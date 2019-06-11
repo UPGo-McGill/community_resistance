@@ -21,7 +21,7 @@ neighbourhoods_tidy<- rbind(
   data_frame(neighbourhood = "leaside", names = c("leaside")),
   data_frame(neighbourhood = "high park", names = c("high park", "bloor west", "bloor street west", "bloor st west", 
                                                     "bloor w", "bloor st w", "bloor street w")),
-  data_frame(neighbourhood = "regeant park", names = c("regeant")))
+  data_frame(neighbourhood = "regent park", names = c("regent")))
 
 
 ## IMPORT NECESSARY FILES - input required
@@ -94,6 +94,6 @@ repeat{
 }
 
 # Calculate percentage that is opposition
-neighbourhood_resistance %>% 
-  mutate(opposition_pct = opposition/mentions*100) ->
-  neighbourhood_resistance
+neighbourhood_resistance <- neighbourhood_resistance %>% 
+  mutate(opposition_pct = opposition/mentions*100)
+
