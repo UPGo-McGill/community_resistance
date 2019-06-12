@@ -10,7 +10,7 @@ neighbourhoods <-
   neighbourhoods_tidy$neighbourhood %>% 
   unique()
 
-neighbourhood_resistance <- tibble(neighbourhoods = character(0), mentions = numeric(0), opposition = numeric(0)) 
+neighbourhood_resistance <- tibble(neighbourhoods = character(0), mentions_local = numeric(0), opposition_local = numeric(0)) 
 
 community_resistance_words = c("protest", "anti", "community-led", "affordability", 
                                "oppose",  "resist", "resistance", "opposition", "gentrification", 
@@ -53,5 +53,5 @@ repeat{
 
 # Calculate percentage that is opposition
 neighbourhood_resistance <- neighbourhood_resistance %>% 
-  mutate(opposition_pct = opposition/mentions*100)
+  mutate(opposition_local_pct = opposition_local/mentions_local*100)
 
