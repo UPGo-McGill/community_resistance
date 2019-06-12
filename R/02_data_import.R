@@ -40,7 +40,8 @@ city2 <- city2@meta %>%
 city2 <- city2 %>% 
   mutate(ID = (nrow(city1)+1): (nrow(city2)+nrow(city1)))
 
-city <- rbind(city1, city2)
+city <- rbind(city1, city2) %>% 
+  select(-c("Source_File", "Graphic"))
 
 rm(city1, city2)
 
