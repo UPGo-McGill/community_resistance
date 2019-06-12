@@ -29,19 +29,20 @@ neighbourhoods_tidy<- rbind(
 city1 <- lnt_read("txt_files/airbnb_toronto_1.TXT")
 city2 <- lnt_read("txt_files/airbnb_toronto_2.TXT") 
 
-
 city1 <- city1@meta %>% 
-  right_join(city1@articles, by = "ID")
+  right_join(city1@articles, by = "ID") %>% 
+  select(-c("ID"))
 
 city2 <- city2@meta %>% 
   right_join(city2@articles, by = "ID") %>% 
   select(-c("ID")) 
 
-city2 <- city2 %>% 
-  mutate(ID = (nrow(city1)+1): (nrow(city2)+nrow(city1)))
-
 city <- rbind(city1, city2) %>% 
   select(-c("Source_File", "Graphic"))
+
+city <- city %>% 
+  mutate(ID = 1:nrow(city)) %>% 
+  select(c(9, 1:8))
 
 rm(city1, city2)
 
