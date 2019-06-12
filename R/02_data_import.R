@@ -49,11 +49,18 @@ rm(city1_LN, city2_LN)
 
 ## COMPLETE THIS SECTION IF FACTIVA, OTHERWISE SKIP. 
 # import the source and corpus Factiva HTML files
-source <- FactivaSource("txt_files/Factiva.htm")
-corpus <- Corpus(source, list(language = NA)) %>% 
+source1 <- FactivaSource("txt_files/Factiva.htm")
+corpus1 <- Corpus(source1, list(language = NA)) %>% 
   tm_map(content_transformer(tolower)) %>% 
   tm_map(content_transformer(removePunctuation)) %>% 
   tm_map(stripWhitespace)
+source2 <- FactivaSource("txt_files/Factiva.htm")
+corpus2 <- Corpus(source1, list(language = NA)) %>% 
+  tm_map(content_transformer(tolower)) %>% 
+  tm_map(content_transformer(removePunctuation)) %>% 
+  tm_map(stripWhitespace)
+
+corpus = tm:::c.VCorpus(corpus1, corpus2)
 
 # transform into a data table
 city_FTV <- tibble(Source_ID = numeric(0), Newspaper = character(0), Date = character(0), 
@@ -85,7 +92,8 @@ city <- rbind(city_FTV, city_LN) %>%
   mutate(ID = 1: (nrow(city_FTV) + nrow(city_LN))) %>% 
   select(10, 1:9) %>% 
   group_by(Author) %>% 
-  distinct(Headline, .keep_all = TRUE)
+  distinct(Headline, .keep_all = TRUE) %>% 
+  ungroup()
 
 
 ## OTHERWISE RENAME THE DATAFRAME AS CITY
@@ -149,3 +157,4 @@ repeat{
 # Calculate percentage that is opposition
 neighbourhood_resistance <- neighbourhood_resistance %>% 
   mutate(opposition_pct = opposition/mentions*100)
+
