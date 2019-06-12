@@ -1,8 +1,8 @@
-############## DATA IMPORT ###############################
+######################################### DATA IMPORT ###############################
 
 source("R/01_helper_functions.R")
 
-## INPUT NECESSARY VARIABLES - input required
+################################ INPUT NECESSARY VARIABLES ##########################################
 # Set up neighbourhood names
 neighbourhoods_tidy<- rbind(
   data_frame(neighbourhood = "kensington market", names = c("kensington")),
@@ -24,33 +24,78 @@ neighbourhoods_tidy<- rbind(
   data_frame(neighbourhood = "regent park", names = c("regent")))
 
 
-## IMPORT NECESSARY FILES - input required
-# Import txt file(s) with airbnb + city name
-city1 <- lnt_read("txt_files/airbnb_toronto_1.TXT")
-city2 <- lnt_read("txt_files/airbnb_toronto_2.TXT") 
+############################# IMPORT NECESSARY FILES ########################################
+## COMPLETE THIS SECTION IF LEXISNEXIS, OTHERWISE SKIP.
+# Import LexisNexis txt file(s) with airbnb + city name
+city1_LN <- lnt_read("txt_files/airbnb_toronto_1.TXT")
+city2_LN <- lnt_read("txt_files/airbnb_toronto_2.TXT") 
 
-city1 <- city1@meta %>% 
-  right_join(city1@articles, by = "ID") %>% 
-  select(-c("ID"))
+city_LN <- rbind(city1_LN@meta %>% 
+                   right_join(city1_LN@articles, by = "ID"), 
+                 city2_LN@meta %>% 
+                   right_join(city2_LN@articles, by = "ID")) %>% 
+  select(-c("Source_File", "Graphic", "ID"))
 
-city2 <- city2@meta %>% 
-  right_join(city2@articles, by = "ID") %>% 
-  select(-c("ID")) 
+city_LN <- city_LN %>% 
+  mutate(Source_ID = paste("LN", 1:nrow(city_LN))) %>% 
+  select(9, 1:8) %>% 
+  separate(Length, c("Word_Count", NA))
 
-city <- rbind(city1, city2) %>% 
-  select(-c("Source_File", "Graphic"))
+city_LN$Date <- as.character(city_LN$Date)
 
-city <- city %>% 
-  mutate(ID = 1:nrow(city)) %>% 
-  select(c(9, 1:8))
+rm(city1_LN, city2_LN)
 
-rm(city1, city2)
+# Fix dates - get fucked up when merging
 
-## INPUTS NO LONGER REQUIRED
+## COMPLETE THIS SECTION IF FACTIVA, OTHERWISE SKIP. 
+# import the source and corpus Factiva HTML files
+source <- FactivaSource("txt_files/Factiva.htm")
+corpus <- Corpus(source, list(language = NA)) %>% 
+  tm_map(content_transformer(tolower)) %>% 
+  tm_map(content_transformer(removePunctuation)) %>% 
+  tm_map(stripWhitespace)
+
+# transform into a data table
+city_FTV <- tibble(Source_ID = numeric(0), Newspaper = character(0), Date = character(0), 
+               Word_Count = numeric(0), Section = character(0), Author = character(0), 
+               Edition = character(0), Headline = character(0), Article = character(0))
+
+n = 1
+
+for (n in c(1:length(corpus))) {
+  
+  city_FTV[n,1] = paste("FTV", n)
+  city_FTV[n,2] = paste(corpus[[n]]$meta$origin, collapse="")
+  city_FTV[n,3] = paste(as.character(corpus[[n]]$meta$datetimestamp), collapse = "")
+  city_FTV[n,4] = paste(corpus[[n]]$meta$wordcount, collapse = "")
+  city_FTV[n,5] = paste(corpus[[n]]$meta$section, collapse = "")
+  city_FTV[n,6] = paste(corpus[[n]]$meta$author,collapse = "") 
+  city_FTV[n,7] = paste(corpus[[n]]$meta$edition,collapse = "") 
+  city_FTV[n,8] = paste(corpus[[n]]$meta$heading, collapse = "")
+  city_FTV[n,9] = paste(corpus[[n]]$content, collapse = "")
+  
+  n = n+1
+}
+
+rm(source, corpus)
+
+## IF USING BOTH FACTIVA AND LEXISNEXIS, MERGE AND REMOVE DUPLICATES
+
+city <- rbind(city_FTV, city_LN) %>% 
+  mutate(ID = 1: (nrow(city_FTV) + nrow(city_LN))) %>% 
+  select(10, 1:9) %>% 
+  group_by(Author) %>% 
+  distinct(Headline, .keep_all = TRUE)
+
+
+## OTHERWISE RENAME THE DATAFRAME AS CITY
+
+# city <- city_LN
+
+############################### INPUTS NO LONGER REQUIRED ########################################
 ## CLEAN TEXT
 city$Article <- str_to_lower(city$Article)
-city$Article <- gsub("[[:punct:]]", "", city$Article)
-
+city$Article <- gsub("[[:punct:]]", " ", city$Article)
 
 ## PERFORM ANALYSIS
 # Set up variables to evaluate community resistance 
