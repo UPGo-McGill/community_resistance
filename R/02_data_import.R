@@ -27,21 +27,27 @@ neighbourhoods_tidy<- rbind(
 ## IMPORT NECESSARY FILES - input required
 # Import txt file(s) with airbnb + city name
 city1 <- lnt_read("txt_files/airbnb_toronto_1.TXT")
-city2 <- lnt_read("txt_files/airbnb_toronto_2.TXT")
+city2 <- lnt_read("txt_files/airbnb_toronto_2.TXT") 
+
 
 city1 <- city1@meta %>% 
   right_join(city1@articles, by = "ID")
+
 city2 <- city2@meta %>% 
-  right_join(city2@articles, by = "ID")
+  right_join(city2@articles, by = "ID") %>% 
+  select(-c("ID")) 
+
+city2 <- city2 %>% 
+  mutate(ID = (nrow(city1)+1): (nrow(city2)+nrow(city1)))
 
 city <- rbind(city1, city2)
 
 rm(city1, city2)
 
-## INPUT NO LONGER REQUIRED
+## INPUTS NO LONGER REQUIRED
 ## CLEAN TEXT
 city$Article <- str_to_lower(city$Article)
-city$Article <- gsub("[[:punct:]]", " ", city$Article)
+city$Article <- gsub("[[:punct:]]", "", city$Article)
 
 
 ## PERFORM ANALYSIS
@@ -96,4 +102,3 @@ repeat{
 # Calculate percentage that is opposition
 neighbourhood_resistance <- neighbourhood_resistance %>% 
   mutate(opposition_pct = opposition/mentions*100)
-
