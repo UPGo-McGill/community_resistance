@@ -2,8 +2,10 @@
 
 source("R/01_helper_functions.R")
 
+# must input file paths and make some adjustments depending on what files you would like to import
+
 ################################ INPUT NECESSARY VARIABLES ##########################################
-# Set up neighbourhood names
+# set up neighbourhood names
 neighbourhoods_tidy<- rbind(
   data_frame(neighbourhood = "kensington market", names = c("kensington")),
   data_frame(neighbourhood = "chinatown", names = c("chinatown")),
@@ -26,83 +28,170 @@ neighbourhoods_tidy<- rbind(
 
 ############################# IMPORT NECESSARY FILES ########################################
 ## COMPLETE THIS SECTION IF LEXISNEXIS, OTHERWISE SKIP.
-# Import LexisNexis txt file(s) with airbnb + city name
-city1_LN <- lnt_read("txt_files/airbnb_toronto_1.TXT")
-city2_LN <- lnt_read("txt_files/airbnb_toronto_2.TXT") 
-
-city_LN <- rbind(city1_LN@meta %>% 
-                   right_join(city1_LN@articles, by = "ID"), 
-                 city2_LN@meta %>% 
-                   right_join(city2_LN@articles, by = "ID")) %>% 
+# import LexisNexis txt file(s) with airbnb + city name from the New York Times
+city_LN_NYT <- lnt_read("txt_files/toronto_NYT/airbnb_toronto_NYT_LN.TXT")
+city_LN_NYT <- city_LN_NYT@meta %>% 
+  right_join(city_LN_NYT@articles, by = "ID") %>% 
   select(-c("Source_File", "Graphic", "ID"))
 
-city_LN <- city_LN %>% 
-  mutate(Source_ID = paste("LN", 1:nrow(city_LN))) %>% 
+# if there is more than one file, repeat the following.
+#city2_LN_NYT <- lnt_read("txt_files/airbnb_toronto_2.TXT") 
+
+# if there is more than one file, merge.
+#city_LN_NYT <- rbind(city1_LN_NYT@meta %>% 
+#                   right_join(city1_LN_NYT@articles, by = "ID"), 
+#                 city2_LN_NYT@meta %>% 
+#                   right_join(city2_LN_NYT@articles, by = "ID")) %>% 
+#  select(-c("Source_File", "Graphic", "ID"))
+
+city_LN_NYT <- city_LN_NYT %>% 
+  mutate(Source_ID = paste("LN", 1:nrow(city_LN_NYT))) %>% 
   select(9, 1:8) %>% 
   separate(Length, c("Word_Count", NA))
 
-city_LN$Date <- as.character(city_LN$Date)
+city_LN_NYT$Date <- as.character(city_LN$Date)
 
-rm(city1_LN, city2_LN)
+# rm(city1_LN_NYT, city2_LN_NYT)
 
-# Fix dates - get fucked up when merging
+# import LexisNexis txt file(s) with airbnb + city name from the local newspaper
+city1_LN_local <- lnt_read("txt_files/toronto_local/airbnb_toronto_local_LN_1.TXT")
+#city_LN_local <- city_LN_local@meta %>% 
+# right_join(city_LN_local@articles, by = "ID") %>% 
+# select(-c("Source_File", "Graphic", "ID"))
+
+# if there is more than one file, repeat the following.
+city2_LN_local <- lnt_read("txt_files/toronto_local/airbnb_toronto_local_LN_2.TXT") 
+
+# if there is more than one file, merge.
+city_LN_local <- rbind(city1_LN_local@meta %>% 
+                   right_join(city1_LN_local@articles, by = "ID"), 
+                 city2_LN_local@meta %>% 
+                   right_join(city2_LN_local@articles, by = "ID")) %>% 
+  select(-c("Source_File", "Graphic", "ID"))
+
+city_LN_local <- city_LN_local %>% 
+  mutate(Source_ID = paste("LN", 1:nrow(city_LN_local))) %>% 
+  select(9, 1:8) %>% 
+  separate(Length, c("Word_Count", NA))
+
+city_LN_local$Date <- as.character(city_LN_local$Date)
+
+rm(city1_LN_local, city2_LN_local)
 
 ## COMPLETE THIS SECTION IF FACTIVA, OTHERWISE SKIP. 
-# import the source and corpus Factiva HTML files
-source1 <- FactivaSource("txt_files/Factiva.htm")
-corpus1 <- Corpus(source1, list(language = NA)) %>% 
+# import the source and corpus Factiva HTML files for airbnb + city name from the New York Times
+source1_NYT <- FactivaSource("txt_files/toronto_NYT/airbnb_toronto_NYT_FTV.htm")
+corpus_NYT <- Corpus(source1_NYT, list(language = NA)) %>% 
   tm_map(content_transformer(tolower)) %>% 
   tm_map(content_transformer(removePunctuation)) %>% 
   tm_map(stripWhitespace)
 
-source2 <- FactivaSource("txt_files/Factiva.htm")
-corpus2 <- Corpus(source1, list(language = NA)) %>% 
-  tm_map(content_transformer(tolower)) %>% 
-  tm_map(content_transformer(removePunctuation)) %>% 
-  tm_map(stripWhitespace)
+# if there is more than one file, repeat the following.
+#source2_NYT <- FactivaSource("txt_files/Factiva.htm")
+#corpus2_NYT <- Corpus(source1_NYT, list(language = NA)) %>% 
+#  tm_map(content_transformer(tolower)) %>% 
+#  tm_map(content_transformer(removePunctuation)) %>% 
+#  tm_map(stripWhitespace)
 
-corpus = tm:::c.VCorpus(corpus1, corpus2)
+# if there is more than one file, merge
+#corpus_NYT = tm:::c.VCorpus(corpus1_NYT, corpus2_NYT)
 
 # transform into a data table
-city_FTV <- tibble(Source_ID = numeric(0), Newspaper = character(0), Date = character(0), 
+city_FTV_NYT <- tibble(Source_ID = numeric(0), Newspaper = character(0), Date = character(0), 
                Word_Count = numeric(0), Section = character(0), Author = character(0), 
                Edition = character(0), Headline = character(0), Article = character(0))
 
 n = 1
 
-for (n in c(1:length(corpus))) {
+for (n in c(1:length(corpus_NYT))) {
   
-  city_FTV[n,1] = paste("FTV", n)
-  city_FTV[n,2] = paste(corpus[[n]]$meta$origin, collapse="")
-  city_FTV[n,3] = paste(as.character(corpus[[n]]$meta$datetimestamp), collapse = "")
-  city_FTV[n,4] = paste(corpus[[n]]$meta$wordcount, collapse = "")
-  city_FTV[n,5] = paste(corpus[[n]]$meta$section, collapse = "")
-  city_FTV[n,6] = paste(corpus[[n]]$meta$author,collapse = "") 
-  city_FTV[n,7] = paste(corpus[[n]]$meta$edition,collapse = "") 
-  city_FTV[n,8] = paste(corpus[[n]]$meta$heading, collapse = "")
-  city_FTV[n,9] = paste(corpus[[n]]$content, collapse = "")
+  city_FTV_NYT[n,1] = paste("FTV", n)
+  city_FTV_NYT[n,2] = paste(corpus_NYT[[n]]$meta$origin, collapse="")
+  city_FTV_NYT[n,3] = paste(as.character(corpus_NYT[[n]]$meta$datetimestamp), collapse = "")
+  city_FTV_NYT[n,4] = paste(corpus_NYT[[n]]$meta$wordcount, collapse = "")
+  city_FTV_NYT[n,5] = paste(corpus_NYT[[n]]$meta$section, collapse = "")
+  city_FTV_NYT[n,6] = paste(corpus_NYT[[n]]$meta$author,collapse = "") 
+  city_FTV_NYT[n,7] = paste(corpus_NYT[[n]]$meta$edition,collapse = "") 
+  city_FTV_NYT[n,8] = paste(corpus_NYT[[n]]$meta$heading, collapse = "")
+  city_FTV_NYT[n,9] = paste(corpus_NYT[[n]]$content, collapse = "")
   
   n = n+1
 }
 
-rm(source1, source2, corpus1, corpus2, corpus)
+rm(source1_NYT, source2_NYT, corpus1_NYT, corpus2_NYT, corpus_NYT)
+
+# import the source and corpus Factiva HTML files for airbnb + city name from the local newspaper
+source1_local <- FactivaSource("txt_files/toronto_local/airbnb_toronto_local_FTV_1.htm")
+corpus1_local <- Corpus(source1_local, list(language = NA)) %>% 
+  tm_map(content_transformer(tolower)) %>% 
+  tm_map(content_transformer(removePunctuation)) %>% 
+  tm_map(stripWhitespace)
+
+# if there is more than one file, repeat the following.
+source8_local <- FactivaSource("txt_files/toronto_local/airbnb_toronto_local_FTV_8.htm")
+corpus8_local <- Corpus(source8_local, list(language = NA)) %>% 
+  tm_map(content_transformer(tolower)) %>% 
+  tm_map(content_transformer(removePunctuation)) %>% 
+  tm_map(stripWhitespace)
+
+# if there is more than one file, merge
+corpus_local = tm:::c.VCorpus(corpus1_local, corpus2_local, corpus3_local, corpus4_local, corpus5_local,
+                              corpus6_local, corpus7_local)
+
+# transform into a data table
+city_FTV_local <- tibble(Source_ID = numeric(0), Newspaper = character(0), Date = character(0), 
+                   Word_Count = numeric(0), Section = character(0), Author = character(0), 
+                   Edition = character(0), Headline = character(0), Article = character(0))
+
+n = 1
+
+for (n in c(1:length(corpus_local))) {
+  
+  city_FTV_local[n,1] = paste("FTV", n)
+  city_FTV_local[n,2] = paste(corpus_local[[n]]$meta$origin, collapse="")
+  city_FTV_local[n,3] = paste(as.character(corpus_local[[n]]$meta$datetimestamp), collapse = "")
+  city_FTV_local[n,4] = paste(corpus_local[[n]]$meta$wordcount, collapse = "")
+  city_FTV_local[n,5] = paste(corpus_local[[n]]$meta$section, collapse = "")
+  city_FTV_local[n,6] = paste(corpus_local[[n]]$meta$author,collapse = "") 
+  city_FTV_local[n,7] = paste(corpus_local[[n]]$meta$edition,collapse = "") 
+  city_FTV_local[n,8] = paste(corpus_local[[n]]$meta$heading, collapse = "")
+  city_FTV_local[n,9] = paste(corpus_local[[n]]$content, collapse = "")
+  
+  n = n+1
+}
+
+rm(source1_local, source2_local, source3_local, source4_local, source5_local, source6_local,
+   source7_local, source8_local, corpus1_local, corpus2_local, corpus3_local, corpus4_local, 
+   corpus5_local, corpus6_local, corpus7_local, corpus8_local, corpus_local)
+
 
 ## IF USING BOTH FACTIVA AND LEXISNEXIS, MERGE AND REMOVE DUPLICATES
 
-city <- rbind(city_FTV, city_LN) %>% 
-  mutate(ID = 1: (nrow(city_FTV) + nrow(city_LN))) %>% 
+city_NYT <- rbind(city_FTV_NYT, city_LN_NYT) %>% 
+  mutate(ID = 1: (nrow(city_FTV_NYT) + nrow(city_LN_NYT))) %>% 
   select(10, 1:9) %>% 
   group_by(Author) %>% 
   distinct(Headline, .keep_all = TRUE) %>% 
   ungroup()
 
+city_local <- rbind(city_FTV_local, city_LN_local) %>% 
+  mutate(ID = 1: (nrow(city_FTV_local) + nrow(city_LN_local))) %>% 
+  select(10, 1:9) %>% 
+  group_by(Author) %>% 
+  distinct(Headline, .keep_all = TRUE) %>% 
+  ungroup()
 
 ## OTHERWISE RENAME THE DATAFRAME AS CITY
 
-# city <- city_LN
+# city_NYT <- city_LN_NYT
+# city_local <- city_LN_local
 
 ## CLEAN TEXT
-city$Article <- str_to_lower(city$Article)
-city$Article <- gsub("[[:punct:]]", " ", city$Article)
+city_NYT$Article <- str_to_lower(city_NYT$Article)
+city_NYT$Article <- gsub("[[:punct:]]", " ", city_NYT$Article)
+
+city_local$Article <- str_to_lower(city_local$Article)
+city_local$Article <- gsub("[[:punct:]]", " ", city_local$Article)
+
 
 
