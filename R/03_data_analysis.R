@@ -23,7 +23,7 @@ n = 1
 repeat{
   neighbourhood_resistance[n, 1] <- neighbourhoods[n]
   
-  neighbourhood_resistance[n,2] <- city_local %>% 
+  neighbourhood_resistance[n,2] <- media_local %>% 
     filter(str_detect(Article, paste(filter(neighbourhoods_tidy, 
                                             neighbourhood == neighbourhoods [n]) %>% 
                                        pull(names), collapse = "|"))) %>% 
@@ -32,10 +32,10 @@ repeat{
     nrow()
   
   neighbourhood_resistance[n,3] <- 
-    city_local %>% 
+    media_local %>% 
     filter(str_detect(Article, paste(community_resistance_words, collapse="|"))) %>% 
     select("ID") %>% 
-    inner_join(city_local %>% 
+    inner_join(media_local %>% 
                  filter(str_detect(Article, paste(filter(neighbourhoods_tidy, 
                                                          neighbourhood == neighbourhoods [n]) %>% 
                                                     pull(names), collapse = "|"))) %>% 
@@ -44,7 +44,7 @@ repeat{
     distinct() %>% 
     nrow()
   
-  neighbourhood_resistance[n,4] <- city_NYT %>% 
+  neighbourhood_resistance[n,4] <- media_NYT %>% 
     filter(str_detect(Article, paste(filter(neighbourhoods_tidy, 
                                             neighbourhood == neighbourhoods [n]) %>% 
                                        pull(names), collapse = "|"))) %>% 
@@ -53,10 +53,10 @@ repeat{
     nrow()
   
   neighbourhood_resistance[n,5] <- 
-    city_NYT %>% 
+    media_NYT %>% 
     filter(str_detect(Article, paste(community_resistance_words, collapse="|"))) %>% 
     select("ID") %>% 
-    inner_join(city_NYT %>% 
+    inner_join(media_NYT %>% 
                  filter(str_detect(Article, paste(filter(neighbourhoods_tidy, 
                                                          neighbourhood == neighbourhoods [n]) %>% 
                                                     pull(names), collapse = "|"))) %>% 
