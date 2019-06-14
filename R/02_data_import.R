@@ -9,20 +9,18 @@ source("R/01_helper_functions.R")
 neighbourhoods_tidy<- rbind(
   data_frame(neighbourhood = "kensington market", names = c("kensington")),
   data_frame(neighbourhood = "chinatown", names = c("chinatown")),
-  data_frame(neighbourhood = "beaches", names = c("the beach", "the beaches", "queen street east", "queen street e", "
-                                                  queen east", "queen e", "queen st e", "queen st east")),
+  data_frame(neighbourhood = "beaches", names = c("the beach", "woodbine", "queen street e",
+                                                "queen e", "queen st e")),
   data_frame(neighbourhood = "danforth", names = c("danforth", "greektown")),
   data_frame(neighbourhood = "rosedale", names = c("rosedale")),
   data_frame(neighbourhood = "little italy", names = c("little italy")),
-  data_frame(neighbourhood = "queen street west", names = c("queen street west", "queen west", "queen st west", "queen w", 
-                                                            "queen st w", "queen st west")),
+  data_frame(neighbourhood = "queen street west", names = c("queen street w", "queen w", "queen st w")),
   data_frame(neighbourhood = "leslieville", names = c("leslieville")),
   data_frame(neighbourhood = "cabbagetown", names = c("cabbagetown")),
   data_frame(neighbourhood = "lawrence park", names = c("lawrence")),
   data_frame(neighbourhood = "eglinton", names = c("eglinton")),
   data_frame(neighbourhood = "leaside", names = c("leaside")),
-  data_frame(neighbourhood = "high park", names = c("high park", "bloor west", "bloor street west", "bloor st west", 
-                                                    "bloor w", "bloor st w", "bloor street w")),
+  data_frame(neighbourhood = "high park", names = c("high park", "bloor w", "bloor street w", "bloor st w")),
   data_frame(neighbourhood = "regent park", names = c("regent")))
 
 
@@ -126,17 +124,11 @@ rm(city1_LN_local, city2_LN_local)
 ## 3.2 COMPLETE THIS SECTION IF FACTIVA, OTHERWISE SKIP. 
 # import the source and corpus Factiva HTML files for airbnb + city name from the local newspaper
 source1_local <- FactivaSource("txt_files/toronto_local/airbnb_toronto_local_FTV_1.htm")
-corpus1_local <- Corpus(source1_local, list(language = NA)) %>% 
-  tm_map(content_transformer(tolower)) %>% 
-  tm_map(content_transformer(removePunctuation)) %>% 
-  tm_map(stripWhitespace)
+corpus1_local <- Corpus(source1_local, list(language = NA)) 
 
 # if there is more than one file, repeat the following.
-source8_local <- FactivaSource("txt_files/toronto_local/airbnb_toronto_local_FTV_8.htm")
-corpus8_local <- Corpus(source8_local, list(language = NA)) %>% 
-  tm_map(content_transformer(tolower)) %>% 
-  tm_map(content_transformer(removePunctuation)) %>% 
-  tm_map(stripWhitespace)
+source2_local <- FactivaSource("txt_files/toronto_local/airbnb_toronto_local_FTV_2.htm")
+corpus2_local <- Corpus(source2_local, list(language = NA))
 
 # if there is more than one file, merge
 corpus_local = tm:::c.VCorpus(corpus1_local, corpus2_local, corpus3_local, corpus4_local, corpus5_local,
@@ -191,11 +183,16 @@ city_local <- rbind(city_FTV_local, city_LN_local) %>%
 # city_local <- city_LN_local
 
 ## 4.3 CLEAN TEXT
+# make all lower space, remove punctuation, and remove double spaces
 city_NYT$Article <- str_to_lower(city_NYT$Article)
+city_NYT$Article <- str_replace(city_local$Article, "—", " ")
 city_NYT$Article <- gsub("[[:punct:]]", " ", city_NYT$Article)
+city_NYT$Article <- str_replace(gsub("\\s+", " ", str_trim(city_NYT$Article)), "B", "b")
 
 city_local$Article <- str_to_lower(city_local$Article)
+city_local$Article <- str_replace(city_local$Article, "—", " ")
 city_local$Article <- gsub("[[:punct:]]", " ", city_local$Article)
+city_local$Article <- str_replace(gsub("\\s+", " ", str_trim(city_local$Article)), "B", "b")
 
 
 
