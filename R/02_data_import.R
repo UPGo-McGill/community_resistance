@@ -205,24 +205,43 @@ media_NYT$Article <- iconv(media_NYT$Article, to = "ASCII//TRANSLIT")
 media_NYT$Article <- str_replace(media_NYT$Article, "—", " ")
 media_NYT$Article <- gsub("[[:punct:]]", " ", media_NYT$Article)
 media_NYT$Article <- str_replace(gsub("\\s+", " ", str_trim(media_NYT$Article)), "B", "b")
+media_NYT$Headline <- str_to_lower(media_NYT$Headline)
+media_NYT$Headline <- iconv(media_NYT$Headline, to = "ASCII//TRANSLIT")
+media_NYT$Headline <- str_replace(media_NYT$Headline, "—", " ")
+media_NYT$Headline <- gsub("[[:punct:]]", " ", media_NYT$Headline)
+media_NYT$Headline <- str_replace(gsub("\\s+", " ", str_trim(media_NYT$Headline)), "B", "b")
 
 media_local$Article <- str_to_lower(media_local$Article)
 media_local$Article <- iconv(media_local$Article, to = "ASCII//TRANSLIT")
 media_local$Article <- str_replace(media_local$Article, "—", " ")
 media_local$Article <- gsub("[[:punct:]]", " ", media_local$Article)
 media_local$Article <- str_replace(gsub("\\s+", " ", str_trim(media_local$Article)), "B", "b")
+media_local$Headline <- str_to_lower(media_local$Headline)
+media_local$Headline <- iconv(media_local$Headline, to = "ASCII//TRANSLIT")
+media_local$Headline <- str_replace(media_local$Headline, "—", " ")
+media_local$Headline <- gsub("[[:punct:]]", " ", media_local$Headline)
+media_local$Headline <- str_replace(gsub("\\s+", " ", str_trim(media_local$Headline)), "B", "b")
 
 ## 4.4 REMOVE IRRELEVANT ARTICLES
 # Remove articles that only mention Airbnb once. These are more often than not just referencing the 
 # sharing economy in another sense.
 
+## UPDATE
+
 media_local <- media_local %>% 
   mutate(mentions = 
            str_count(media_local$Article, "airbnb") +
            str_count(media_local$Article, "home shar") +
+           str_count(media_local$Article, "homeshar") +
            str_count(media_local$Article, "shortterm") +
            str_count(media_local$Article, "short term") + 
-           str_count(media_local$Article, "str ")) %>% 
+           str_count(media_local$Article, "str ") +
+           str_count(media_local$Headline, "airbnb") +
+           str_count(media_local$Headline, "home shar") +
+           str_count(media_local$Headline, "homeshar") +
+           str_count(media_local$Headline, "shortterm") +
+           str_count(media_local$Headline, "short term") + 
+           str_count(media_local$Headline, "str ")) %>% 
   filter(mentions > 1) %>%
   select(-c(mentions))
 
@@ -230,9 +249,16 @@ media_NYT <- media_NYT %>%
   mutate(mentions = 
            str_count(media_NYT$Article, "airbnb") +
            str_count(media_NYT$Article, "home shar") +
+           str_count(media_NYT$Article, "homeshar") +
            str_count(media_NYT$Article, "shortterm") +
-           str_count(media_NYT$Article, "short term")+
-           str_count(media_NYT$Article, "str ")) %>% 
+           str_count(media_NYT$Article, "short term") +
+           str_count(media_NYT$Article, "str ") + 
+           str_count(media_NYT$Headline, "airbnb") +
+           str_count(media_NYT$Headline, "home shar") +
+           str_count(media_NYT$Headline, "homeshar") +
+           str_count(media_NYT$Headline, "shortterm") +
+           str_count(media_NYT$Headline, "short term") +
+           str_count(media_NYT$Headline, "str "))%>% 
   filter(mentions > 1) %>% 
   select(-c(mentions))
 

@@ -83,3 +83,5 @@ neighbourhood_resistance <- neighbourhood_resistance %>%
                   mentions_NYT/nrow(filter(media_NYT, str_detect(Article, paste(neighbourhoods_tidy$names, collapse="|")))))/2*100) %>% 
   mutate(CRI = (opposition_local/nrow(filter(media_local, str_detect(Article, paste(neighbourhoods_tidy$names, collapse="|")))) +
                 opposition_NYT/nrow(filter(media_NYT, str_detect(Article, paste(neighbourhoods_tidy$names, collapse="|")))))/2*100)
+
+
