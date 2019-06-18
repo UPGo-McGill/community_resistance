@@ -47,7 +47,7 @@ repeat{
     distinct() %>% 
     nrow()
   
-  neighbourhood_resistance[n,4] <- media_local %>% 
+  neighbourhood_resistance[n,4] <- media_NYT %>% 
     filter(str_detect(Article, paste(filter(neighbourhoods_tidy, 
                                             neighbourhood == neighbourhoods [n]) %>% 
                                        pull(names), collapse = "|"))) %>% 
@@ -56,10 +56,10 @@ repeat{
     nrow()
   
   neighbourhood_resistance[n,5] <- 
-    media_local %>% 
+    media_NYT %>% 
     filter(str_detect(Article, paste(community_resistance_words, collapse="|"))) %>% 
     select("ID") %>% 
-    inner_join(media_local %>% 
+    inner_join(media_NYT %>% 
                  filter(str_detect(Article, paste(filter(neighbourhoods_tidy, 
                                                          neighbourhood == neighbourhoods [n]) %>% 
                                                     pull(names), collapse = "|"))) %>% 
@@ -83,7 +83,3 @@ neighbourhood_resistance <- neighbourhood_resistance %>%
                   mentions_NYT/nrow(filter(media_NYT, str_detect(Article, paste(neighbourhoods_tidy$names, collapse="|")))))/2*100) %>% 
   mutate(CRI = (opposition_local/nrow(filter(media_local, str_detect(Article, paste(neighbourhoods_tidy$names, collapse="|")))) +
                 opposition_NYT/nrow(filter(media_NYT, str_detect(Article, paste(neighbourhoods_tidy$names, collapse="|")))))/2*100)
-
-media_local %>% 
-filter(str_detect(Article, paste(community_resistance_words, collapse="|"))) %>% 
-  filter(str_detect(Article, paste(neighbourhoods_tidy$names, collapse="|")))

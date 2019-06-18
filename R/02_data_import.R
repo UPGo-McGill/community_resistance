@@ -199,19 +199,45 @@ media_local <- media_LN_local %>%
  
 
 ## 4.3 CLEAN TEXT
-# make all lower space, remove punctuation, and remove double spaces
+# make all lower space, remove accents, remove punctuation, and remove double spaces
 media_NYT$Article <- str_to_lower(media_NYT$Article)
+media_NYT$Article <- iconv(media_NYT$Article, to = "ASCII//TRANSLIT")
 media_NYT$Article <- str_replace(media_NYT$Article, "—", " ")
 media_NYT$Article <- gsub("[[:punct:]]", " ", media_NYT$Article)
 media_NYT$Article <- str_replace(gsub("\\s+", " ", str_trim(media_NYT$Article)), "B", "b")
 
 media_local$Article <- str_to_lower(media_local$Article)
+media_local$Article <- iconv(media_local$Article, to = "ASCII//TRANSLIT")
 media_local$Article <- str_replace(media_local$Article, "—", " ")
 media_local$Article <- gsub("[[:punct:]]", " ", media_local$Article)
 media_local$Article <- str_replace(gsub("\\s+", " ", str_trim(media_local$Article)), "B", "b")
 
+## 4.4 REMOVE IRRELEVANT ARTICLES
+# Remove articles that only mention Airbnb once. These are more often than not just referencing the 
+# sharing economy in another sense.
 
-## 4.4 EXPORT
+media_local <- media_local %>% 
+  mutate(mentions = 
+           str_count(media_local$Article, "airbnb") +
+           str_count(media_local$Article, "home shar") +
+           str_count(media_local$Article, "shortterm") +
+           str_count(media_local$Article, "short term") + 
+           str_count(media_local$Article, "str ")) %>% 
+  filter(mentions > 1) %>%
+  select(-c(mentions))
+
+media_NYT <- media_NYT %>% 
+  mutate(mentions = 
+           str_count(media_NYT$Article, "airbnb") +
+           str_count(media_NYT$Article, "home shar") +
+           str_count(media_NYT$Article, "shortterm") +
+           str_count(media_NYT$Article, "short term")+
+           str_count(media_NYT$Article, "str ")) %>% 
+  filter(mentions > 1) %>% 
+  select(-c(mentions))
+
+
+## 4.5 EXPORT
 # export the table(s) as .csv so that this does not need to be rerun.
 
 write_csv(media_local, "txt_files/montreal_local/media_montreal_local.csv")
