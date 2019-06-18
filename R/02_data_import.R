@@ -7,21 +7,20 @@ source("R/01_helper_functions.R")
 ################################ 1 - INPUT NEIGHBOURHOOD NAMES ##############################################################################################################################
 # set up neighbourhood names
 neighbourhoods_tidy<- rbind(
-  data_frame(neighbourhood = "kensington market", names = c("kensington")),
-  data_frame(neighbourhood = "chinatown", names = c("chinatown")),
-  data_frame(neighbourhood = "beaches", names = c("the beach", "woodbine", "queen street e",
-                                                "queen e", "queen st e")),
-  data_frame(neighbourhood = "danforth", names = c("danforth", "greektown")),
-  data_frame(neighbourhood = "rosedale", names = c("rosedale")),
-  data_frame(neighbourhood = "little italy", names = c("little italy")),
-  data_frame(neighbourhood = "queen street west", names = c("queen street w", "queen w", "queen st w")),
-  data_frame(neighbourhood = "leslieville", names = c("leslieville")),
-  data_frame(neighbourhood = "cabbagetown", names = c("cabbagetown")),
-  data_frame(neighbourhood = "lawrence park", names = c("lawrence")),
-  data_frame(neighbourhood = "eglinton", names = c("eglinton")),
-  data_frame(neighbourhood = "leaside", names = c("leaside")),
-  data_frame(neighbourhood = "high park", names = c("high park", "bloor w", "bloor street w", "bloor st w")),
-  data_frame(neighbourhood = "regent park", names = c("regent")))
+  data_frame(neighbourhood = "plateau", names = c("plateau", "mile end")),
+  data_frame(neighbourhood = "ville-marie", names = c("ville marie")),
+  data_frame(neighbourhood = "old montreal", names = c("old port", "old montreal", "old montréal")),
+  data_frame(neighbourhood = "hochelaga", names = c("hochelaga", "maisonneuve", "homa", "mercier")),
+  data_frame(neighbourhood = "ndg", names = c("notre dame", "ndg", "cote des neiges", "côte des neiges")),
+  data_frame(neighbourhood = "rosemont", names = c("little italy", "rosemont", "la petite patrie")),
+  data_frame(neighbourhood = "saint henri", names = c("saint henri", "atwater market", "lachine canal")),
+  data_frame(neighbourhood = "griffintown", names = c("griffintown")),
+  data_frame(neighbourhood = "little burgundy", names = c("little burgundy")),
+  data_frame(neighbourhood = "outremont", names = c("outremont")),
+  data_frame(neighbourhood = "westmount", names = c("westmount")),
+  data_frame(neighbourhood = "sud-ouest", names = c("sud ouest", "sudouest", "pointe saint charles", "pointe st charles", "charles")),
+  data_frame(neighbourhood = "villeray", names = c("park ex", "mile ex", "villeray", "saint michel")),
+  data_frame(neighbourhood = "lachine", names = c("lachine")))
 
 
 ############################# 2 - IMPORT NECESSARY FILES FROM THE NYT ############################################################################################################################
@@ -33,15 +32,17 @@ media_LN_NYT <- media_LN_NYT@meta %>%
   select(-c("Source_File", "Graphic", "ID"))
 
 # if there is more than one file, repeat the following.
-#media2_LN_NYT <- lnt_read("txt_files/airbnb_toronto_2.TXT") 
+media2_LN_NYT <- lnt_read("txt_files/airbnb_toronto_2.TXT") 
 
-# if there is more than one file, merge.
-#media_LN_NYT <- rbind(media1_LN_NYT@meta %>% 
-#                   right_join(media1_LN_NYT@articles, by = "ID"), 
-#                 media2_LN_NYT@meta %>% 
-#                   right_join(media2_LN_NYT@articles, by = "ID")) %>% 
-#  select(-c("Source_File", "Graphic", "ID"))
+# if there is more than one file, merge and remove files.
+media_LN_NYT <- rbind(media1_LN_NYT@meta %>% 
+                   right_join(media1_LN_NYT@articles, by = "ID"), 
+                 media2_LN_NYT@meta %>% 
+                   right_join(media2_LN_NYT@articles, by = "ID")) %>% 
+  select(-c("Source_File", "Graphic", "ID"))
+rm(media1_LN_NYT, media2_LN_NYT)
 
+# reformat the table
 media_LN_NYT <- media_LN_NYT %>% 
   mutate(Source_ID = paste("LN", 1:nrow(media_LN_NYT))) %>% 
   select(9, 1:8) %>% 
@@ -49,7 +50,6 @@ media_LN_NYT <- media_LN_NYT %>%
 
 media_LN_NYT$Date <- as.character(media_LN$Date)
 
-# rm(media1_LN_NYT, media2_LN_NYT)
 
 ## 2.2 COMPLETE THIS SECTION IF FACTIVA, OTHERWISE SKIP. 
 # 2.2.1 import the source and corpus Factiva HTML files for airbnb + city name from the New York Times
@@ -60,14 +60,14 @@ corpus_NYT <- Corpus(source1_NYT, list(language = NA)) %>%
   tm_map(stripWhitespace)
 
 # if there is more than one file, repeat the following.
-#source2_NYT <- FactivaSource("txt_files/Factiva.htm")
-#corpus2_NYT <- Corpus(source1_NYT, list(language = NA)) %>% 
-#  tm_map(content_transformer(tolower)) %>% 
-#  tm_map(content_transformer(removePunctuation)) %>% 
-#  tm_map(stripWhitespace)
+source2_NYT <- FactivaSource("txt_files/Factiva.htm")
+corpus2_NYT <- Corpus(source1_NYT, list(language = NA)) %>% 
+  tm_map(content_transformer(tolower)) %>% 
+  tm_map(content_transformer(removePunctuation)) %>% 
+  tm_map(stripWhitespace)
 
 # if there is more than one file, merge
-#corpus_NYT = tm:::c.VCorpus(corpus1_NYT, corpus2_NYT)
+corpus_NYT = tm:::c.VCorpus(corpus1_NYT, corpus2_NYT)
 
 # transform into a data table
 media_FTV_NYT <- tibble(Source_ID = numeric(0), Newspaper = character(0), Date = character(0), 
@@ -76,7 +76,7 @@ media_FTV_NYT <- tibble(Source_ID = numeric(0), Newspaper = character(0), Date =
 
 n = 1
 
-for (n in c(1:length(media_NYT))) {
+for (n in c(1:length(media_FTV_NYT))) {
   
   media_FTV_NYT[n,1] = paste("FTV", n)
   media_FTV_NYT[n,2] = paste(corpus_NYT[[n]]$meta$origin, collapse="")
@@ -97,31 +97,33 @@ rm(source1_NYT, source2_NYT, corpus1_NYT, corpus2_NYT, corpus_NYT)
 ############################# 3 - IMPORT NECESSARY FILES FROM THE LOCAL PAPER ############################################################################################################################
 ## 3.1 COMPLETE THIS SECTION IF LEXISNEXIS, OTHERWISE SKIP.
 # import LexisNexis txt file(s) with airbnb + city name from the local newspaper
-media1_LN_local <- lnt_read("txt_files/toronto_local/airbnb_toronto_local_LN_1.TXT")
+media_LN_local <- lnt_read("txt_files/montreal_local/airbnb_montreal_local_FTV.TXT")
 
 # if there is only one file, run the following
-media1_LN_local <- media1_LN_local@meta %>% 
- right_join(media1_LN_local@articles, by = "ID") %>% 
+media_LN_local <- media_LN_local@meta %>% 
+ right_join(media_LN_local@articles, by = "ID") %>% 
  select(-c("Source_File", "Graphic", "ID"))
 
 # if there is more than one file, repeat the following.
 media2_LN_local <- lnt_read("txt_files/toronto_local/airbnb_toronto_local_LN_2.TXT") 
 
-# if there is more than one file, merge.
+# if there is more than one file, merge and remove files.
 media_LN_local <- rbind(media1_LN_local@meta %>% 
                    right_join(media1_LN_local@articles, by = "ID"), 
                  media2_LN_local@meta %>% 
                    right_join(media2_LN_local@articles, by = "ID")) %>% 
   select(-c("Source_File", "Graphic", "ID"))
 
+rm(media1_LN_local, media2_LN_local)
+
+# reformat table
 media_LN_local <- media_LN_local %>% 
-  mutate(Source_ID = paste("LN", 1:nrow(city_LN_local))) %>% 
+  mutate(Source_ID = paste("LN", 1:nrow(media_LN_local))) %>% 
   select(9, 1:8) %>% 
   separate(Length, c("Word_Count", NA))
 
 media_LN_local$Date <- as.character(media_LN_local$Date)
 
-rm(media1_LN_local, media2_LN_local)
 
 ## 3.2 COMPLETE THIS SECTION IF FACTIVA, OTHERWISE SKIP. 
 # import the source and corpus Factiva HTML files for airbnb + city name from the local newspaper
@@ -129,12 +131,12 @@ source1_local <- FactivaSource("txt_files/toronto_local/airbnb_toronto_local_FTV
 corpus1_local <- Corpus(source1_local, list(language = NA)) 
 
 # if there is more than one file, repeat the following.
-source2_local <- FactivaSource("txt_files/toronto_local/airbnb_toronto_local_FTV_2.htm")
-corpus2_local <- Corpus(source2_local, list(language = NA))
+source8_local <- FactivaSource("txt_files/toronto_local/airbnb_toronto_local_FTV_8.htm")
+corpus8_local <- Corpus(source8_local, list(language = NA))
 
 # if there is more than one file, merge
 corpus_local = tm:::c.VCorpus(corpus1_local, corpus2_local, corpus3_local, corpus4_local, corpus5_local,
-                              corpus6_local, corpus7_local)
+                              corpus6_local, corpus7_local, corpus8_local)
 
 # transform into a data table
 media_FTV_local <- tibble(Source_ID = numeric(0), Newspaper = character(0), Date = character(0), 
@@ -181,8 +183,20 @@ media_local <- rbind(media_FTV_local, media_LN_local) %>%
 
 ## 4.2 OTHERWISE RENAME THE DATAFRAME AS CITY
 
-# media_NYT <- media_LN_NYT
-# media_local <- media_LN_local
+media_NYT <- media_LN_NYT %>% 
+  mutate(ID = 1: nrow(media_LN_NYT)) %>% 
+  select(10, 1:9) %>% 
+  group_by(Author) %>% 
+  distinct(Headline, .keep_all = TRUE) %>% 
+  ungroup()
+
+media_local <- media_LN_local %>% 
+  mutate(ID = 1: nrow(media_LN_local)) %>% 
+  select(10, 1:9) %>% 
+  group_by(Author) %>% 
+  distinct(Headline, .keep_all = TRUE) %>% 
+  ungroup()
+ 
 
 ## 4.3 CLEAN TEXT
 # make all lower space, remove punctuation, and remove double spaces
@@ -196,5 +210,11 @@ media_local$Article <- str_replace(media_local$Article, "—", " ")
 media_local$Article <- gsub("[[:punct:]]", " ", media_local$Article)
 media_local$Article <- str_replace(gsub("\\s+", " ", str_trim(media_local$Article)), "B", "b")
 
+
+## 4.4 EXPORT
+# export the table(s) as .csv so that this does not need to be rerun.
+
+write_csv(media_local, "txt_files/montreal_local/media_montreal_local.csv")
+write_csv(media_NYT, "txt_files/montreal_NYT/media_montreal_NYT.csv")
 
 
