@@ -226,41 +226,22 @@ media_local$Headline <- str_replace(gsub("\\s+", " ", str_trim(media_local$Headl
 # Remove articles that only mention Airbnb once. These are more often than not just referencing the 
 # sharing economy in another sense.
 
-## UPDATE
+airbnb <- c("airbnb", "homeshar", "home shar", "shortterm", "short term", "str ", "strs")
 
 media_local <- media_local %>% 
   mutate(mentions = 
-           str_count(media_local$Article, "airbnb") +
-           str_count(media_local$Article, "home shar") +
-           str_count(media_local$Article, "homeshar") +
-           str_count(media_local$Article, "shortterm") +
-           str_count(media_local$Article, "short term") + 
-           str_count(media_local$Article, "str ") +
-           str_count(media_local$Headline, "airbnb") +
-           str_count(media_local$Headline, "home shar") +
-           str_count(media_local$Headline, "homeshar") +
-           str_count(media_local$Headline, "shortterm") +
-           str_count(media_local$Headline, "short term") + 
-           str_count(media_local$Headline, "str ")) %>% 
+           str_count(media_local$Article, paste(airbnb, collapse="|")) +
+           str_count(media_local$Headline, paste(airbnb, collapse="|"))) %>% 
   filter(mentions > 1) %>%
   select(-c(mentions))
 
 media_NYT <- media_NYT %>% 
   mutate(mentions = 
-           str_count(media_NYT$Article, "airbnb") +
-           str_count(media_NYT$Article, "home shar") +
-           str_count(media_NYT$Article, "homeshar") +
-           str_count(media_NYT$Article, "shortterm") +
-           str_count(media_NYT$Article, "short term") +
-           str_count(media_NYT$Article, "str ") + 
-           str_count(media_NYT$Headline, "airbnb") +
-           str_count(media_NYT$Headline, "home shar") +
-           str_count(media_NYT$Headline, "homeshar") +
-           str_count(media_NYT$Headline, "shortterm") +
-           str_count(media_NYT$Headline, "short term") +
-           str_count(media_NYT$Headline, "str "))%>% 
-  filter(mentions > 1) %>% 
+           str_count(media_NYT$Article, paste(airbnb, collapse="|")) +
+           str_count(media_NYT$Headline, paste(airbnb, collapse="|"))) %>% 
+  filter(mentions > 1) %>%
   select(-c(mentions))
+
 
 
 ## 4.5 EXPORT
