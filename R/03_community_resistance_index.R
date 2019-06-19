@@ -1,8 +1,7 @@
-######################################### DATA ANALYSIS ###############################
+######################################### COMMUNITY RESISTANCE INDEX ###############################
 
 source("R/01_helper_functions.R")
 
-## COMMUNITY RESISTANCE INDEX
 # Outline variables to evaluate community resistance 
 neighbourhoods <- 
   neighbourhoods_tidy$neighbourhood %>% 
