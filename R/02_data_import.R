@@ -185,46 +185,47 @@ media_local <- rbind(media_FTV_local, media_LN_local) %>%
 
 media_NYT <- media_LN_NYT %>% 
   mutate(ID = 1: nrow(media_LN_NYT)) %>% 
-  select(10, 1:9) %>% 
-  group_by(Author) %>% 
-  distinct(Headline, .keep_all = TRUE) %>% 
-  ungroup()
+  select(10, 1:9) 
 
 media_local <- media_LN_local %>% 
   mutate(ID = 1: nrow(media_LN_local)) %>% 
-  select(10, 1:9) %>% 
-  group_by(Author) %>% 
-  distinct(Headline, .keep_all = TRUE) %>% 
-  ungroup()
- 
+  select(10, 1:9)
 
 ## 4.3 CLEAN TEXT
 # make all lower space, remove accents, remove punctuation, and remove double spaces
-media_NYT$Article <- str_to_lower(media_NYT$Article)
-media_NYT$Article <- iconv(media_NYT$Article, to = "ASCII//TRANSLIT")
-media_NYT$Article <- str_replace(media_NYT$Article, "—", " ")
-media_NYT$Article <- gsub("[[:punct:]]", " ", media_NYT$Article)
-media_NYT$Article <- str_replace(gsub("\\s+", " ", str_trim(media_NYT$Article)), "B", "b")
-media_NYT$Headline <- str_to_lower(media_NYT$Headline)
-media_NYT$Headline <- iconv(media_NYT$Headline, to = "ASCII//TRANSLIT")
-media_NYT$Headline <- str_replace(media_NYT$Headline, "—", " ")
-media_NYT$Headline <- gsub("[[:punct:]]", " ", media_NYT$Headline)
+
+media_NYT$Headline <- media_NYT$Headline %>% 
+  str_to_lower() %>% 
+  iconv(to = "ASCII//TRANSLIT") %>% 
+  str_replace("—", " ") %>% 
+  gsub("[[:punct:]]", " ", .)
 media_NYT$Headline <- str_replace(gsub("\\s+", " ", str_trim(media_NYT$Headline)), "B", "b")
 
-media_local$Article <- str_to_lower(media_local$Article)
-media_local$Article <- iconv(media_local$Article, to = "ASCII//TRANSLIT")
-media_local$Article <- str_replace(media_local$Article, "—", " ")
-media_local$Article <- gsub("[[:punct:]]", " ", media_local$Article)
-media_local$Article <- str_replace(gsub("\\s+", " ", str_trim(media_local$Article)), "B", "b")
-media_local$Headline <- str_to_lower(media_local$Headline)
-media_local$Headline <- iconv(media_local$Headline, to = "ASCII//TRANSLIT")
-media_local$Headline <- str_replace(media_local$Headline, "—", " ")
-media_local$Headline <- gsub("[[:punct:]]", " ", media_local$Headline)
+media_NYT$Article <- media_NYT$Article %>% 
+  str_to_lower() %>% 
+  iconv(to = "ASCII//TRANSLIT") %>% 
+  str_replace("—", " ") %>% 
+  gsub("[[:punct:]]", " ", .)
+media_NYT$Article <- str_replace(gsub("\\s+", " ", str_trim(media_NYT$Article)), "B", "b")
+
+media_local$Headline <- media_local$Headline %>% 
+  str_to_lower() %>% 
+  iconv(to = "ASCII//TRANSLIT") %>% 
+  str_replace("—", " ") %>% 
+  gsub("[[:punct:]]", " ", .)
 media_local$Headline <- str_replace(gsub("\\s+", " ", str_trim(media_local$Headline)), "B", "b")
+
+media_local$Article <- media_local$Article %>% 
+  str_to_lower() %>% 
+  iconv(to = "ASCII//TRANSLIT") %>% 
+  str_replace("—", " ") %>% 
+  gsub("[[:punct:]]", " ", .)
+media_local$Article <- str_replace(gsub("\\s+", " ", str_trim(media_local$Article)), "B", "b")
+
 
 ## 4.4 REMOVE IRRELEVANT ARTICLES
 # Remove articles that only mention Airbnb once. These are more often than not just referencing the 
-# sharing economy in another sense.
+# sharing economy in another sense. Remove duplicate articles.
 
 airbnb <- c("airbnb", "homeshar", "home shar", "shortterm", "short term", "str ", "strs")
 
@@ -233,15 +234,20 @@ media_local <- media_local %>%
            str_count(media_local$Article, paste(airbnb, collapse="|")) +
            str_count(media_local$Headline, paste(airbnb, collapse="|"))) %>% 
   filter(mentions > 1) %>%
-  select(-c(mentions))
+  select(-c(mentions)) %>% 
+  group_by(Author) %>% 
+  distinct(Headline, .keep_all = TRUE) %>% 
+  ungroup()
 
 media_NYT <- media_NYT %>% 
   mutate(mentions = 
            str_count(media_NYT$Article, paste(airbnb, collapse="|")) +
            str_count(media_NYT$Headline, paste(airbnb, collapse="|"))) %>% 
   filter(mentions > 1) %>%
-  select(-c(mentions))
-
+  select(-c(mentions))%>% 
+  group_by(Author) %>% 
+  distinct(Headline, .keep_all = TRUE) %>% 
+  ungroup()
 
 
 ## 4.5 EXPORT
@@ -249,5 +255,6 @@ media_NYT <- media_NYT %>%
 
 write_csv(media_local, "txt_files/montreal_local/media_montreal_local.csv")
 write_csv(media_NYT, "txt_files/montreal_NYT/media_montreal_NYT.csv")
+
 
 
