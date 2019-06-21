@@ -78,9 +78,13 @@ repeat{
 neighbourhood_resistance <- neighbourhood_resistance %>% 
   mutate(opposition_local_pct = opposition_local/mentions_local) %>% 
   mutate(opposition_NYT_pct = opposition_NYT/mentions_NYT) %>% 
-  mutate(CI = (mentions_local/nrow(filter(media_local, str_detect(Article, paste(neighbourhoods_tidy$names, collapse="|")))) +
-                  mentions_NYT/nrow(filter(media_NYT, str_detect(Article, paste(neighbourhoods_tidy$names, collapse="|")))))/2) %>% 
-  mutate(CRI = (opposition_local/nrow(filter(media_local, str_detect(Article, paste(neighbourhoods_tidy$names, collapse="|")))) +
-                opposition_NYT/nrow(filter(media_NYT, str_detect(Article, paste(neighbourhoods_tidy$names, collapse="|")))))/2)
+  mutate(CI = (mentions_local/nrow(filter(media_local, str_detect(Article, 
+                                                                  paste(neighbourhoods_tidy$names, collapse="|")))) +
+                  mentions_NYT/nrow(filter(media_NYT, str_detect(Article, 
+                                                                 paste(neighbourhoods_tidy$names, collapse="|")))))/2) %>% 
+  mutate(CRI = (opposition_local/nrow(filter(media_local, str_detect(Article, 
+                                                                     paste(neighbourhoods_tidy$names, collapse="|")))) +
+                opposition_NYT/nrow(filter(media_NYT, str_detect(Article, 
+                                                                 paste(neighbourhoods_tidy$names, collapse="|")))))/2)
 
 

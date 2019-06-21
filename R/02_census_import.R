@@ -256,6 +256,8 @@ CTs_us <- CTs_us %>%
   spread(variable, estimate) %>% 
   separate(NAME, into = c("CT", "County_name", "State_name"), sep = ",") 
 
+CTs_us$geometry <- st_cast(CTs_us$geometry, "MULTIPOLYGON")
+
 CTs_us <- CTs_us %>% 
   mutate(ST_UID = substr(CTs_us$GEOID, 1, 2),
          CT_UID = as.numeric(gsub("Census Tract ", "", CT))) %>% 
@@ -290,3 +292,4 @@ CTs_us <- CTs_us%>%
   mutate_at(
     .vars = c("housing_need", "owner_occupied", "rental"),
     .funs = list(`pct_household` = ~{. / households}))
+

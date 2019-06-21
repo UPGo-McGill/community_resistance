@@ -28,3 +28,8 @@ CTs_us <- CTs_us %>%
 # Since focusing on Canada and the US, the social capital index is the relative 
 # social capital of a census tract in relation to the city/county-wide average
 
+
+
+st_join(CTs_us, CMAs_us)
+
+class(CMAs_us)
