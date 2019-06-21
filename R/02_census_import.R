@@ -1,4 +1,4 @@
-######################################### SOCIAL CAPITAL INDEX ###############################
+######################################### CENSUS IMPORT  ###############################
 
 source("R/01_helper_functions.R")
 
@@ -26,9 +26,9 @@ CMAs_canada$CMA_name <- CMAs_canada$CMA_name %>%
 CTs_canada <-
   get_census(
     dataset = "CA16", regions = list(C = "Canada"), level = "CT",
-    vectors = c("v_CA16_2398", "v_CA16_5078", "v_CA16_4888", "v_CA16_6698",
-                "v_CA16_6725", "v_CA16_4837", "v_CA16_4838", "v_CA16_524", 
-                "v_CA16_3390", "v_CA16_3957"),
+    vectors = c("v_CA16_2398", "v_CA16_5078", "v_CA16_4888", "v_CA16_6695",
+                "v_CA16_4837", "v_CA16_4838", "v_CA16_512", 
+                "v_CA16_3393", "v_CA16_3996"),
     geo_format = "sf") %>% 
   st_transform(3347) %>% 
   filter(Type == "CT") %>% 
@@ -40,16 +40,16 @@ CTs_canada <- CTs_canada %>%
 
 names(CTs_canada) <- 
   c("Geo_UID", "PR_UID", "CMA_UID", "CMA_name", "population", "households", "med_income",
-    "university_education", "housing_need", "moved_1yr", "moved_5yr", "owner_occupied", 
-    "rental", "no_official_language", "citizen", "visible_minority", "geometry")
+    "university_education", "housing_need", "non_mover", "owner_occupied", 
+    "rental", "official_language", "citizen", "white", "geometry")
 
 CTs_canada <- CTs_canada%>% 
   mutate_at(
-    .vars = c("university_education", "housing_need", "moved_1yr", "moved_5yr", 
-              "no_official_language", "citizen", "visible_minority"),
+    .vars = c("university_education", "non_mover", 
+              "official_language", "citizen", "white"),
     .funs = list(`pct_pop` = ~{. / population})) %>% 
   mutate_at(
-    .vars = c("owner_occupied", "rental"),
+    .vars = c("housing_need", "owner_occupied", "rental"),
     .funs = list(`pct_household` = ~{. / households}))
 
 ########################################### 2 - UNITED STATES #####################################
@@ -58,21 +58,39 @@ CTs_canada <- CTs_canada%>%
 variables_us <- load_variables(2017, "acs5", cache = TRUE) 
 
 # get state codes
-states <- unique(fips_codes$state)[1:51]
+states <- unique(fips_codes$state)[1:51] 
+  
+states <- c("NY", "CA", "LA", "FL", "DC")
 
 # import variables for every census tract with geometries
 CTs_us <- reduce(
   map(states, function(x) {
-  get_acs(geography = "tract", variables = c("B01003_001", "B25001_001", 
-                                             "B19001_001","B15003_022",
-                                             "B07001_017", "B25012_002", "B25011_026",
-                                             "B06007_008", "B05001_006", "B01001H_001"),
+  get_acs(geography = "tract", variables = c("B01003_001", 
+                                             "B25001_001", 
+                                             "B06011_001",
+                                             "B15003_022",
+                                             "B25070_007",
+                                             "B25070_008",
+                                             "B25070_009",
+                                             "B25070_010",
+                                             "B25091_008",
+                                             "B25091_009",
+                                             "B25091_010",
+                                             "B25091_011",
+                                             "B07001_017", 
+                                             "B25012_002", 
+                                             "B25011_026",
+                                             "B06007_002", 
+                                             "B06007_003",
+                                             "B06007_007",
+                                             "B05001_006", 
+                                             "B01001H_001"),
           state = x, geometry = TRUE)
 }),
   rbind
 )
 
-# tidy the data such that it is in the same format as the canadian census data
+# tidy the naming and coding of census tracts
 CTs_us <- CTs_us %>% 
   select(-c("moe")) %>% 
   spread(variable, estimate) %>% 
@@ -83,8 +101,32 @@ CTs_us <- CTs_us %>%
          CT_UID = as.numeric(gsub("Census Tract ", "", CT))) %>% 
   select(-c("CT", "State_name"))
 
+# tidy the variables
+CTs_us <- CTs_us %>% 
+  mutate(official_language = B06007_002 + B06007_003 + B06007_007,
+         housing_need = B25070_007 + B25070_008 + B25070_009 + B25070_010 +
+           B25091_008 + B25091_009 + B25091_010 + B25091_011) %>% 
+  select(-c("B06007_002", "B06007_003", "B06007_007", "B25070_007", "B25070_008", 
+            "B25070_009", "B25070_010", "B25091_008", "B25091_009", "B25091_010",
+            "B25091_011"))
 
+names(CTs_us) <- 
+  c("Geo_UID", "County_name", "white", "population", "non_citizen", "med_income",
+    "non_mover", "university_education", "households", 
+    "rental", "owner_occupied", "ST_UID", "CT_UID", "official_language", 
+    "housing_need", "geometry")
 
-
-
-
+CTs_us <- CTs_us %>% 
+  mutate(citizen = population - non_citizen) %>% 
+  select(c("Geo_UID", "ST_UID", "CT_UID", "County_name", "population", "households", "med_income",
+           "university_education", "housing_need", "non_mover", "owner_occupied", 
+           "rental", "official_language", "citizen", "white", "geometry"))
+  
+CTs_us <- CTs_us%>% 
+  mutate_at(
+    .vars = c("university_education", "non_mover", 
+              "official_language", "citizen", "white"),
+    .funs = list(`pct_pop` = ~{. / population})) %>% 
+  mutate_at(
+    .vars = c("housing_need", "owner_occupied", "rental"),
+    .funs = list(`pct_household` = ~{. / households}))
