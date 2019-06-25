@@ -26,6 +26,10 @@ neighbourhoods_tidy<- rbind(
   data_frame(neighbourhood = "villeray", names = c("park ex", "mile ex", "villeray", "saint michel")),
   data_frame(neighbourhood = "lachine", names = c("lachine")))
 
+neighbourhoods <- 
+  neighbourhoods_tidy$neighbourhood %>% 
+  unique()
+
 
 ############################# 2 - IMPORT NECESSARY FILES FROM THE NYT ############################################################################################################################
 ## 2.1 COMPLETE THIS SECTION IF LEXISNEXIS, OTHERWISE SKIP.

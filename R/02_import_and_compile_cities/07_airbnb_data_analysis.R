@@ -1,6 +1,6 @@
 #################################### AIRBNB BASIC FACTS ######################################
 
-source("R/import_and_compile/01_helper_functions.R")
+source("R/01_import_and_compile_general/01_helper_functions.R")
 
 airbnb <- tibble(city = character(0), active_listings = numeric(0), active_listings_avg = numeric (0), EH_pct = numeric (0), 
                  revenue = numeric (0), GH = numeric (0), FREH = numeric (0),  housing_loss = numeric (0), 
