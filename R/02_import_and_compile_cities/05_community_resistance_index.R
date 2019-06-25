@@ -1,6 +1,6 @@
 ######################################### COMMUNITY RESISTANCE INDEX ###############################
 
-source("R/import_and_compile/01_helper_functions.R")
+source("R/01_import_and_compile_general/01_helper_functions.R")
 
 # Outline variables to evaluate community resistance 
 neighbourhood_resistance <- tibble(city = character(0), neighbourhood = character(0), mentions_local = numeric(0), opposition_local = numeric(0),

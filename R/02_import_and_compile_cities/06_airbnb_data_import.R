@@ -1,6 +1,6 @@
 ######################################### AIRBNB DATA IMPORT ###############################
 
-source("R/import_and_compile/01_helper_functions.R")
+source("R/01_import_and_compile_general/01_helper_functions.R")
 
 start_date <- "2018-05-01"
 end_date <- "2019-04-30"
@@ -79,7 +79,7 @@ daily <-
 
 
 
-## Trim listings to the Plateau in May 2018-April 2019 and add raffle results
+## Trim listings to the past twelve months
 property <-
   property %>% 
   filter(Property_ID %in% daily$Property_ID,

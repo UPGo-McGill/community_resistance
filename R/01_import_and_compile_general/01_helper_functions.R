@@ -1,11 +1,5 @@
 ############# HELPER FUNCTIONS ##################
 
-# How to use this code
-# Run the helper functions
-# Run media import and community resistance index (run for every city individually - export the tables)
-# Run census import and social capital index (once for all cities)
-# Run raffle for all cities
-
 # Install packages
 library(tm.plugin.lexisnexis)
 library(tm)
@@ -21,6 +15,7 @@ library(tidycensus)
 library(purrr)
 library(tigris)
 options(tigris_use_cache = TRUE)
+library(osmdata)
 
 # Run Canadian census API key
 options(cancensus.api_key = "CensusMapper_4be2cf3bf91d0cabf967f4934dbdc63b")

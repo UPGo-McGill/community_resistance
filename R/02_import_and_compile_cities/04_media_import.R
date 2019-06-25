@@ -1,6 +1,6 @@
 ######################################### MEDIA IMPORT ###############################
 
-source("R/import_and_compile/01_helper_functions.R")
+source("R/01_import_and_compile_general/01_helper_functions.R")
 
 # must input file paths and make some adjustments depending on what files you would like to import
 # when complete, export table and run community resistance index
@@ -29,6 +29,9 @@ neighbourhoods_tidy<- rbind(
 neighbourhoods <- 
   neighbourhoods_tidy$neighbourhood %>% 
   unique()
+
+# import neighbourhood geometries
+
 
 
 ############################# 2 - IMPORT NECESSARY FILES FROM THE NYT ############################################################################################################################
