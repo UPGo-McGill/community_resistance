@@ -3,10 +3,13 @@
 source("R/import_and_compile/01_helper_functions.R")
 
 airbnb <- tibble(city = character(0), active_listings = numeric(0), active_listings_avg = numeric (0), EH_pct = numeric (0), 
-                 revenue = numeric (0), GH = numeric (0), FREH = numeric (0),  housing_loss = numeric (0), revenue_10pct = numeric (0))
+                 revenue = numeric (0), GH = numeric (0), FREH = numeric (0),  housing_loss = numeric (0), 
+                 revenue_10pct = numeric (0))
          
 
 # Perform airbnb analysis for all neighbourhoods (currently for the city, need to filter to neighbourhoods)
+# the data should have the census tract in it after running the raffle
+
 n = 1
 
 repeat{
