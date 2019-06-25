@@ -1,6 +1,6 @@
 ######################################### MEDIA IMPORT ###############################
 
-source("R/01_helper_functions.R")
+source("R/import_and_compile/01_helper_functions.R")
 
 # must input file paths and make some adjustments depending on what files you would like to import
 # when complete, export table and run community resistance index
@@ -8,6 +8,8 @@ source("R/01_helper_functions.R")
 
 ################################ 1 - INPUT NEIGHBOURHOOD NAMES ##############################################################################################################################
 # set up neighbourhood names
+cityname <- "Montreal"
+
 neighbourhoods_tidy<- rbind(
   data_frame(neighbourhood = "plateau", names = c("plateau", "mile end")),
   data_frame(neighbourhood = "ville-marie", names = c("ville marie")),
@@ -50,7 +52,7 @@ media_LN_NYT <- media_LN_NYT %>%
   select(9, 1:8) %>% 
   separate(Length, c("Word_Count", NA))
 
-media_LN_NYT$Date <- as.character(media_LN$Date)
+media_LN_NYT$Date <- as.character(media_LN_NYT$Date)
 
 
 ## 2.2 COMPLETE THIS SECTION IF FACTIVA, OTHERWISE SKIP. 
@@ -255,8 +257,8 @@ media_NYT <- media_NYT %>%
 ## 4.5 EXPORT
 # export the table(s) as .csv so that this does not need to be rerun.
 
-write_csv(media_local, "txt_files/montreal_local/media_montreal_local.csv")
-write_csv(media_NYT, "txt_files/montreal_NYT/media_montreal_NYT.csv")
+write_csv(media_local, "txt_files/montreal/media_montreal_local.csv")
+write_csv(media_NYT, "txt_files/montreal/media_montreal_NYT.csv")
 
 
 

@@ -1,13 +1,13 @@
 ######################################### COMMUNITY RESISTANCE INDEX ###############################
 
-source("R/01_helper_functions.R")
+source("R/import_and_compile/01_helper_functions.R")
 
 # Outline variables to evaluate community resistance 
 neighbourhoods <- 
   neighbourhoods_tidy$neighbourhood %>% 
   unique()
 
-neighbourhood_resistance <- tibble(neighbourhood = character(0), mentions_local = numeric(0), opposition_local = numeric(0),
+neighbourhood_resistance <- tibble(city = character(0), neighbourhood = character(0), mentions_local = numeric(0), opposition_local = numeric(0),
                                    mentions_NYT = numeric(0), opposition_NYT = numeric(0)) 
 
 community_resistance_words = c("protest", "anti", "community led", "affordability", 
@@ -23,9 +23,10 @@ community_resistance_words = c("protest", "anti", "community led", "affordabilit
 # Perform query and sentiment analysis
 n = 1
 repeat{
-  neighbourhood_resistance[n, 1] <- neighbourhoods[n]
+  neighbourhood_resistance[n, 1] <- cityname
+  neighbourhood_resistance[n, 2] <- neighbourhoods[n]
   
-  neighbourhood_resistance[n,2] <- media_local %>% 
+  neighbourhood_resistance[n,3] <- media_local %>% 
     filter(str_detect(Article, paste(filter(neighbourhoods_tidy, 
                                             neighbourhood == neighbourhoods [n]) %>% 
                                        pull(names), collapse = "|"))) %>% 
@@ -33,7 +34,7 @@ repeat{
     distinct() %>% 
     nrow()
   
-  neighbourhood_resistance[n,3] <- 
+  neighbourhood_resistance[n,4] <- 
     media_local %>% 
     filter(str_detect(Article, paste(community_resistance_words, collapse="|"))) %>% 
     select("ID") %>% 
@@ -46,7 +47,7 @@ repeat{
     distinct() %>% 
     nrow()
   
-  neighbourhood_resistance[n,4] <- media_NYT %>% 
+  neighbourhood_resistance[n,5] <- media_NYT %>% 
     filter(str_detect(Article, paste(filter(neighbourhoods_tidy, 
                                             neighbourhood == neighbourhoods [n]) %>% 
                                        pull(names), collapse = "|"))) %>% 
@@ -54,7 +55,7 @@ repeat{
     distinct() %>% 
     nrow()
   
-  neighbourhood_resistance[n,5] <- 
+  neighbourhood_resistance[n,6] <- 
     media_NYT %>% 
     filter(str_detect(Article, paste(community_resistance_words, collapse="|"))) %>% 
     select("ID") %>% 
@@ -88,5 +89,5 @@ neighbourhood_resistance <- neighbourhood_resistance %>%
                                                                  paste(neighbourhoods_tidy$names, collapse="|")))))/2)
 
 # Export as a table
-write_csv(neighbourhood_resistance, "txt_files/montreal/community_resistance_montreal.csv")
+write_csv(neighbourhood_resistance, "txt_files/neighbourhood_resistance/montreal.csv")
 

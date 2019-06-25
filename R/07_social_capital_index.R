@@ -1,6 +1,6 @@
 ######################################### SOCIAL CAPITAL INDEX ###############################
 
-source("R/01_helper_functions.R")
+source("R/import_and_compile/01_helper_functions.R")
 
 # Calculate the social capital index for all census tracts and census metropolitan 
 # areas for the Canada and the US.

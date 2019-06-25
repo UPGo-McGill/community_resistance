@@ -1,24 +1,26 @@
 ######################################### AIRBNB DATA IMPORT ###############################
 
-source("R/01_helper_functions.R")
+source("R/import_and_compile/01_helper_functions.R")
 
+start_date <- "2018-05-01"
+end_date <- "2019-04-30"
 
 ## Import private Airbnb files
-
 property <-
-  read_csv("data/Montreal_property_2019.csv", col_types = cols_only(
-    `Property ID` = col_character(),
-    `Listing Title` = col_character(),
-    `Property Type` = col_character(),
-    `Listing Type` = col_character(),
-    `Created Date` = col_date(format = ""),
-    `Last Scraped Date` = col_date(format = ""),
+  read_csv("data/property.csv", col_types = cols_only(
+    `Property_ID` = col_character(),
+    `Listing_Title` = col_character(),
+    `Property_Type` = col_character(),
+    `Listing_Type` = col_character(),
+    `Created` = col_date(format = ""),
+    `Scraped` = col_date(format = ""),
     Latitude = col_double(),
     Longitude = col_double(),
-    `Airbnb Property ID` = col_double(),
-    `Airbnb Host ID` = col_double(),
-    `HomeAway Property ID` = col_character(),
-    `HomeAway Property Manager` = col_character())) %>% 
+    `City` = col_skip(),
+    `Airbnb_PID` = col_double(),
+    `Airbnb_HID` = col_double(),
+    `HomeAway_PID` = col_character(),
+    `HomeAway_HID` = col_character())) %>% 
   set_names(c("Property_ID", "Listing_Title", "Property_Type", "Listing_Type",
               "Created", "Scraped", "Latitude", "Longitude", "Airbnb_PID",
               "Airbnb_HID", "HomeAway_PID", "HomeAway_HID")) %>% 
@@ -59,51 +61,49 @@ property <-
   select(-Property_Type)
 
 daily <- 
-  read_csv("data/Montreal_daily_2019.csv", col_types = cols(
-    `Property ID` = col_character(),
+  read_csv("data/daily.csv", col_types = cols(
+    `Property_ID` = col_character(),
     Date = col_date(format = ""),
     Status = col_factor(levels = c("U", "B", "A", "R")),
-    `Booked Date` = col_skip(),
-    `Price (USD)` = col_double(),
-    `Price (Native)` = col_skip(),
-    `Currency Native` = col_skip(),
-    `Reservation ID` = col_skip(),
-    `Airbnb Property ID` = col_double(),
-    `HomeAway Property ID` = col_character())) %>% 
+    # `Booked Date` = col_skip(),
+    `Price` = col_double(),
+    #`Price (Native)` = col_skip(),
+    #`Currency Native` = col_skip(),
+    #`Reservation ID` = col_skip(),
+    `Airbnb_PID` = col_double(),
+    `HomeAway_PID` = col_character())) %>% 
   set_names(c("Property_ID", "Date", "Status", "Price", "Airbnb_PID", 
               "HomeAway_PID")) %>% 
   filter(!is.na(Status)) %>%
   arrange(Property_ID, Date)
 
 
-## Trim listings to the Plateau in May 2018-April 2019 and add raffle results
 
+## Trim listings to the Plateau in May 2018-April 2019 and add raffle results
 property <-
   property %>% 
   filter(Property_ID %in% daily$Property_ID,
-         Scraped >= "2018-05-01",
-         Created <= "2019-04-30") %>% 
-  st_join(st_buffer(plateau["geometry"], 200),
-          join = st_within, left = FALSE) %>% 
-  left_join(read_csv("data/raffle.csv"))
+         Scraped >= start_date,
+         Created <= end_date)
+#%>% 
+ # st_join(st_buffer(plateau["geometry"], 200),
+ #         join = st_within, left = FALSE) %>% 
+ # left_join(read_csv("data/raffle_montreal.csv"))
 
 daily <- 
   daily %>% 
   filter(Property_ID %in% property$Property_ID,
-         Date >= "2018-05-01",
-         Date <= "2019-04-30")
+         Date >= start_date,
+         Date <= end_date)
 
 
 ## Join property and daily file
-
 daily <- inner_join(daily, st_drop_geometry(property)) %>% 
   select(Property_ID, Date, Status, Price, Airbnb_PID, HomeAway_PID, Airbnb_HID,
          HomeAway_HID, Listing_Type)
 
 
-
 ## Find FREH listings and revenue
-
 property <- 
   daily %>%
   group_by(Property_ID) %>% 
@@ -118,7 +118,6 @@ property <-
 
 
 ## Find multi-listings
-
 daily <- strr_multilistings(daily, listing_type = Listing_Type,
                             host_ID = Airbnb_HID, date = Date)
 
@@ -130,10 +129,9 @@ property <-
 
 
 # Identify ghost hotels
-
 GH_list <-
-  strr_ghost(property, Property_ID, Airbnb_HID, Created, Scraped, "2018-05-01",
-             "2019-04-30", listing_type = Listing_Type) %>% 
+  strr_ghost(property, Property_ID, Airbnb_HID, Created, Scraped, start_date,
+             end_date, listing_type = Listing_Type) %>% 
   pull(property_IDs) %>%
   unlist() %>%
   unique()
