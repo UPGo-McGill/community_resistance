@@ -1,4 +1,10 @@
 ############# HELPER FUNCTIONS ##################
+
+# How to use this code
+# Run the helper functions
+# Run media import and community resistance index (run for every city individually - export the tables)
+# Run census import and social capital index (once for all cities)
+
 # Install packages
 library(tm.plugin.lexisnexis)
 library(tm)
@@ -21,3 +27,4 @@ options(cancensus.cache_path = "~/Desktop/AirBnB Internship/AirBnB-GIT/community
 
 # Run US census API key
 # census_api_key("dab993e99dc7faf74295fc559dc2e1764b60e6b9", install = TRUE, overwrite = TRUE)
+

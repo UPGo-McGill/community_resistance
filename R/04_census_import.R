@@ -64,6 +64,9 @@ CMAs_canada <- CMAs_canada%>%
     .vars = c("housing_need", "owner_occupied", "rental"),
     .funs = list(`pct_household` = ~{. / households}))
 
+CMAs_canada$CMA_name <- substr(CMAs_canada$CMA_name, 1, nchar(CMAs_canada$CMA_name) - 1)
+
+
 # 1.4 IMPORT CENSUS VARIABLES FOR ALL CENSUS TRACTS
 CTs_canada <-
   get_census(
@@ -159,7 +162,7 @@ us <- us %>%
 states <- unique(fips_codes$state)[1:51] 
 states <- c("NY", "CA", "LA", "FL", "DC")
 
-CMAs_us <- get_acs(geography = "metropolitan statistical area/micropolitan statistical area", 
+MSAs_us <- get_acs(geography = "metropolitan statistical area/micropolitan statistical area", 
                    variables = c("B01003_001", 
                                  "B25001_001", 
                                  "B06011_001",
@@ -180,14 +183,14 @@ CMAs_us <- get_acs(geography = "metropolitan statistical area/micropolitan stati
                                  "B06007_007",
                                  "B05001_006", 
                                  "B01001H_001"))
-CMAs_us <- CMAs_us %>% 
+MSAs_us <- MSAs_us %>% 
   select(-c("moe")) %>% 
   spread(variable, estimate) %>% 
   separate(NAME, into = c("City_name", "Rest"), sep = ",") %>% 
   separate(Rest, into = c(NA, "State", "Type", NA), sep = " ") %>% 
   filter(str_detect(State, paste(states, collapse="|")))
 
-CMAs_us <- CMAs_us %>% 
+MSAs_us <- MSAs_us %>% 
   mutate(official_language = B06007_002 + B06007_003 + B06007_007,
          housing_need = B25070_007 + B25070_008 + B25070_009 + B25070_010 +
            B25091_008 + B25091_009 + B25091_010 + B25091_011) %>% 
@@ -195,19 +198,19 @@ CMAs_us <- CMAs_us %>%
             "B25070_009", "B25070_010", "B25091_008", "B25091_009", "B25091_010",
             "B25091_011"))
 
-names(CMAs_us) <- 
-  c("Geo_UID", "CMA_name", "State", "Type", "white", "population", "non_citizen", "med_income",
+names(MSAs_us) <- 
+  c("CMA_UID", "CMA_name", "State", "Type", "white", "population", "non_citizen", "med_income",
     "non_mover", "university_education", "households", 
     "rental", "owner_occupied", "official_language", 
     "housing_need")
 
-CMAs_us <- CMAs_us %>% 
+MSAs_us <- MSAs_us %>% 
   mutate(citizen = population - non_citizen) %>% 
-  select(c("Geo_UID", "CMA_name", "State", "population", "households", "med_income",
+  select(c("CMA_UID", "CMA_name", "State", "population", "households", "med_income",
            "university_education", "housing_need", "non_mover", "owner_occupied", 
            "rental", "official_language", "citizen", "white"))
 
-CMAs_us <- CMAs_us%>% 
+MSAs_us <- MSAs_us%>% 
   mutate_at(
     .vars = c("university_education", "non_mover", 
               "official_language", "citizen", "white"),
@@ -216,10 +219,11 @@ CMAs_us <- CMAs_us%>%
     .vars = c("housing_need", "owner_occupied", "rental"),
     .funs = list(`pct_household` = ~{. / households}))
 
-CMAs_us <- core_based_statistical_areas(cb = TRUE, class = "sf", refresh = TRUE) %>% 
+MSAs_us <- core_based_statistical_areas(cb = TRUE, class = "sf", refresh = TRUE) %>% 
   st_transform(26918) %>% 
   select(c("GEOID", "geometry")) %>% 
-  left_join(CMAs_us, ., by = c("Geo_UID" = "GEOID"))
+  left_join(MSAs_us, ., by = c("CMA_UID" = "GEOID")) %>% 
+  st_as_sf(sf_column_name = "geometry")
 
 # 2.4 IMPORT CENSUS VARIABLES FOR ALL CENSUS TRACTS (include geometries)
 
@@ -252,6 +256,7 @@ CTs_us <- reduce(
 
 # tidy the naming and coding of census tracts
 CTs_us <- CTs_us %>% 
+  st_transform(26918) %>% 
   select(-c("moe")) %>% 
   spread(variable, estimate) %>% 
   separate(NAME, into = c("CT", "County_name", "State_name"), sep = ",") 
@@ -292,4 +297,8 @@ CTs_us <- CTs_us%>%
   mutate_at(
     .vars = c("housing_need", "owner_occupied", "rental"),
     .funs = list(`pct_household` = ~{. / households}))
+
+CTs_us <- CTs_us %>% 
+  st_join(MSAs_us, left = FALSE, suffix = c("",".y")) %>% 
+  select(c(1, 24, 25, 2, 5:23, 46)) 
 

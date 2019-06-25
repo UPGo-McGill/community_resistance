@@ -87,4 +87,6 @@ neighbourhood_resistance <- neighbourhood_resistance %>%
                 opposition_NYT/nrow(filter(media_NYT, str_detect(Article, 
                                                                  paste(neighbourhoods_tidy$names, collapse="|")))))/2)
 
+# Export as a table
+write_csv(neighbourhood_resistance, "txt_files/montreal/community_resistance_montreal.csv")
 

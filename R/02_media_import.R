@@ -3,6 +3,8 @@
 source("R/01_helper_functions.R")
 
 # must input file paths and make some adjustments depending on what files you would like to import
+# when complete, export table and run community resistance index
+# repeat for all cities
 
 ################################ 1 - INPUT NEIGHBOURHOOD NAMES ##############################################################################################################################
 # set up neighbourhood names
