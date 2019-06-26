@@ -92,4 +92,3 @@ repeat{
 # Export as a table
 write_csv(airbnb, "airbnb/montreal.csv")
 
-?save

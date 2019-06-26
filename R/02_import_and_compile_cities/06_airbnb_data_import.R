@@ -2,7 +2,7 @@
 
 source("R/01_import_and_compile_general/01_helper_functions.R")
 
-start_date <- "2018-05-01"
+start_date <- "2019-04-29"
 end_date <- "2019-04-30"
 
 ## Import private Airbnb files
