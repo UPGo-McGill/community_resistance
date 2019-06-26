@@ -40,7 +40,7 @@ CMAs_canada <-
                 "v_CA16_4837", "v_CA16_4838", "v_CA16_512", 
                 "v_CA16_3393", "v_CA16_3996"),
     geo_format = "sf") %>% 
-  st_transform(3347) %>% 
+  st_transform(32618) %>% 
   filter(Type == "CMA") %>% 
   select(GeoUID, CMA_name = name, Population, Households, contains("v_CA")) 
 
@@ -75,7 +75,7 @@ CTs_canada <-
                 "v_CA16_4837", "v_CA16_4838", "v_CA16_512", 
                 "v_CA16_3393", "v_CA16_3996"),
     geo_format = "sf") %>% 
-  st_transform(3347) %>% 
+  st_transform(32618) %>% 
   filter(Type == "CT") %>% 
   select(GeoUID, PR_UID, CMA_UID, Population, Households, contains("v_CA"))
 
@@ -97,10 +97,28 @@ CTs_canada <- CTs_canada%>%
     .vars = c("housing_need", "owner_occupied", "rental"),
     .funs = list(`pct_household` = ~{. / households}))
 
-# 1.5 SOCIAL CAPITAL INDEX FOR ALL CENSUS TRACTS 
+# 1.5 Z SCORES
 
 CTs_canada <- CTs_canada %>% 
-  mutate(SCI = (med_income/canada$med_income +
+  mutate(med_income_z =  (CT)
+           CTs_city <- CTs_canada %>% 
+           st_join(st_buffer(neighbourhoods["geometry"], 200),
+                   join = st_within, left = FALSE)          
+           
+           CTs_city %>% 
+           st_drop_geometry() %>% 
+           select("population") %>% 
+           as.numeric() %>% 
+           sapply(sd)
+         
+         
+         sd(CTs_city$population, na.rm = TRUE)
+         mean(CTs_city$population, na.rm = TRUE)
+           
+           
+           
+           
+           (med_income/canada$med_income +
                   university_education_pct_pop +
                   non_mover_pct_pop + 
                   official_language_pct_pop + 
@@ -358,16 +376,5 @@ CTs_us <- MSAs_us %>%
   left_join(CTs_us, .)
 CTs_us <- CTs_us %>% 
   mutate(SCI_adjusted = SCI / SCI_MSA)
-
-
-CMAs_canada %>% 
-  select(c("SCI_CMA", "geometry")) %>% 
-  plot()
-
-CTs_canada %>% 
-  filter(CMA_name == "Montreal") %>% 
-  filter(SCI_adjusted >= 1 ) %>% 
-  select(c("SCI_adjusted", "geometry")) %>% 
-  plot()
 
 
