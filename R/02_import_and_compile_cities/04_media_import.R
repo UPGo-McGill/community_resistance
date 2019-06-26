@@ -7,32 +7,69 @@ source("R/01_import_and_compile_general/01_helper_functions.R")
 # repeat for all cities
 
 ################################ 1 - INPUT NEIGHBOURHOOD NAMES ##############################################################################################################################
-# set up neighbourhood names
+# set up neighbourhood names and import geometries
 cityname <- "Montreal"
 
-neighbourhoods_tidy<- rbind(
-  data_frame(neighbourhood = "plateau", names = c("plateau", "mile end")),
-  data_frame(neighbourhood = "ville-marie", names = c("ville marie")),
-  data_frame(neighbourhood = "old montreal", names = c("old port", "old montreal", "old montréal")),
-  data_frame(neighbourhood = "hochelaga", names = c("hochelaga", "maisonneuve", "homa", "mercier")),
-  data_frame(neighbourhood = "ndg", names = c("notre dame", "ndg", "cote des neiges", "côte des neiges")),
-  data_frame(neighbourhood = "rosemont", names = c("little italy", "rosemont", "la petite patrie")),
-  data_frame(neighbourhood = "saint henri", names = c("saint henri", "atwater market", "lachine canal")),
-  data_frame(neighbourhood = "griffintown", names = c("griffintown")),
-  data_frame(neighbourhood = "little burgundy", names = c("little burgundy")),
-  data_frame(neighbourhood = "outremont", names = c("outremont")),
-  data_frame(neighbourhood = "westmount", names = c("westmount")),
-  data_frame(neighbourhood = "sud-ouest", names = c("sud ouest", "sudouest", "pointe saint charles", "pointe st charles", "charles")),
-  data_frame(neighbourhood = "villeray", names = c("park ex", "mile ex", "villeray", "saint michel")),
-  data_frame(neighbourhood = "lachine", names = c("lachine")))
+neighbourhoods <-
+  read_sf(dsn = "Data", layer = "montreal") %>%
+  st_transform(32618) %>% 
+  select(MUN_ID = MUNID, CODE_ID = CODEID, neighbourhood = NOM, geometry) 
 
-neighbourhoods <- 
-  neighbourhoods_tidy$neighbourhood %>% 
-  unique()
+neighbourhoods$name <- c("outremont",
+                          "lasalle",
+                          "town of mont royal, ville de mont royal",
+                          "ville marie, place des arts, entertainment district, downtown, old montreal, old port",
+                          "plateau, mile end", 
+                          "hampstead",
+                          "sud ouest, st henri, little burgundy", 
+                          "riviere des prairies, pointe aux trembles",
+                          "lachine",
+                          "dorval",
+                          "montreal nord, montreal north", 
+                          "ile bizard, sainte genevieve, ste genevieve",
+                          "kirkland",
+                          "ormeaux",
+                          "senneville",
+                          "ahuntsic, cartierville",
+                          "cote saint luc, cote st luc",
+                          "saint leonard, st leonard", 
+                          "montreal ouest, montreal west", 
+                          "pointe claire", 
+                          "dorval",
+                          "mercier, hochelaga, maisonneuve, homa",
+                          "cote des neiges, notre dame de grace, ndg",
+                          "rosemont, la petite patrie, little italy",
+                          "ville saint laurent",
+                          "beaconsfield",
+                          "villeray, saint michel, st michel, parc ex, parcex, mile ex, mile ex",
+                          "westmount",
+                          "montreal est, montreal east",
+                          "anjou",
+                          "pierrefonds, roxboro",
+                          "sainte anne, ste anne, bellevue",
+                          "verdun",
+                          "baie d'urfe, durfe, d urfe")
 
-# import neighbourhood geometries
+# tidy the table to allow for media search
+neighbourhoods_tidy <- neighbourhoods %>% 
+  select(c("neighbourhood", "name")) %>% 
+  cSplit("name", ",", direction = "long")
 
-
+# neighbourhoods_tidy<- rbind(
+  #data_frame(neighbourhood = "plateau", names = c("plateau", "mile end")),
+  #data_frame(neighbourhood = "ville-marie", names = c("ville marie")),
+  #data_frame(neighbourhood = "old montreal", names = c("old port", "old montreal", "old montréal")),
+  #data_frame(neighbourhood = "hochelaga", names = c("hochelaga", "maisonneuve", "homa", "mercier")),
+  #data_frame(neighbourhood = "ndg", names = c("notre dame", "ndg", "cote des neiges", "côte des neiges")),
+  #data_frame(neighbourhood = "rosemont", names = c("little italy", "rosemont", "la petite patrie")),
+  #data_frame(neighbourhood = "saint henri", names = c("saint henri", "atwater market", "lachine canal")),
+  #data_frame(neighbourhood = "griffintown", names = c("griffintown")),
+  #data_frame(neighbourhood = "little burgundy", names = c("little burgundy")),
+  #data_frame(neighbourhood = "outremont", names = c("outremont")),
+  #data_frame(neighbourhood = "westmount", names = c("westmount")),
+  #data_frame(neighbourhood = "sud-ouest", names = c("sud ouest", "sudouest", "pointe saint charles", "pointe st charles", "charles")),
+  #data_frame(neighbourhood = "villeray", names = c("park ex", "mile ex", "villeray", "saint michel")),
+  #data_frame(neighbourhood = "lachine", names = c("lachine")))
 
 ############################# 2 - IMPORT NECESSARY FILES FROM THE NYT ############################################################################################################################
 ## 2.1 COMPLETE THIS SECTION IF LEXISNEXIS, OTHERWISE SKIP.

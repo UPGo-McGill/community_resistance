@@ -7,20 +7,20 @@ end_date <- "2019-04-30"
 
 ## Import private Airbnb files
 property <-
-  read_csv("data/property.csv", col_types = cols_only(
-    `Property_ID` = col_character(),
-    `Listing_Title` = col_character(),
-    `Property_Type` = col_character(),
-    `Listing_Type` = col_character(),
-    `Created` = col_date(format = ""),
-    `Scraped` = col_date(format = ""),
+  read_csv("data/property_montreal.csv", col_types = cols_only(
+    `Property ID` = col_character(),
+    `Listing Title` = col_character(),
+    `Property Type` = col_character(),
+    `Listing Type` = col_character(),
+    `Created Date` = col_date(format = ""),
+    `Last Scraped Date` = col_date(format = ""),
     Latitude = col_double(),
     Longitude = col_double(),
     `City` = col_skip(),
-    `Airbnb_PID` = col_double(),
-    `Airbnb_HID` = col_double(),
-    `HomeAway_PID` = col_character(),
-    `HomeAway_HID` = col_character())) %>% 
+    `Airbnb Property ID` = col_double(),
+    `Airbnb Host ID` = col_double(),
+    `HomeAway Property ID` = col_character(),
+    `HomeAway Property Manager` = col_character())) %>% 
   set_names(c("Property_ID", "Listing_Title", "Property_Type", "Listing_Type",
               "Created", "Scraped", "Latitude", "Longitude", "Airbnb_PID",
               "Airbnb_HID", "HomeAway_PID", "HomeAway_HID")) %>% 
@@ -60,24 +60,22 @@ property <-
     "Entire casa particular", "")) %>% 
   select(-Property_Type)
 
-daily <- 
-  read_csv("data/daily.csv", col_types = cols(
-    `Property_ID` = col_character(),
+daily <-
+  read_csv("data/daily_montreal.csv", col_types = cols(
+    `Property ID` = col_character(),
     Date = col_date(format = ""),
     Status = col_factor(levels = c("U", "B", "A", "R")),
-    # `Booked Date` = col_skip(),
-    `Price` = col_double(),
-    #`Price (Native)` = col_skip(),
-    #`Currency Native` = col_skip(),
-    #`Reservation ID` = col_skip(),
-    `Airbnb_PID` = col_double(),
-    `HomeAway_PID` = col_character())) %>% 
-  set_names(c("Property_ID", "Date", "Status", "Price", "Airbnb_PID", 
-              "HomeAway_PID")) %>% 
+    `Booked Date` = col_skip(),
+    `Price (USD)` = col_double(),
+    `Price (Native)` = col_skip(),
+    `Currency Native` = col_skip(),
+    `Reservation ID` = col_skip(),
+    `Airbnb Property ID` = col_double(),
+    `HomeAway Property ID` = col_character())) %>%
+  set_names(c("Property_ID", "Date", "Status", "Price", "Airbnb_PID",
+               "HomeAway_PID")) %>%
   filter(!is.na(Status)) %>%
   arrange(Property_ID, Date)
-
-
 
 ## Trim listings to the past twelve months
 property <-
@@ -85,10 +83,6 @@ property <-
   filter(Property_ID %in% daily$Property_ID,
          Scraped >= start_date,
          Created <= end_date)
-#%>% 
- # st_join(st_buffer(plateau["geometry"], 200),
- #         join = st_within, left = FALSE) %>% 
- # left_join(read_csv("data/raffle_montreal.csv"))
 
 daily <- 
   daily %>% 

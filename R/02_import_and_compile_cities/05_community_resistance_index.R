@@ -20,12 +20,12 @@ community_resistance_words = c("protest", "anti", "community led", "affordabilit
 n = 1
 repeat{
   neighbourhood_resistance[n, 1] <- cityname
-  neighbourhood_resistance[n, 2] <- neighbourhoods[n]
+  neighbourhood_resistance[n, 2] <- neighbourhoods$neighbourhood[n]
   
   neighbourhood_resistance[n,3] <- media_local %>% 
     filter(str_detect(Article, paste(filter(neighbourhoods_tidy, 
-                                            neighbourhood == neighbourhoods [n]) %>% 
-                                       pull(names), collapse = "|"))) %>% 
+                                            neighbourhood == neighbourhoods$neighbourhood[n]) %>% 
+                                       pull(name), collapse = "|"))) %>% 
     select("ID") %>% 
     distinct() %>% 
     nrow()
@@ -36,8 +36,8 @@ repeat{
     select("ID") %>% 
     inner_join(media_local %>% 
                  filter(str_detect(Article, paste(filter(neighbourhoods_tidy, 
-                                                         neighbourhood == neighbourhoods [n]) %>% 
-                                                    pull(names), collapse = "|"))) %>% 
+                                                         neighbourhood == neighbourhoods$neighbourhood[n]) %>% 
+                                                    pull(name), collapse = "|"))) %>% 
                  select("ID") %>% 
                  distinct(), .) %>% 
     distinct() %>% 
@@ -45,8 +45,8 @@ repeat{
   
   neighbourhood_resistance[n,5] <- media_NYT %>% 
     filter(str_detect(Article, paste(filter(neighbourhoods_tidy, 
-                                            neighbourhood == neighbourhoods [n]) %>% 
-                                       pull(names), collapse = "|"))) %>% 
+                                            neighbourhood == neighbourhoods$neighbourhood[n]) %>% 
+                                       pull(name), collapse = "|"))) %>% 
     select("ID") %>% 
     distinct() %>% 
     nrow()
@@ -57,8 +57,8 @@ repeat{
     select("ID") %>% 
     inner_join(media_NYT %>% 
                  filter(str_detect(Article, paste(filter(neighbourhoods_tidy, 
-                                                         neighbourhood == neighbourhoods [n]) %>% 
-                                                    pull(names), collapse = "|"))) %>% 
+                                                         neighbourhood == neighbourhoods$neighbourhood[n]) %>% 
+                                                    pull(name), collapse = "|"))) %>% 
                  select("ID") %>% 
                  distinct(), .) %>% 
     distinct() %>% 
@@ -66,10 +66,11 @@ repeat{
   
   n = n+1
   
-  if (n > length(neighbourhoods)) {
+  if (n > nrow(neighbourhoods)) {
     break
   }
 }
+
 
 # Calculate percent opposition and community index and community resistance index
 neighbourhood_resistance <- neighbourhood_resistance %>% 
