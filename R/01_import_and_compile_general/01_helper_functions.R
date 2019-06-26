@@ -43,7 +43,6 @@ strr_multilistings <- function(daily, EH = 2, PR = 3, listing_type, host_ID,
 }
 
 
-## Ghost hotel function
 #' Function to identify STR ghost hotels
 #'
 #' \code{strr_ghost} takes reported STR listing locations and identifies
@@ -790,4 +789,3 @@ ghost_intersect_leftovers <- function(points, property_ID, host_ID, distance,
   
   points
 }
-
