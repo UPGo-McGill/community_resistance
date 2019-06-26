@@ -97,6 +97,35 @@ CTs_canada <- CTs_canada%>%
     .vars = c("housing_need", "owner_occupied", "rental"),
     .funs = list(`pct_household` = ~{. / households}))
 
+# 1.5 SOCIAL CAPITAL INDEX FOR ALL CENSUS TRACTS 
+
+CTs_canada <- CTs_canada %>% 
+  mutate(SCI = (med_income/canada$med_income +
+                  university_education_pct_pop +
+                  non_mover_pct_pop + 
+                  official_language_pct_pop + 
+                  citizen_pct_pop + 
+                  white_pct_pop +
+                  (1 - housing_need_pct_household) +
+                  owner_occupied_pct_household)/8)
+CMAs_canada <- CMAs_canada %>% 
+  mutate(SCI_CMA = (med_income/canada$med_income +
+                      university_education_pct_pop +
+                      non_mover_pct_pop + 
+                      official_language_pct_pop + 
+                      citizen_pct_pop + 
+                      white_pct_pop +
+                      (1 - housing_need_pct_household) +
+                      owner_occupied_pct_household)/8)
+
+CTs_canada <- CMAs_canada %>% 
+  select(c(1, 23)) %>% 
+  st_drop_geometry %>% 
+  left_join(CTs_canada, .)
+CTs_canada <- CTs_canada %>% 
+  mutate(SCI_adjusted = SCI / SCI_CMA)
+
+
 ########################################### 2 - UNITED STATES #####################################
 
 # 2.1 LIST CENSUS VARIBALES
@@ -301,4 +330,44 @@ CTs_us <- CTs_us%>%
 CTs_us <- CTs_us %>% 
   st_join(MSAs_us, left = FALSE, suffix = c("",".y")) %>% 
   select(c(1, 24, 25, 2, 5:23, 46)) 
+
+# 2.5 SOCIAL CAPITAL INDEX FOR ALL CENSUS TRACTS
+
+CTs_us <- CTs_us %>% 
+  mutate(SCI = (med_income/us$med_income +
+                  university_education_pct_pop +
+                  non_mover_pct_pop + 
+                  official_language_pct_pop + 
+                  citizen_pct_pop + 
+                  white_pct_pop +
+                  (1 - housing_need_pct_household) +
+                  owner_occupied_pct_household)/8)
+MSAs_us <- MSAs_us %>% 
+  mutate(SCI_MSA = (med_income/us$med_income +
+                      university_education_pct_pop +
+                      non_mover_pct_pop + 
+                      official_language_pct_pop + 
+                      citizen_pct_pop + 
+                      white_pct_pop +
+                      (1 - housing_need_pct_household) +
+                      owner_occupied_pct_household)/8)
+
+CTs_us <- MSAs_us %>% 
+  st_drop_geometry() %>% 
+  select(c(1, 23)) %>% 
+  left_join(CTs_us, .)
+CTs_us <- CTs_us %>% 
+  mutate(SCI_adjusted = SCI / SCI_MSA)
+
+
+CMAs_canada %>% 
+  select(c("SCI_CMA", "geometry")) %>% 
+  plot()
+
+CTs_canada %>% 
+  filter(CMA_name == "Montreal") %>% 
+  filter(SCI_adjusted >= 1 ) %>% 
+  select(c("SCI_adjusted", "geometry")) %>% 
+  plot()
+
 
