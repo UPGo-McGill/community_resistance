@@ -17,6 +17,7 @@ library(tigris)
 options(tigris_use_cache = TRUE)
 library(osmdata)
 library(splitstackshape)
+library(dplyr)
 
 # Run Canadian census API key
 options(cancensus.api_key = "CensusMapper_4be2cf3bf91d0cabf967f4934dbdc63b")
