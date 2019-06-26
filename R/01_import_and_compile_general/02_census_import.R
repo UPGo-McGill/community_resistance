@@ -302,5 +302,3 @@ CTs_us <- CTs_us %>%
   st_join(MSAs_us, left = FALSE, suffix = c("",".y")) %>% 
   select(c(1, 24, 25, 2, 5:23, 46)) 
 
-CTs_hold$Geo_UID %in% CTs_us$Geo_UID
-
