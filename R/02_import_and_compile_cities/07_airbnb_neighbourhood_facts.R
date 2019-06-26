@@ -8,12 +8,9 @@ airbnb <- tibble(city = character(0), neighbourhood_name = character(0), active_
                  revenue_10pct = numeric (0))
          
 
-# Perform airbnb analysis for all neighbourhoods (currently for the city, need to filter to neighbourhoods
-# once i get the information from micke)
-# the data should have the census tract in it after running the raffle
+# Perform airbnb analysis for all neighbourhoods 
 
 n = 1
-
 
 repeat{
   
@@ -60,17 +57,20 @@ repeat{
                       filter(FREH == TRUE) %>% 
                       nrow()
   
-  airbnb[n, 9] <-  st_drop_geometry(strr_ghost(neighbourhood_property, Property_ID, Airbnb_HID, Created, Scraped, start_date,
-                                               end_date, listing_type = Listing_Type) %>% 
-                                      filter(date == end_date) %>% 
-                                      group_by(ghost_ID) %>% 
-                                      summarize(n = sum(housing_units)) %>% 
-                                      ungroup() %>% 
-                                      summarize(GH_housing_loss = sum(n))) +
-    nrow(neighbourhood_daily %>% 
-           filter(Date == end_date) %>% 
-           inner_join(neighbourhood_property, .) %>% 
-           filter(FREH == TRUE)) 
+  temp <- strr_ghost(neighbourhood_property, Property_ID, Airbnb_HID, Created, Scraped, start_date,
+                                      end_date, listing_type = Listing_Type) %>% 
+                             filter(date == end_date) %>% 
+                             group_by(ghost_ID) %>% 
+                             summarize(n = sum(housing_units)) %>% 
+                             ungroup()
+  
+  airbnb[n, 9] <-  ifelse(nrow(temp) == 0, 0, temp %>% 
+                            summarize(GH_housing_loss = sum(n))) %>% 
+                            as.numeric() +
+                   nrow(neighbourhood_daily %>% 
+                            filter(Date == end_date) %>% 
+                            inner_join(neighbourhood_property, .) %>% 
+                            filter(FREH == TRUE)) 
   
   airbnb[n, 10] <- neighbourhood_daily %>%
                       filter(Date >= start_date, Date <= end_date, Status == "R") %>%
@@ -82,7 +82,7 @@ repeat{
     
   n = n+1
   
-  rm(neighbourhood_property, neighbourhood_daily)
+  rm(neighbourhood_property, neighbourhood_daily, temp)
   
   if (n > nrow(neighbourhoods)) {
     break
@@ -92,3 +92,4 @@ repeat{
 # Export as a table
 write_csv(airbnb, "airbnb/montreal.csv")
 
+nrow(temp)
