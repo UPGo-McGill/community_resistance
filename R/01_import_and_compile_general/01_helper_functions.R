@@ -44,6 +44,65 @@ strr_multilistings <- function(daily, EH = 2, PR = 3, listing_type, host_ID,
 
 
 ## Ghost hotel function
+#' Function to identify STR ghost hotels
+#'
+#' \code{strr_ghost} takes reported STR listing locations and identifies
+#' possible "ghost hotels"--clusters of private-room STR listings operating in a
+#' single building.
+#'
+#' A function for probablistically assigning STR listings to administrative
+#' geographies (e.g. census tracts) based on reported latitude/longitude.
+#' The function works by combining a known probability density function (e.g.
+#' Airbnb's spatial obfuscation of listing locations) with an additional source
+#' of information about possible listing locations--either population or housing
+#' densities.
+#'
+#' @param points A data frame of STR listings with sf or sp point geometries in
+#'   a projected coordinate system.
+#' @param property_ID The name of a character or numeric variable in the points
+#'   object which uniquely identifies STR listings.
+#' @param host_ID The name of a character or numeric variable in the points
+#'   object which uniquely identifies STR hosts.
+#' @param created The name of a date variable in the points object which gives
+#'   the creation date for each listing.
+#' @param scraped The name of a date variable in the points object which gives
+#'   the last-scraped date for each listing.
+#' @param start_date A character string of format YYYY-MM-DD indicating the
+#'   first date for which to run the analysis.
+#' @param end_date A character string of format YYYY-MM-DD indicating the last
+#'   date for which to run the analysis.
+#' @param distance A numeric scalar. The radius (in the units of the CRS) of the
+#'   buffer which will be drawn around points to determine possible ghost hotel
+#'   locations.
+#' @param min_listings A numeric scalar. The minimum number of listings to
+#'   be considered a ghost hotel.
+#' @param listing_type The name of a character variable in the points
+#'   object which identifies private-room listings. If NULL, all listings will
+#'   be used.
+#' @param private_room A character string which identifies the value of the
+#'   listing_type variable to be used to find ghost hotels.
+#' @param cores A positive integer scalar. How many processing cores should be
+#'   used to perform the computationally intensive intersection step?
+#' @return The output will be a tidy data frame of identified ghost hotels,
+#'   organized with the following fields: `ghost_ID`: an identifier for each
+#'   unique ghost hotel cluster. `date`: the date on which the ghost hotel was
+#'   detected. `host_ID` (or whatever name was passed to the host_ID argument):
+#'   The ID number of the host operating the ghost hotel. `listing_count`: how
+#'   many separate listings comprised the ghost hotel. `housing_units`: an
+#'   estimate of how many housing units the ghost hotel occupies, calculated as
+#'   `ceiling(listing_count / 4)`. `property_IDs`: A list of the property_ID
+#'   (or whatever name was passed to the property_ID argument) values from the
+#'   listings comprising the ghost hotel. `data`: a nested tibble of additional
+#'   variables present in the points object. `geometry`: the polygons
+#'   representing the possible locations of each ghost hotel.
+#' @importFrom dplyr %>% arrange as_tibble enquo filter group_by mutate n pull
+#' @importFrom dplyr rename ungroup
+#' @importFrom methods is
+#' @importFrom purrr map map2 map_dbl map_lgl
+#' @importFrom rlang .data
+#' @importFrom sf st_as_sf st_crs st_crs<- st_transform
+#' @export
+
 strr_ghost <- function(
   points, property_ID, host_ID, created, scraped, start_date, end_date,
   distance = 200, min_listings = 3, listing_type = NULL,
@@ -731,3 +790,4 @@ ghost_intersect_leftovers <- function(points, property_ID, host_ID, distance,
   
   points
 }
+
