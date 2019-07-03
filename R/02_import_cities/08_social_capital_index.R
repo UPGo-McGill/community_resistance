@@ -1,6 +1,6 @@
 ######################################### SOCIAL CAPITAL INDEX ###############################
 
-source("R/01_import_and_compile_general/01_helper_functions.R")
+source("R/01_import_general/01_helper_functions.R")
 
 social_capital <- tibble(city = character(0), neighbourhood_name = character(0), population = numeric(0),
                          households = numeric(0), med_income = numeric(0), university_education = numeric (0), 
@@ -67,6 +67,11 @@ repeat{
     break
   }
 }
+
+social_capital <- social_capital %>% 
+  mutate(SCI = med_income_z + university_education_z - housing_need_z +
+           non_mover_z + owner_occupied_z + official_language_z + 
+           citizen_z + white_z)
 
 # Export as a table
 save(social_capital, file = "social_capital_montreal.Rdata")

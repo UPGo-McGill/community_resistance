@@ -1,6 +1,6 @@
 ######################################### COMPILE ###############################
 
-source("R/01_import_and_compile_general/01_helper_functions.R")
+source("R/01_import_general/01_helper_functions.R")
 
 # Import all community resistance tables
 load("community_resistance_montreal.Rdata")
