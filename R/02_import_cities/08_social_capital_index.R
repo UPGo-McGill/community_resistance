@@ -23,6 +23,10 @@ repeat{
   
   social_capital[n, 4] = sum(CTs_neighbourhood$households, na.rm = TRUE)
   
+  
+  
+  
+  
   social_capital[n, 5] = sum(CTs_neighbourhood$population * CTs_neighbourhood$med_income, na.rm = TRUE)/
                                   sum(CTs_neighbourhood$population, na.rm = TRUE)
   
@@ -40,6 +44,12 @@ repeat{
   
   social_capital[n, 12] = sum(CTs_neighbourhood$white, na.rm = TRUE)/sum(CTs_neighbourhood$population, na.rm = TRUE)
   
+  
+  
+  
+  
+  
+  
   n = n+1
   
   rm(CTs_neighbourhood)
@@ -50,7 +60,4 @@ repeat{
 }
 
 # Export as a table
-write_csv(social_capital, "social_capital/montreal.csv")
-
-
-save(social_capital, file = )
+save(social_capital, file = "social_capital_montreal.Rdata")

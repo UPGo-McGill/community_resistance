@@ -86,5 +86,6 @@ neighbourhood_resistance <- neighbourhood_resistance %>%
                                                                  paste(neighbourhoods_tidy$names, collapse="|")))))/2)
 
 # Export as a table
-write_csv(neighbourhood_resistance, "txt_files/neighbourhood_resistance/montreal.csv")
+save(neighbourhood_resistance, file = "neighbourhood_resistance_montreal.Rdata")
+
 

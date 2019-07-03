@@ -90,5 +90,5 @@ repeat{
 }
 
 # Export as a table
-write_csv(airbnb, "airbnb/montreal.csv")
+save(airbnb, file = "airbnb_montreal.Rdata")
 
