@@ -116,7 +116,7 @@ repeat{
       .vars = c("population", "households", "med_income",
                 "university_education", "housing_need", "non_mover", "owner_occupied", 
                 "rental", "official_language", "citizen", "white"),
-      .funs = list(`z` = ~{(.- mean(.))/sd(.)})) 
+      .funs = list(`z` = ~{(.- mean(., na.rm = TRUE))/sd(., na.rm = TRUE)})) 
   
   datalist[[n]] <- CTs_canada_temp
 
@@ -349,7 +349,7 @@ repeat{
       .vars = c("population", "households", "med_income",
                 "university_education", "housing_need", "non_mover", "owner_occupied", 
                 "rental", "official_language", "citizen", "white"),
-      .funs = list(`z` = ~{(.- mean(.))/sd(.)})) 
+      .funs = list(`z` = ~{(.- mean(., na.rm = TRUE))/sd(., na.rm = TRUE)})) 
   
   datalist[[n]] <- CTs_us_temp
   
