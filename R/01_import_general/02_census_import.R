@@ -1,6 +1,10 @@
 ######################################### CENSUS IMPORT  ###############################
 
-source("R/01_import_and_compile_general/01_helper_functions.R")
+source("R/01_import_general/01_helper_functions.R")
+
+# census import for all census tracts in Canada and the census tracts in the US in the following states
+states <- unique(fips_codes$state)[1:51] 
+states <- c("NY", "CA", "LA", "FL", "DC")
 
 ########################################### 1 - CANADA #######################################
 
@@ -80,7 +84,7 @@ CTs_canada <-
   select(GeoUID, PR_UID, CMA_UID, Population, Households, contains("v_CA"))
 
 CTs_canada <- CTs_canada %>% 
-  inner_join(st_drop_geometry(select(CMAs_canada, c(1,2)))) %>% 
+  inner_join(st_drop_geometry(select(CMAs_canada, c(1,2))), by = "CMA_UID") %>% 
   select(GeoUID, CMA_UID, CMA_name, everything()) 
 
 names(CTs_canada) <- 
@@ -97,51 +101,36 @@ CTs_canada <- CTs_canada%>%
     .vars = c("housing_need", "owner_occupied", "rental"),
     .funs = list(`pct_household` = ~{. / households}))
 
+
 # 1.5 Z SCORES
 
-CTs_canada <- CTs_canada %>% 
-  mutate(med_income_z =  (CT)
-           CTs_city <- CTs_canada %>% 
-           st_join(st_buffer(neighbourhoods["geometry"], 200),
-                   join = st_within, left = FALSE)          
-           
-           CTs_city %>% 
-           st_drop_geometry() %>% 
-           select("population") %>% 
-           as.numeric() %>% 
-           sapply(sd)
-         
-         
-         sd(CTs_city$population, na.rm = TRUE)
-         mean(CTs_city$population, na.rm = TRUE)
-           
-           
-           
-           
-           (med_income/canada$med_income +
-                  university_education_pct_pop +
-                  non_mover_pct_pop + 
-                  official_language_pct_pop + 
-                  citizen_pct_pop + 
-                  white_pct_pop +
-                  (1 - housing_need_pct_household) +
-                  owner_occupied_pct_household)/8)
-CMAs_canada <- CMAs_canada %>% 
-  mutate(SCI_CMA = (med_income/canada$med_income +
-                      university_education_pct_pop +
-                      non_mover_pct_pop + 
-                      official_language_pct_pop + 
-                      citizen_pct_pop + 
-                      white_pct_pop +
-                      (1 - housing_need_pct_household) +
-                      owner_occupied_pct_household)/8)
+n = 1
 
-CTs_canada <- CMAs_canada %>% 
-  select(c(1, 23)) %>% 
-  st_drop_geometry %>% 
-  left_join(CTs_canada, .)
-CTs_canada <- CTs_canada %>% 
-  mutate(SCI_adjusted = SCI / SCI_CMA)
+datalist = list()
+
+repeat{
+
+  CTs_canada_temp <- CTs_canada %>% 
+    filter(CMA_UID == as.numeric(st_drop_geometry(CMAs_canada[n, 1]))) %>% 
+    mutate_at(
+      .vars = c("population", "households", "med_income",
+                "university_education", "housing_need", "non_mover", "owner_occupied", 
+                "rental", "official_language", "citizen", "white"),
+      .funs = list(`z` = ~{(.- mean(.))/sd(.)})) 
+  
+  datalist[[n]] <- CTs_canada_temp
+
+  n = n + 1
+  
+  if (n > nrow(CMAs_canada)) {
+    break
+    
+  }
+}
+
+CTs_canada = do.call(rbind, datalist)
+
+rm(CTs_canada_temp, datalist)
 
 
 ########################################### 2 - UNITED STATES #####################################
@@ -206,9 +195,6 @@ us <- us %>%
     .funs = list(`pct_household` = ~{. / households}))
 
 # 2.3 IMPORT CENSUS VARIABLES FOR ALL CMAs
-states <- unique(fips_codes$state)[1:51] 
-states <- c("NY", "CA", "LA", "FL", "DC")
-
 MSAs_us <- get_acs(geography = "metropolitan statistical area/micropolitan statistical area", 
                    variables = c("B01003_001", 
                                  "B25001_001", 
@@ -349,32 +335,34 @@ CTs_us <- CTs_us %>%
   st_join(MSAs_us, left = FALSE, suffix = c("",".y")) %>% 
   select(c(1, 24, 25, 2, 5:23, 46)) 
 
-# 2.5 SOCIAL CAPITAL INDEX FOR ALL CENSUS TRACTS
+# 2.5 Z SCORES
 
-CTs_us <- CTs_us %>% 
-  mutate(SCI = (med_income/us$med_income +
-                  university_education_pct_pop +
-                  non_mover_pct_pop + 
-                  official_language_pct_pop + 
-                  citizen_pct_pop + 
-                  white_pct_pop +
-                  (1 - housing_need_pct_household) +
-                  owner_occupied_pct_household)/8)
-MSAs_us <- MSAs_us %>% 
-  mutate(SCI_MSA = (med_income/us$med_income +
-                      university_education_pct_pop +
-                      non_mover_pct_pop + 
-                      official_language_pct_pop + 
-                      citizen_pct_pop + 
-                      white_pct_pop +
-                      (1 - housing_need_pct_household) +
-                      owner_occupied_pct_household)/8)
+n = 1
 
-CTs_us <- MSAs_us %>% 
-  st_drop_geometry() %>% 
-  select(c(1, 23)) %>% 
-  left_join(CTs_us, .)
-CTs_us <- CTs_us %>% 
-  mutate(SCI_adjusted = SCI / SCI_MSA)
+datalist = list()
+
+repeat{
+  
+  CTs_us_temp <- CTs_us %>% 
+    filter(CMA_UID == as.numeric(st_drop_geometry(MSAs_us[n, 1]))) %>% 
+    mutate_at(
+      .vars = c("population", "households", "med_income",
+                "university_education", "housing_need", "non_mover", "owner_occupied", 
+                "rental", "official_language", "citizen", "white"),
+      .funs = list(`z` = ~{(.- mean(.))/sd(.)})) 
+  
+  datalist[[n]] <- CTs_us_temp
+  
+  n = n + 1
+  
+  if (n > nrow(MSAs_us)) {
+    break
+    
+  }
+}
+
+CTs_us = do.call(rbind, datalist)
+
+rm(CTs_us_temp, datalist)
 
 
