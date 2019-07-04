@@ -1,6 +1,6 @@
 ######################################### MEDIA IMPORT ###############################
 
-source("R/01_import_and_compile_general/01_helper_functions.R")
+source("R/01_import_general/01_helper_functions.R")
 
 # must input file paths and make some adjustments depending on what files you would like to import
 # when complete, export table and run community resistance index
@@ -177,16 +177,15 @@ media_LN_local$Date <- as.character(media_LN_local$Date)
 
 ## 3.2 COMPLETE THIS SECTION IF FACTIVA, OTHERWISE SKIP. 
 # import the source and corpus Factiva HTML files for airbnb + city name from the local newspaper
-source1_local <- FactivaSource("txt_files/montreal/montreal_local_FTV.htm")
-corpus_local <- Corpus(source1_local, list(language = NA)) 
+source1_local <- FactivaSource("txt_files/montreal/montreal_local_FTV_1.htm")
+corpus1_local <- Corpus(source1_local, list(language = NA)) 
 
 # if there is more than one file, repeat the following.
-source8_local <- FactivaSource("txt_files/toronto_local/airbnb_toronto_local_FTV_8.htm")
-corpus8_local <- Corpus(source8_local, list(language = NA))
+source3_local <- FactivaSource("txt_files/montreal/montreal_local_FTV_3.htm")
+corpus3_local <- Corpus(source3_local, list(language = NA))
 
 # if there is more than one file, merge
-corpus_local = tm:::c.VCorpus(corpus1_local, corpus2_local, corpus3_local, corpus4_local, corpus5_local,
-                              corpus6_local, corpus7_local, corpus8_local)
+corpus_local = tm:::c.VCorpus(corpus1_local, corpus2_local, corpus3_local)
 
 # transform into a data table
 media_FTV_local <- tibble(Source_ID = numeric(0), Newspaper = character(0), Date = character(0), 
@@ -299,6 +298,7 @@ media_NYT <- media_NYT %>%
   distinct(Headline, .keep_all = TRUE) %>% 
   ungroup()
 
+rm(airbnb)
 
 ## 4.5 EXPORT
 # export the table(s) as .csv so that this does not need to be rerun.

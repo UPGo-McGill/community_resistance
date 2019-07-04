@@ -16,5 +16,5 @@ airbnb_neighbourhoods <- airbnb_neighbourhoods %>%
   mutate(housing_loss_pct = housing_loss/households)
 
 # Explore some relationships
-ggplot(filter(airbnb_neighbourhoods, CRI > 0 ), aes(SCI, CRI, size = housing_loss_pct)) +
+ggplot(filter(airbnb_neighbourhoods, CRI > 0 ), aes(med_income, CRI, size = active_listings)) +
   geom_point()
