@@ -1,6 +1,6 @@
 #################################### AIRBNB BASIC FACTS ######################################
 
-source("R/01_import_and_compile_general/01_helper_functions.R")
+source("R/01_import_general/01_helper_functions.R")
 
 airbnb <- tibble(city = character(0), neighbourhood_name = character(0), active_listings = numeric(0), 
                  active_listings_avg = numeric (0), EH_pct = numeric (0), revenue = numeric (0), 
@@ -90,5 +90,5 @@ repeat{
 }
 
 # Export as a table
-save(airbnb, file = "airbnb_montreal.Rdata")
+save(airbnb, file = "airbnb/montreal.Rdata")
 

@@ -2,20 +2,19 @@
 
 source("R/01_import_general/01_helper_functions.R")
 
-# Import all community resistance tables
-load("community_resistance_montreal.Rdata")
-
-# rbind
-
-# Import all airbnb tables (include geometries)
-# rbind
-
-# Import all social capital tables 
+# Import a table for each city
+montreal <- left_join(loadRdata("neighbourhood_resistance/montreal.Rdata"), 
+                      left_join(loadRdata("airbnb/montreal.Rdata"), neighbourhoods, by = c("neighbourhood_name" = "neighbourhood")) %>% 
+                        select(1:10, "geometry"), by = c("city", "neighbourhood_name")) %>% 
+            left_join(loadRdata("social_capital/montreal.Rdata"), by = c("city", "neighbourhood_name"))
 
 # Create a new table with one row per neighbourhood
-# cbind
+airbnb_neighbourhoods <- rbind(montreal, toronto, vancouver, washington, miami, new_york, new_orleans)
 
 # Calculate housing loss as percentage of dwellings
+airbnb_neighbourhoods <- airbnb_neighbourhoods %>% 
+  mutate(housing_loss_pct = housing_loss/households)
 
-
-load("social_capital_montreal.Rdata")
+# Explore some relationships
+ggplot(filter(airbnb_neighbourhoods, CRI > 0 ), aes(SCI, CRI, size = housing_loss_pct)) +
+  geom_point()

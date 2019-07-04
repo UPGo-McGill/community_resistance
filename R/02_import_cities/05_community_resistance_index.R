@@ -3,7 +3,7 @@
 source("R/01_import_and_compile_general/01_helper_functions.R")
 
 # Outline variables to evaluate community resistance 
-neighbourhood_resistance <- tibble(city = character(0), neighbourhood = character(0), mentions_local = numeric(0), opposition_local = numeric(0),
+neighbourhood_resistance <- tibble(city = character(0), neighbourhood_name = character(0), mentions_local = numeric(0), opposition_local = numeric(0),
                                    mentions_NYT = numeric(0), opposition_NYT = numeric(0)) 
 
 community_resistance_words = c("protest", "anti", "community led", "affordability", 
@@ -86,6 +86,6 @@ neighbourhood_resistance <- neighbourhood_resistance %>%
                                                                  paste(neighbourhoods_tidy$names, collapse="|")))))/2)
 
 # Export as a table
-save(neighbourhood_resistance, file = "neighbourhood_resistance_montreal.Rdata")
+save(neighbourhood_resistance, file = "neighbourhood_resistance/montreal.Rdata")
 
 

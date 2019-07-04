@@ -27,6 +27,12 @@ options(cancensus.cache_path = "~/Desktop/AirBnB Internship/AirBnB-GIT/community
 # Run US census API key
 # census_api_key("dab993e99dc7faf74295fc559dc2e1764b60e6b9", install = TRUE, overwrite = TRUE)
 
+# Data loader that allows for in place renaming
+loadRdata <- function(fileName){
+  load(fileName)
+  get(ls()[ls() != "fileName"])
+}
+
 ## Multilistings function
 
 strr_multilistings <- function(daily, EH = 2, PR = 3, listing_type, host_ID,

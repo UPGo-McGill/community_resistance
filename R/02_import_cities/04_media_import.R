@@ -74,7 +74,9 @@ neighbourhoods_tidy <- neighbourhoods %>%
 ############################# 2 - IMPORT NECESSARY FILES FROM THE NYT ############################################################################################################################
 ## 2.1 COMPLETE THIS SECTION IF LEXISNEXIS, OTHERWISE SKIP.
 # import LexisNexis txt file(s) with airbnb + city name from the New York Times
-media_LN_NYT <- lnt_read("txt_files/toronto_NYT/airbnb_toronto_NYT_LN.TXT")
+media_LN_NYT <- lnt_read("txt_files/montreal/montreal_NYT_LN.TXT")
+
+# if there is only one file, run the following.
 media_LN_NYT <- media_LN_NYT@meta %>% 
   right_join(media_LN_NYT@articles, by = "ID") %>% 
   select(-c("Source_File", "Graphic", "ID"))
@@ -101,7 +103,7 @@ media_LN_NYT$Date <- as.character(media_LN_NYT$Date)
 
 ## 2.2 COMPLETE THIS SECTION IF FACTIVA, OTHERWISE SKIP. 
 # 2.2.1 import the source and corpus Factiva HTML files for airbnb + city name from the New York Times
-source1_NYT <- FactivaSource("txt_files/toronto_NYT/airbnb_toronto_NYT_FTV.htm")
+source1_NYT <- FactivaSource("txt_files/montreal/montreal_NYT_FTV.htm")
 corpus_NYT <- Corpus(source1_NYT, list(language = NA)) %>% 
   tm_map(content_transformer(tolower)) %>% 
   tm_map(content_transformer(removePunctuation)) %>% 
@@ -145,7 +147,7 @@ rm(source1_NYT, source2_NYT, corpus1_NYT, corpus2_NYT, corpus_NYT)
 ############################# 3 - IMPORT NECESSARY FILES FROM THE LOCAL PAPER ############################################################################################################################
 ## 3.1 COMPLETE THIS SECTION IF LEXISNEXIS, OTHERWISE SKIP.
 # import LexisNexis txt file(s) with airbnb + city name from the local newspaper
-media_LN_local <- lnt_read("txt_files/montreal_local/airbnb_montreal_local_FTV.TXT")
+media_LN_local <- lnt_read("txt_files/montreal/montreal_local_LN.TXT")
 
 # if there is only one file, run the following
 media_LN_local <- media_LN_local@meta %>% 
@@ -175,8 +177,8 @@ media_LN_local$Date <- as.character(media_LN_local$Date)
 
 ## 3.2 COMPLETE THIS SECTION IF FACTIVA, OTHERWISE SKIP. 
 # import the source and corpus Factiva HTML files for airbnb + city name from the local newspaper
-source1_local <- FactivaSource("txt_files/toronto_local/airbnb_toronto_local_FTV_1.htm")
-corpus1_local <- Corpus(source1_local, list(language = NA)) 
+source1_local <- FactivaSource("txt_files/montreal/montreal_local_FTV.htm")
+corpus_local <- Corpus(source1_local, list(language = NA)) 
 
 # if there is more than one file, repeat the following.
 source8_local <- FactivaSource("txt_files/toronto_local/airbnb_toronto_local_FTV_8.htm")
