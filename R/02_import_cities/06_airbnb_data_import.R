@@ -77,7 +77,7 @@ daily <-
   filter(!is.na(Status)) %>%
   arrange(Property_ID, Date)
 
-## Trim listings to the past twelve months
+## Trim listings to the specified dates (add raffle results in future)
 property <-
   property %>% 
   filter(Property_ID %in% daily$Property_ID,
@@ -136,3 +136,6 @@ property <-
 
 rm(GH_list)
 
+# Save files so that you do not need to re run
+save(property, file = "airbnb/montreal_property.Rdata")
+save(daily, file = "airbnb/montreal_daily.Rdata")
