@@ -19,6 +19,9 @@ library(osmdata)
 library(splitstackshape)
 library(dplyr)
 library(stats)
+library(spacyr)
+library(ggmap)
+library(mapview)
 
 # Run Canadian census API key
 options(cancensus.api_key = "CensusMapper_4be2cf3bf91d0cabf967f4934dbdc63b")
@@ -26,6 +29,9 @@ options(cancensus.cache_path = "~/Desktop/AirBnB Internship/AirBnB-GIT/community
 
 # Run US census API key
 # census_api_key("dab993e99dc7faf74295fc559dc2e1764b60e6b9", install = TRUE, overwrite = TRUE)
+
+# Run Google Maps API Key
+# register_google(key = "AIzaSyA8JwLK2FEXI9CFsqU08u0D763fogx7gqs", write = TRUE)
 
 # Data loader that allows for in place renaming
 loadRdata <- function(fileName){

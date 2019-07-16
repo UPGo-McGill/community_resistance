@@ -41,7 +41,7 @@ neighbourhoods$name <- c("outremont",
                           "rosemont, la petite patrie, little italy",
                           "ville saint laurent",
                           "beaconsfield",
-                          "villeray, saint michel, st michel, parc ex, parcex, mile ex, mile ex",
+                          "villeray, saint michel, st michel, parc ex, parcex, mileex, mile ex",
                           "westmount",
                           "montreal est, montreal east",
                           "anjou",
@@ -54,22 +54,6 @@ neighbourhoods$name <- c("outremont",
 neighbourhoods_tidy <- neighbourhoods %>% 
   select(c("neighbourhood", "name")) %>% 
   cSplit("name", ",", direction = "long")
-
-# neighbourhoods_tidy<- rbind(
-  #data_frame(neighbourhood = "plateau", names = c("plateau", "mile end")),
-  #data_frame(neighbourhood = "ville-marie", names = c("ville marie")),
-  #data_frame(neighbourhood = "old montreal", names = c("old port", "old montreal", "old montréal")),
-  #data_frame(neighbourhood = "hochelaga", names = c("hochelaga", "maisonneuve", "homa", "mercier")),
-  #data_frame(neighbourhood = "ndg", names = c("notre dame", "ndg", "cote des neiges", "côte des neiges")),
-  #data_frame(neighbourhood = "rosemont", names = c("little italy", "rosemont", "la petite patrie")),
-  #data_frame(neighbourhood = "saint henri", names = c("saint henri", "atwater market", "lachine canal")),
-  #data_frame(neighbourhood = "griffintown", names = c("griffintown")),
-  #data_frame(neighbourhood = "little burgundy", names = c("little burgundy")),
-  #data_frame(neighbourhood = "outremont", names = c("outremont")),
-  #data_frame(neighbourhood = "westmount", names = c("westmount")),
-  #data_frame(neighbourhood = "sud-ouest", names = c("sud ouest", "sudouest", "pointe saint charles", "pointe st charles", "charles")),
-  #data_frame(neighbourhood = "villeray", names = c("park ex", "mile ex", "villeray", "saint michel")),
-  #data_frame(neighbourhood = "lachine", names = c("lachine")))
 
 ############################# 2 - IMPORT NECESSARY FILES FROM THE NYT ############################################################################################################################
 ## 2.1 COMPLETE THIS SECTION IF LEXISNEXIS, OTHERWISE SKIP.
@@ -276,7 +260,10 @@ media_local$Article <- str_replace(gsub("\\s+", " ", str_trim(media_local$Articl
 # Remove articles that only mention Airbnb once. These are more often than not just referencing the 
 # sharing economy in another sense. Remove duplicate articles.
 
-airbnb <- c("airbnb", "homeshar", "home shar", "shortterm", "short term", "str ", "strs")
+airbnb <- c("airbnb", "homeshar", "home shar", "shortterm", "short term", "str ", "strs",
+            "Airbnb", "AirBnB", "AIRBNB", "short-term", "Short-term", "Shortterm", "Short term",
+            "STR", "Home-shar", "Home shar", "home-shar", "Accomodation", "accomodation", "rental", 
+            "Rental")
 
 media_local <- media_local %>% 
   mutate(mentions = 

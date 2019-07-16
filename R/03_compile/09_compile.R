@@ -19,7 +19,6 @@ airbnb_neighbourhoods <- airbnb_neighbourhoods %>%
 ggplot(filter(airbnb_neighbourhoods, CRI > 0 ), aes(med_income, CRI, size = active_listings)) +
   geom_point()
  
-
 ggplot(airbnb_neighbourhoods, aes(CRI, housing_loss_pct, size = SCI)) +
          geom_point()
        
