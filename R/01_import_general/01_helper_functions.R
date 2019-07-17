@@ -22,6 +22,7 @@ library(stats)
 library(spacyr)
 library(ggmap)
 library(mapview)
+# Note: spaCy requires the user to download a version of miniconda and follow a set of instructions to set up
 
 # Run Canadian census API key
 options(cancensus.api_key = "CensusMapper_4be2cf3bf91d0cabf967f4934dbdc63b")

@@ -24,6 +24,7 @@ ner_local <- rbind(
            entity_type == "LOC" |
            entity_type == "PERSON") %>% 
   filter(entity != cityname) %>% 
+  filter(nchar(entity) > 2) %>% 
   select(doc_id, entity),
   spacy_parse(media_local$Headline) %>% 
     entity_extract(type = "named", concatenator = " ") %>% 
@@ -33,10 +34,11 @@ ner_local <- rbind(
              entity_type == "LOC" |
              entity_type == "PERSON") %>% 
     filter(entity != cityname) %>% 
+    filter(nchar(entity) > 2) %>% 
     select(doc_id, entity)) %>% 
   distinct()
 
-ner_NYT <- rbind(
+ner_NYT_2 <- rbind(
   spacy_parse(media_NYT$Article) %>% 
     entity_extract(type = "named", concatenator = " ") %>% 
     filter(entity_type == "GPE" |
@@ -45,6 +47,7 @@ ner_NYT <- rbind(
              entity_type == "LOC" |
              entity_type == "PERSON") %>% 
     filter(entity != cityname) %>% 
+    filter(nchar(entity) > 2) %>% 
     select(doc_id, entity),
   spacy_parse(media_NYT$Headline) %>% 
     entity_extract(type = "named", concatenator = " ") %>% 
@@ -54,6 +57,7 @@ ner_NYT <- rbind(
              entity_type == "LOC" |
              entity_type == "PERSON") %>% 
     filter(entity != cityname) %>% 
+    filter(nchar(entity) > 2) %>% 
     select(doc_id, entity)) %>% 
   distinct()
 
@@ -85,6 +89,22 @@ neighbourhoods$neighbourhood <- neighbourhoods$neighbourhood %>%
       }
   }
  
+ n = 1
+ 
+ repeat{
+   
+   ner_NYT$entity[n] <- 
+     ifelse(any(grepl(ner_NYT$entity[n], neighbourhoods$neighbourhood)) == TRUE,
+            paste(ner_NYT$entity[n], cityname),
+            ner_NYT$entity[n])
+   
+   n = n + 1
+   
+   if (n > nrow(ner_NYT)) {
+     break
+   }
+ }
+ 
 # Query Google to geocode the locations for their latitude and longitude
 locations_local <- mutate_geocode(ner_local, entity)
 
@@ -95,7 +115,7 @@ locations_local <- locations_local %>%
   st_as_sf(coords = c ("lon", "lat"), crs = 4326) %>% 
   st_transform(32618)
 
-locations_NYT <- locations_local %>% 
+locations_NYT <- locations_NYT %>% 
   filter(!is.na(lon)) %>% 
   st_as_sf(coords = c ("lon", "lat"), crs = 4326) %>% 
   st_transform(32618)
@@ -129,7 +149,8 @@ community_resistance_words = c("protest", "anti", "community led", "affordabilit
                                "housing stock", "multiple listings", "disturbance", "damage")
 
 # Perform query and sentiment analysis
-# need to update 4 and 6
+
+n = 5
 
 repeat{
   neighbourhood_resistance[n, 1] <- cityname
@@ -138,6 +159,7 @@ repeat{
   neighbourhood_resistance[n,3] <- locations_local %>% 
     filter(neighbourhood == neighbourhoods$neighbourhood[n]) %>% 
     select("doc_id") %>% 
+    st_drop_geometry() %>% 
     distinct() %>% 
     nrow()
   
@@ -145,18 +167,18 @@ repeat{
     media_local %>% 
     filter(str_detect(Article, paste(community_resistance_words, collapse="|"))) %>% 
     select("ID") %>% 
-    inner_join(media_local %>% 
-                 filter(str_detect(Article, paste(filter(neighbourhoods_tidy, 
-                                                         neighbourhood == neighbourhoods$neighbourhood[n]) %>% 
-                                                    pull(name), collapse = "|"))) %>% 
-                 select("ID") %>% 
-                 distinct(), .) %>% 
+    inner_join(locations_local %>% 
+                 filter(neighbourhood == neighbourhoods$neighbourhood[n]) %>% 
+                 select("doc_id") %>% 
+                 st_drop_geometry() %>% 
+                 distinct(), ., by = c("doc_id" = "ID")) %>% 
     distinct() %>% 
     nrow()
   
   neighbourhood_resistance[n,5] <- locations_NYT %>% 
     filter(neighbourhood == neighbourhoods$neighbourhood[n]) %>% 
     select("doc_id") %>% 
+    st_drop_geometry() %>% 
     distinct() %>% 
     nrow()
   
@@ -164,12 +186,11 @@ repeat{
     media_NYT %>% 
     filter(str_detect(Article, paste(community_resistance_words, collapse="|"))) %>% 
     select("ID") %>% 
-    inner_join(media_NYT %>% 
-                 filter(str_detect(Article, paste(filter(neighbourhoods_tidy, 
-                                                         neighbourhood == neighbourhoods$neighbourhood[n]) %>% 
-                                                    pull(name), collapse = "|"))) %>% 
-                 select("ID") %>% 
-                 distinct(), .) %>% 
+    inner_join(locations_NYT %>% 
+                 filter(neighbourhood == neighbourhoods$neighbourhood[n]) %>% 
+                 select("doc_id") %>% 
+                 st_drop_geometry() %>% 
+                 distinct(), ., by = c("doc_id" = "ID")) %>% 
     distinct() %>% 
     nrow()
   
@@ -185,15 +206,26 @@ repeat{
 neighbourhood_resistance <- neighbourhood_resistance %>% 
   mutate(opposition_local_pct = opposition_local/mentions_local) %>% 
   mutate(opposition_NYT_pct = opposition_NYT/mentions_NYT) %>% 
-  mutate(CI = (mentions_local/nrow(filter(media_local, str_detect(Article, 
-                                                                  paste(neighbourhoods_tidy$names, collapse="|")))) +
-                 mentions_NYT/nrow(filter(media_NYT, str_detect(Article, 
-                                                                paste(neighbourhoods_tidy$names, collapse="|")))))/2) %>% 
-  mutate(CRI = (opposition_local/nrow(filter(media_local, str_detect(Article, 
-                                                                     paste(neighbourhoods_tidy$names, collapse="|")))) +
-                  opposition_NYT/nrow(filter(media_NYT, str_detect(Article, 
-                                                                   paste(neighbourhoods_tidy$names, collapse="|")))))/2)
+  mutate(CI = (mentions_local/
+                 nrow(locations_local %>% 
+                  select("doc_id") %>% 
+                  st_drop_geometry() %>% 
+                  distinct()) +
+                 mentions_NYT/ 
+                  nrow(locations_NYT %>% 
+                         select("doc_id") %>% 
+                         st_drop_geometry() %>% 
+                          distinct()))/2) %>% 
+  mutate(CRI = (opposition_local/
+                  nrow(locations_local %>% 
+                         select("doc_id") %>% 
+                         st_drop_geometry() %>% 
+                         distinct()) +
+                  opposition_NYT/ 
+                  nrow(locations_NYT %>% 
+                         select("doc_id") %>% 
+                         st_drop_geometry() %>% 
+                         distinct()))/2)
 
 # Export as a table
 save(neighbourhood_resistance, file = "neighbourhood_resistance/montreal.Rdata")
-

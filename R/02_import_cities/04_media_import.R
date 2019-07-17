@@ -39,17 +39,11 @@ media_LN_NYT$Date <- as.character(media_LN_NYT$Date)
 ## 1.2 COMPLETE THIS SECTION IF FACTIVA, OTHERWISE SKIP. 
 # 1.2.1 import the source and corpus Factiva HTML files for airbnb + city name from the New York Times
 source1_NYT <- FactivaSource("txt_files/montreal/montreal_NYT_FTV.htm")
-corpus_NYT <- Corpus(source1_NYT, list(language = NA)) %>% 
-  tm_map(content_transformer(tolower)) %>% 
-  tm_map(content_transformer(removePunctuation)) %>% 
-  tm_map(stripWhitespace)
+corpus_NYT <- Corpus(source1_NYT, list(language = NA)) 
 
 # if there is more than one file, repeat the following.
 source2_NYT <- FactivaSource("txt_files/Factiva.htm")
-corpus2_NYT <- Corpus(source1_NYT, list(language = NA)) %>% 
-  tm_map(content_transformer(tolower)) %>% 
-  tm_map(content_transformer(removePunctuation)) %>% 
-  tm_map(stripWhitespace)
+corpus2_NYT <- Corpus(source1_NYT, list(language = NA))
 
 # if there is more than one file, merge
 corpus_NYT = tm:::c.VCorpus(corpus1_NYT, corpus2_NYT)
@@ -61,7 +55,7 @@ media_FTV_NYT <- tibble(Source_ID = numeric(0), Newspaper = character(0), Date =
 
 n = 1
 
-for (n in c(1:length(media_FTV_NYT))) {
+for (n in c(1:length(corpus_NYT))) {
   
   media_FTV_NYT[n,1] = paste("FTV", n)
   media_FTV_NYT[n,2] = paste(corpus_NYT[[n]]$meta$origin, collapse="")
@@ -116,8 +110,8 @@ source1_local <- FactivaSource("txt_files/montreal/montreal_local_FTV_1.htm")
 corpus1_local <- Corpus(source1_local, list(language = NA)) 
 
 # if there is more than one file, repeat the following.
-source3_local <- FactivaSource("txt_files/montreal/montreal_local_FTV_3.htm")
-corpus3_local <- Corpus(source3_local, list(language = NA))
+source2_local <- FactivaSource("txt_files/montreal/montreal_local_FTV_2.htm")
+corpus2_local <- Corpus(source2_local, list(language = NA))
 
 # if there is more than one file, merge
 corpus_local = tm:::c.VCorpus(corpus1_local, corpus2_local, corpus3_local)
@@ -255,7 +249,7 @@ media_local <- media_local %>%
 media_NYT <- media_NYT %>% 
   mutate(ID = 1:nrow(media_NYT))
 
-## 3.5 EXPORT
+s## 3.5 EXPORT
 # export the table(s) as .csv so that this does not need to be rerun.
 
 write_csv(media_local, "txt_files/montreal/media_montreal_local.csv")
