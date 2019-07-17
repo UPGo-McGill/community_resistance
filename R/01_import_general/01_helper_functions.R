@@ -31,7 +31,7 @@ options(cancensus.cache_path = "~/Desktop/AirBnB Internship/AirBnB-GIT/community
 # census_api_key("dab993e99dc7faf74295fc559dc2e1764b60e6b9", install = TRUE, overwrite = TRUE)
 
 # Run Google Maps API Key
-# register_google(key = "AIzaSyA8JwLK2FEXI9CFsqU08u0D763fogx7gqs", write = TRUE)
+# register_google(key = "personal_key", write = TRUE)
 
 # Data loader that allows for in place renaming
 loadRdata <- function(fileName){
