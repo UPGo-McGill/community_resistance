@@ -1,20 +1,20 @@
-######################################### COMMUNITY RESISTANCE INDEX ###############################
+######################################### COMMUNITY RESISTANCE INDEX ########################################################
 
 source("R/01_import_general/01_helper_functions.R")
 
-# Enter city name and upload required geometries. Ensure that there is a field titled neighbourhood.
+# Enter city name and upload required geometries. Ensure that there is a field titled neighbourhood in the geometries file
 cityname <- "Montreal"
 
 neighbourhoods <-
   read_sf(dsn = "Data", layer = "montreal")%>%
-  st_transform(3618) %>% 
+  st_transform(32618) %>% 
   select(MUN_ID = MUNID, CODE_ID = CODEID, neighbourhood = NOM, geometry) 
 
-# Initialize spaCy.
+# Initialize spaCy
 spacy_initialize()
 
-# Perform Named Entity Recognition to determine what articles mention what locations.
-# Remove the city name as one of the locations as this will geo-locate to a specific point within one borough.
+# Perform Named Entity Recognition to determine what articles mention what locations
+# Remove the city name as one of the locations as this will geo-locate to a specific point within one borough
 ner_local <- rbind(
   spacy_parse(media_local$Article) %>% 
   entity_extract(type = "named", concatenator = " ") %>% 
@@ -33,7 +33,8 @@ ner_local <- rbind(
              entity_type == "LOC" |
              entity_type == "PERSON") %>% 
     filter(entity != cityname) %>% 
-    select(doc_id, entity))
+    select(doc_id, entity)) %>% 
+  distinct()
 
 ner_NYT <- rbind(
   spacy_parse(media_NYT$Article) %>% 
@@ -53,10 +54,40 @@ ner_NYT <- rbind(
              entity_type == "LOC" |
              entity_type == "PERSON") %>% 
     filter(entity != cityname) %>% 
-    select(doc_id, entity))
+    select(doc_id, entity)) %>% 
+  distinct()
 
-# Query Google to geocode the locations for their latitude and longitude.
+# Remove punctuation from the text
+
+ner_local$entity <- ner_local$entity %>% 
+  gsub("[[:punct:]]", " ", .)
+
+ner_NYT$entity <- ner_NYT$entity %>% 
+  gsub("[[:punct:]]", " ", .)
+
+neighbourhoods$neighbourhood <- neighbourhoods$neighbourhood %>% 
+  gsub("[[:punct:]]", " ", .)
+
+# Add the city name to the entity if it is part of any neighbourhood name
+ n = 1
+                                             
+  repeat{
+    
+      ner_local$entity[n] <- 
+           ifelse(any(grepl(ner_local$entity[n], neighbourhoods$neighbourhood)) == TRUE,
+                  paste(ner_local$entity[n], cityname),
+                  ner_local$entity[n])
+                                               
+      n = n + 1
+                                               
+  if (n > nrow(ner_local)) {
+       break
+      }
+  }
+ 
+# Query Google to geocode the locations for their latitude and longitude
 locations_local <- mutate_geocode(ner_local, entity)
+
 locations_NYT <- mutate_geocode(ner_NYT, entity)
 
 locations_local <- locations_local %>% 
@@ -74,9 +105,14 @@ locations_local <- locations_local %>%
   st_join( neighbourhoods,join = st_intersects) %>% 
   filter(!is.na(neighbourhood))
 
+locations_local$doc_id <- as.numeric(gsub("text", "",locations_local$doc_id))
+
 locations_NYT <- locations_NYT %>% 
   st_join( neighbourhoods,join = st_intersects) %>% 
   filter(!is.na(neighbourhood))
+
+locations_NYT$doc_id <- as.numeric(gsub("text", "",locations_NYT$doc_id))
+
 
 # Determine the community resistance index.
 neighbourhood_resistance <- tibble(city = character(0), neighbourhood_name = character(0), mentions_local = numeric(0), opposition_local = numeric(0),
@@ -93,14 +129,13 @@ community_resistance_words = c("protest", "anti", "community led", "affordabilit
                                "housing stock", "multiple listings", "disturbance", "damage")
 
 # Perform query and sentiment analysis
-
-n = 1
+# need to update 4 and 6
 
 repeat{
   neighbourhood_resistance[n, 1] <- cityname
   neighbourhood_resistance[n, 2] <- neighbourhoods$neighbourhood[n]
   
-  neighbourhood_resistance[n,3] <- test %>% 
+  neighbourhood_resistance[n,3] <- locations_local %>% 
     filter(neighbourhood == neighbourhoods$neighbourhood[n]) %>% 
     select("doc_id") %>% 
     distinct() %>% 
@@ -119,7 +154,7 @@ repeat{
     distinct() %>% 
     nrow()
   
-  neighbourhood_resistance[n,5] <- test %>% 
+  neighbourhood_resistance[n,5] <- locations_NYT %>% 
     filter(neighbourhood == neighbourhoods$neighbourhood[n]) %>% 
     select("doc_id") %>% 
     distinct() %>% 
@@ -161,10 +196,4 @@ neighbourhood_resistance <- neighbourhood_resistance %>%
 
 # Export as a table
 save(neighbourhood_resistance, file = "neighbourhood_resistance/montreal.Rdata")
-
-
-
-
-
-
 

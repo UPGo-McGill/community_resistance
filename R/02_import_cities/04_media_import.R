@@ -152,15 +152,13 @@ rm(source1_local, source2_local, source3_local, source4_local, source5_local, so
 ######################### 3 - MERGE AND TIDY ##############################################################################################################################
 # 3.1 IF USING BOTH FACTIVA AND LEXISNEXIS, MERGE AND REMOVE DUPLICATES
 media_NYT <- rbind(media_FTV_NYT, media_LN_NYT) %>% 
-  mutate(ID = 1: (nrow(media_FTV_NYT) + nrow(media_LN_NYT))) %>% 
-  select(10, 1:9) %>% 
+  select(1:9) %>% 
   group_by(Author) %>% 
   distinct(Headline, .keep_all = TRUE) %>% 
   ungroup()
 
 media_local <- rbind(media_FTV_local, media_LN_local) %>% 
-  mutate(ID = 1: (nrow(media_FTV_local) + nrow(media_LN_local))) %>% 
-  select(10, 1:9) %>% 
+  select(1:9) %>% 
   group_by(Author) %>% 
   distinct(Headline, .keep_all = TRUE) %>% 
   ungroup()
@@ -168,33 +166,62 @@ media_local <- rbind(media_FTV_local, media_LN_local) %>%
 ## 3.2 OTHERWISE RENAME THE DATAFRAME AS CITY
 
 media_NYT <- media_LN_NYT %>% 
-  mutate(ID = 1: nrow(media_LN_NYT)) %>% 
-  select(10, 1:9) 
+  select(1:9) 
 
 media_local <- media_LN_local %>% 
-  mutate(ID = 1: nrow(media_LN_local)) %>% 
-  select(10, 1:9)
+  select(1:9)
 
-## 3.4 REMOVE IRRELEVANT ARTICLES
+## 3.3 REMOVE IRRELEVANT ARTICLES
 # Remove articles that only mention Airbnb once. These are more often than not just referencing the 
-# sharing economy in another sense. Remove duplicate articles.
+# sharing economy in another sense. 
 
-airbnb <- c("airbnb", "homeshar", "home shar", "shortterm", "short term", "str ", "strs",
-            "Airbnb", "AirBnB", "AIRBNB", "short-term", "Short-term", "Shortterm", "Short term",
-            "STR", "Home-shar", "Home shar", "home-shar", "Accomodation", "accomodation", "rental", 
-            "Rental")
+# clean text temporarily to allow for easy search
+media_NYT_temp <- media_NYT
+media_local_temp <- media_local
 
-media_local <- media_local %>% 
+media_NYT_temp$Headline <- media_NYT_temp$Headline %>% 
+  str_to_lower() %>% 
+  iconv(to = "ASCII//TRANSLIT") %>% 
+  str_replace("—", " ") %>% 
+  gsub("[[:punct:]]", " ", .)
+media_NYT_temp$Headline <- str_replace(gsub("\\s+", " ", str_trim(media_NYT_temp$Headline)), "B", "b")
+
+media_NYT_temp$Article <- media_NYT_temp$Article %>% 
+  str_to_lower() %>% 
+  iconv(to = "ASCII//TRANSLIT") %>% 
+  str_replace("—", " ") %>% 
+  gsub("[[:punct:]]", " ", .)
+media_NYT_temp$Article <- str_replace(gsub("\\s+", " ", str_trim(media_NYT_temp$Article)), "B", "b")
+
+media_local_temp$Headline <- media_local_temp$Headline %>% 
+  str_to_lower() %>% 
+  iconv(to = "ASCII//TRANSLIT") %>% 
+  str_replace("—", " ") %>% 
+  gsub("[[:punct:]]", " ", .)
+media_local_temp$Headline <- str_replace(gsub("\\s+", " ", str_trim(media_local_temp$Headline)), "B", "b")
+
+media_local_temp$Article <- media_local_temp$Article %>% 
+  str_to_lower() %>% 
+  iconv(to = "ASCII//TRANSLIT") %>% 
+  str_replace("—", " ") %>% 
+  gsub("[[:punct:]]", " ", .)
+media_local_temp$Article <- str_replace(gsub("\\s+", " ", str_trim(media_local_temp$Article)), "B", "b")
+
+
+# search for Airbnb mentions in the cleaned text
+airbnb <- c("airbnb", "homeshar", "home shar", "shortterm", "short term", "str ", "strs")
+
+media_local_temp <- media_local_temp %>% 
   mutate(mentions = 
-           str_count(media_local$Article, paste(airbnb, collapse="|")) +
-           str_count(media_local$Headline, paste(airbnb, collapse="|"))) %>% 
+           str_count(media_local_temp$Article, paste(airbnb, collapse="|")) +
+           str_count(media_local_temp$Headline, paste(airbnb, collapse="|"))) %>% 
   filter(mentions > 1) %>%
   select(-c(mentions)) %>% 
   group_by(Author) %>% 
   distinct(Headline, .keep_all = TRUE) %>% 
   ungroup()
 
-media_NYT <- media_NYT %>% 
+media_NYT_temp <- media_NYT_temp %>% 
   mutate(mentions = 
            str_count(media_NYT$Article, paste(airbnb, collapse="|")) +
            str_count(media_NYT$Headline, paste(airbnb, collapse="|"))) %>% 
@@ -204,7 +231,29 @@ media_NYT <- media_NYT %>%
   distinct(Headline, .keep_all = TRUE) %>% 
   ungroup()
 
-rm(airbnb)
+# trim the original media files to include only those that mention Airbnb more than once
+
+ media_local <- media_local %>% 
+   mutate(relevant = media_local$Source_ID %in% media_local_temp$Source_ID) %>% 
+   filter(relevant == TRUE) %>% 
+   select(-relevant)
+
+ media_NYT <- media_NYT %>% 
+   mutate(relevant = media_NYT$Source_ID %in% media_NYT_temp$Source_ID) %>% 
+   filter(relevant == TRUE) %>% 
+   select(-relevant)
+ 
+rm(airbnb, media_local_temp, media_NYT_temp)
+
+
+## 3.4 ADD AN ID
+# The following Named Entity Recognition and embedding model use an ID.
+
+media_local <- media_local %>% 
+  mutate(ID = 1:nrow(media_local))
+
+media_NYT <- media_NYT %>% 
+  mutate(ID = 1:nrow(media_NYT))
 
 ## 3.5 EXPORT
 # export the table(s) as .csv so that this does not need to be rerun.
