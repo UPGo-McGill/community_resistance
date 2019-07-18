@@ -1,0 +1,36 @@
+"word","synonym","cosine","freq"
+"airbnb","home share",0.743440091609955,157
+"airbnb","airbnb host",0.735913753509521,973
+"airbnb","host",0.719694018363953,3667
+"airbnb","home sharing",0.686599791049957,465
+"airbnb","https perma",0.677938282489777,186
+"homeshar","homeshare",0.94523549079895,9
+"homeshar","homesharing",0.907262086868286,83
+"homeshar","timeshare",0.646376371383667,14
+"homeshar","makemytrip",0.623713850975037,9
+"homeshar","launch",0.61021763086319,535
+"home shar","airbnb",0.700864195823669,17495
+"home shar","say",0.690365731716156,8454
+"home shar","rideservice",0.680775344371796,6
+"home shar","like",0.663222789764404,2130
+"home shar","market",0.658670663833618,1619
+"shortterm","letting",0.762206554412842,104
+"shortterm","shortterm rental",0.748998463153839,147
+"shortterm","longterm",0.693769335746765,93
+"shortterm","rental",0.688382267951965,1766
+"shortterm","short term",0.688131213188171,460
+"short term","shortterm",0.879550397396088,155
+"short term","shortstay",0.797615110874176,5
+"short term","short term",0.788480699062347,460
+"short term","shortterm rental",0.765700161457062,147
+"short term","rental",0.730291068553925,1766
+"str ","legislation",0.709934115409851,272
+"str ","strs",0.701523959636688,30
+"str ","short term rental",0.676920711994171,1036
+"str ","hotelization",0.668468475341797,22
+"str ","narrowly",0.66154944896698,6
+"strs","short term rental",0.725690901279449,1036
+"strs","hotelization",0.723109364509583,22
+"strs","str",0.683239877223969,150
+"strs","effect",0.673475086688995,350
+"strs","legalization",0.670498430728912,35

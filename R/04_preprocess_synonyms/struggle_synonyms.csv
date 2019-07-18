@@ -1,0 +1,206 @@
+"word","synonym","cosine","freq"
+"protest","protester",0.729939639568329,12
+"protest","activist",0.649093985557556,70
+"protest","riot",0.643338263034821,8
+"protest","accusation",0.639601826667786,20
+"protest","proliferation",0.637122750282288,19
+"anti","israel",0.738280057907104,173
+"anti","semitism",0.726543128490448,6
+"anti","israeli",0.726199269294739,64
+"anti","semitic",0.709179818630219,8
+"anti","bds",0.707178354263306,25
+"community led","community",0.853650987148285,1118
+"community led","promote",0.70973789691925,212
+"community led","tourism",0.689957976341248,1100
+"community led","sustainably",0.687617659568787,13
+"community led","sustainability",0.66936331987381,25
+"affordability","unaffordability",0.909073889255524,5
+"affordability","housing affordability",0.821492075920105,74
+"affordability","crisis",0.711008965969086,174
+"affordability","n11",0.697003304958344,28
+"affordability","unaffordable",0.689217805862427,6
+"oppose","commenter",0.61184698343277,9
+"oppose","criticize",0.599421799182892,42
+"oppose","lawmaker",0.581800818443298,81
+"oppose","opposition",0.578276216983795,73
+"oppose","trades",0.57771247625351,12
+"resist","resistance",0.735307335853577,17
+"resist","setback",0.6379154920578,14
+"resist","lawsuit",0.609499037265778,213
+"resist","desist",0.595785856246948,7
+"resist","forward",0.593809962272644,152
+"opposition","objection",0.688731014728546,11
+"opposition","plight",0.673962473869324,5
+"opposition","victory",0.657229781150818,44
+"opposition","elect",0.6352578997612,51
+"opposition","protest",0.633193969726562,69
+"gentrification","displacement",0.801592528820038,18
+"gentrification","gentrify",0.797862887382507,27
+"gentrification","gentrified",0.787655889987946,6
+"gentrification","socioeconomic",0.785004615783691,9
+"gentrification","inequality",0.695308864116669,22
+"threat","pose",0.740860819816589,96
+"threat","formidable",0.68570464849472,5
+"threat","unfair",0.655801475048065,67
+"threat","competition",0.640976965427399,198
+"threat","overregulation",0.639560043811798,6
+"manifestation","manifesto",0.819180011749268,8
+"manifestation","become",0.677030146121979,905
+"manifestation","slim",0.640877425670624,5
+"manifestation","inspiration",0.63744705915451,26
+"manifestation","compose",0.629595935344696,10
+"complaint","response",0.690955340862274,207
+"complaint","hotline",0.684732496738434,10
+"complaint","neighbour",0.682314455509186,95
+"complaint","complain",0.667750537395477,121
+"complaint","issue",0.653711318969727,924
+"disapprove","disappoint",0.709707915782928,16
+"disapprove","disappear",0.708199679851532,43
+"disapprove","respond",0.658434748649597,228
+"disapprove","disappointing",0.651961028575897,14
+"disapprove","disappointed",0.646222531795502,10
+"evict","tenant",0.761236310005188,420
+"evict","n185",0.74680632352829,10
+"evict","landlord",0.735558986663818,589
+"evict","eviction",0.729438304901123,61
+"evict","n197",0.725249528884888,10
+"overtourism","hypertourism",0.811719655990601,5
+"overtourism","edinburgh",0.690345227718353,77
+"overtourism","lure",0.668260931968689,22
+"overtourism","amsterdammer",0.660704910755157,5
+"overtourism","rarely",0.660007238388062,18
+"detriment","detrimental",0.882724344730377,5
+"detriment","remain",0.667654037475586,394
+"detriment","gearing",0.656327664852142,8
+"detriment","negative",0.63090455532074,136
+"detriment","inadequate",0.630587935447693,11
+"ghost","undercover",0.657509803771973,7
+"ghost","propertys",0.640749871730804,9
+"ghost","invisible",0.62458199262619,8
+"ghost","fill",0.606040239334106,156
+"ghost","sophia",0.582145273685455,5
+"nuisance","antisocial",0.666579842567444,6
+"nuisance","adverse",0.661552786827087,14
+"nuisance","noise",0.653899669647217,72
+"nuisance","disrespectful",0.63501650094986,7
+"nuisance","enforcement",0.633135974407196,251
+"consultation","indication",0.623331248760223,19
+"consultation","also",0.621179282665253,2853
+"consultation","obtain",0.61648690700531,135
+"consultation","will",0.604185104370117,4460
+"consultation","authority",0.592334091663361,258
+"opponent","supporter",0.694334328174591,54
+"opponent","lobbyist",0.644990682601929,22
+"opponent","battleground",0.632742762565613,7
+"opponent","kyung",0.630893349647522,7
+"opponent","republicans",0.630121350288391,6
+"discrimination","discriminate",0.854246556758881,81
+"discrimination","racial discrimination",0.829477727413177,89
+"discrimination","racism",0.793585956096649,61
+"discrimination","bias",0.790143609046936,114
+"discrimination","anti discrimination",0.772489428520203,64
+"critic","illegal hotel",0.668921530246735,119
+"critic","criticise",0.630576550960541,6
+"critic","criticize",0.615535259246826,42
+"critic","concern",0.614649713039398,487
+"critic","dodgy",0.612492322921753,5
+"crisis","housing affordability",0.735195338726044,74
+"crisis","housing crisis",0.716298043727875,67
+"crisis","affordability",0.711008846759796,55
+"crisis","populism",0.708990454673767,5
+"crisis","unaffordability",0.703607022762299,5
+"shortage","housing shortage",0.722693741321564,50
+"shortage","availability",0.676534652709961,82
+"shortage","supply",0.668133974075317,374
+"shortage","long term",0.667707860469818,204
+"shortage","yearit",0.660465359687805,5
+"blame","unaffordability",0.717408537864685,5
+"blame","unaffordable",0.682390153408051,6
+"blame","housing affordability",0.663101732730865,74
+"blame","worsen",0.658213794231415,23
+"blame","girlfriend",0.646994292736053,16
+"garbage","drain",0.623989224433899,8
+"garbage","recycling",0.623678207397461,6
+"garbage","rip",0.614988029003143,14
+"garbage","cleaning",0.608925998210907,52
+"garbage","salad",0.593665778636932,10
+"noise","partying",0.77589076757431,6
+"noise","noisy",0.699316918849945,21
+"noise","antisocial",0.663799703121185,6
+"noise","neighbour",0.658217787742615,95
+"noise","lack",0.656792104244232,178
+"complain","partying",0.721167027950287,6
+"complain","disrespectful",0.716927051544189,7
+"complain","upset",0.686116695404053,30
+"complain","stag",0.675815045833588,11
+"complain","complaint",0.667750537395477,197
+"concern","issue",0.735536456108093,924
+"concern","fear",0.698787868022919,146
+"concern","safety",0.662272572517395,367
+"concern","problem",0.655934393405914,570
+"concern","legitimacy",0.643181264400482,19
+"coalition","fairbnb",0.679767608642578,21
+"coalition","thorben",0.662664771080017,5
+"coalition","allen",0.654311776161194,26
+"coalition","union",0.652650594711304,225
+"coalition","unite",0.646637201309204,36
+"hostile","transparency",0.66962718963623,54
+"hostile","toxic",0.63631546497345,7
+"hostile","violent",0.633600533008575,17
+"hostile","communist",0.631536900997162,15
+"hostile","intervention",0.61948549747467,24
+"hostility","governmental",0.722048819065094,10
+"hostility","environmentally",0.656415820121765,16
+"hostility","environmental",0.648535490036011,51
+"hostility","pollution",0.647293150424957,13
+"hostility","contribution",0.642260432243347,66
+"fairbnb","thorben",0.787550985813141,5
+"fairbnb","coalition",0.679767549037933,72
+"fairbnb","hennessy",0.661591768264771,6
+"fairbnb","toronto",0.660864055156708,187
+"fairbnb","affordable housing",0.652569532394409,270
+"activist","activism",0.723153948783875,5
+"activist","farright",0.654950439929962,5
+"activist","protest",0.649094104766846,69
+"activist","violence",0.649039804935455,24
+"activist","inequality",0.647697448730469,22
+"activism","activist",0.72315388917923,70
+"activism","farright",0.674991726875305,5
+"activism","poetry",0.66595333814621,7
+"activism","uprising",0.654832661151886,5
+"activism","culminate",0.636263251304626,5
+"displace","displacement",0.783356904983521,18
+"displace","gentrify",0.728778183460236,27
+"displace","resident",0.696452856063843,693
+"displace","gentrification",0.673675894737244,49
+"displace","misplace",0.667987525463104,5
+"illegal","illegality",0.842979907989502,7
+"illegal","illegally",0.839765846729279,59
+"illegal","illegal hotel",0.799961030483246,119
+"illegal","violate",0.796073436737061,208
+"illegal","less day",0.7132488489151,59
+"affordable housing","affordable",0.895167112350464,170
+"affordable housing","housing",0.869325459003448,916
+"affordable housing","affordable housing",0.852660477161407,270
+"affordable housing","unaffordable",0.776354074478149,6
+"affordable housing","housing shortage",0.755611896514893,50
+"housing stock","housing stock",0.868383407592773,66
+"housing stock","housing",0.85980212688446,916
+"housing stock","unaffordable",0.800765693187714,6
+"housing stock","housing market",0.779857933521271,144
+"housing stock","affordable housing",0.766149163246155,270
+"multiple listings","listings",0.868959069252014,37
+"multiple listings","ssf",0.723370790481567,27
+"multiple listings","illegal",0.723286330699921,376
+"multiple listings","listing",0.718776881694794,1834
+"multiple listings","illegality",0.715875208377838,7
+"disturbance","disturb",0.817597687244415,18
+"disturbance","antisocial",0.651322841644287,6
+"disturbance","detention",0.64819461107254,17
+"disturbance","condition",0.635324001312256,186
+"disturbance","adequate",0.635059416294098,20
+"damage","cause",0.692863821983337,273
+"damage","injury",0.690799236297607,34
+"damage","suffer",0.645427584648132,67
+"damage","craw",0.640200197696686,5
+"damage","loss",0.630929470062256,128
