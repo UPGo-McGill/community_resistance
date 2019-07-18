@@ -14,15 +14,15 @@ neighbourhoods <-
 # Remove the city name as one of the locations as this will geo-locate to a specific point within one borough
 ner_local <- rbind(
   spacy_parse(media_local$Article) %>% 
-  entity_extract(type = "named", concatenator = " ") %>% 
-  filter(entity_type == "GPE" |
-           entity_type == "FAC" |
-           entity_type == "ORG" |
-           entity_type == "LOC" |
-           entity_type == "PERSON") %>% 
-  filter(entity != cityname) %>% 
-  filter(nchar(entity) > 2) %>% 
-  select(doc_id, entity),
+    entity_extract(type = "named", concatenator = " ") %>% 
+    filter(entity_type == "GPE" |
+             entity_type == "FAC" |
+             entity_type == "ORG" |
+             entity_type == "LOC" |
+             entity_type == "PERSON") %>% 
+    filter(entity != cityname) %>% 
+    filter(nchar(entity) > 2) %>% 
+    select(doc_id, entity),
   spacy_parse(media_local$Headline) %>% 
     entity_extract(type = "named", concatenator = " ") %>% 
     filter(entity_type == "GPE" |
@@ -32,7 +32,7 @@ ner_local <- rbind(
              entity_type == "PERSON") %>% 
     filter(entity != cityname) %>% 
     filter(nchar(entity) > 2) %>% 
-   select(doc_id, entity)) %>% 
+    select(doc_id, entity)) %>% 
   distinct()
 
 ner_NYT <- rbind(
@@ -70,38 +70,38 @@ neighbourhoods$neighbourhood <- neighbourhoods$neighbourhood %>%
   gsub("[[:punct:]]", " ", .)
 
 # Add the city name to the entity if it is part of any neighbourhood name
- n = 1
-                                             
-  repeat{
-    
-      ner_local$entity[n] <- 
-           ifelse(any(grepl(ner_local$entity[n], neighbourhoods$neighbourhood)) == TRUE,
-                  paste(ner_local$entity[n], cityname),
-                  ner_local$entity[n])
-                                               
-      n = n + 1
-                                               
+n = 1
+
+repeat{
+  
+  ner_local$entity[n] <- 
+    ifelse(any(grepl(ner_local$entity[n], neighbourhoods$neighbourhood)) == TRUE,
+           paste(ner_local$entity[n], cityname),
+           ner_local$entity[n])
+  
+  n = n + 1
+  
   if (n > nrow(ner_local)) {
-       break
-      }
+    break
   }
- 
- n = 1
- 
- repeat{
-   
-   ner_NYT$entity[n] <- 
-     ifelse(any(grepl(ner_NYT$entity[n], neighbourhoods$neighbourhood)) == TRUE,
-            paste(ner_NYT$entity[n], cityname),
-            ner_NYT$entity[n])
-   
-   n = n + 1
-   
-   if (n > nrow(ner_NYT)) {
-     break
-   }
- }
- 
+}
+
+n = 1
+
+repeat{
+  
+  ner_NYT$entity[n] <- 
+    ifelse(any(grepl(ner_NYT$entity[n], neighbourhoods$neighbourhood)) == TRUE,
+           paste(ner_NYT$entity[n], cityname),
+           ner_NYT$entity[n])
+  
+  n = n + 1
+  
+  if (n > nrow(ner_NYT)) {
+    break
+  }
+}
+
 # Query Google to geocode the locations for their latitude and longitude
 locations_local <- mutate_geocode(ner_local, entity)
 
@@ -143,18 +143,71 @@ community_resistance_words = c("protest", "anti", "community led", "affordabilit
                                "activist", "activism", "displace", "illegal", "affordable housing",
                                "housing stock", "multiple listings", "disturbance", "damage")
 
+# Clean the text for easy word search
+spacy_articles_local <- spacy_parse(as.character(media_local$Article),
+                                    pos = FALSE, entity = FALSE, tag = FALSE)
+
+lemmatized_articles_local <- spacy_articles_local %>%
+  group_by(doc_id) %>%
+  filter(lemma != "-PRON-") %>%
+  mutate(lemma = str_replace_all(lemma, "[^a-zA-Z0-9 ]", " ")) %>%
+  filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
+  mutate(lemma = strsplit(as.character(lemma), " ")) %>%
+  unnest(lemma) %>%
+  filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
+  dplyr::summarise(lemmas = paste(as.character(lemma), collapse = " ")) %>%
+  mutate(doc_id = as.numeric(paste(flatten(str_extract_all(doc_id,"[[:digit:]]+"))))) %>%
+  arrange(doc_id) %>%
+  mutate_each(list(tolower)) %>%
+  mutate(lemmas = str_squish(str_replace_all(lemmas, "[^a-zA-Z0-9 ]", " "))) %>%
+  mutate(lemmas = gsub('\\b\\w{1,2}\\b','', lemmas))
+
+spacy_articles_NYT <- spacy_parse(as.character(media_NYT$Article),
+                                  pos = FALSE, entity = FALSE, tag = FALSE)
+
+lemmatized_articles_NYT <- spacy_articles_NYT %>%
+  group_by(doc_id) %>%
+  filter(lemma != "-PRON-") %>%
+  mutate(lemma = str_replace_all(lemma, "[^a-zA-Z0-9 ]", " ")) %>%
+  filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
+  mutate(lemma = strsplit(as.character(lemma), " ")) %>%
+  unnest(lemma) %>%
+  filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
+  dplyr::summarise(lemmas = paste(as.character(lemma), collapse = " ")) %>%
+  mutate(doc_id = as.numeric(paste(flatten(str_extract_all(doc_id,"[[:digit:]]+"))))) %>%
+  arrange(doc_id) %>%
+  mutate_each(list(tolower)) %>%
+  mutate(lemmas = str_squish(str_replace_all(lemmas, "[^a-zA-Z0-9 ]", " "))) %>%
+  mutate(lemmas = gsub('\\b\\w{1,2}\\b','', lemmas))
+
+# Calculate mentions
+lemmatized_articles_local <- lemmatized_articles_local %>% 
+  mutate(mentions = 
+           str_count(lemmatized_articles_local$lemmas, paste(community_resistance_words, collapse="|")))
+
+lemmatized_articles_NYT <- lemmatized_articles_NYT %>% 
+  mutate(mentions = 
+           str_count(lemmatized_articles_NYT$lemmas, paste(community_resistance_words, collapse="|")))
+
 # Calculate mentions as a function of total word count
-# NEED TO UPDATE THIS
+lemmatized_articles_local$doc_id <- as.numeric(lemmatized_articles_local$doc_id)
 
 media_local <- media_local %>% 
-  mutate(mentions = 
-           (str_count(media_local$Article, paste(community_resistance_words, collapse="|")) +
-              str_count(media_local$Headline, paste(community_resistance_words, collapse="|")))/as.numeric(Word_Count)) 
+  left_join(lemmatized_articles_local, by = c ("ID" = "doc_id")) %>% 
+  select(-lemmas)
+
+media_local <- media_local %>% 
+  mutate(mentions_wc = mentions/as.numeric(Word_Count))
+
+lemmatized_articles_NYT$doc_id <- as.numeric(lemmatized_articles_NYT$doc_id)
 
 media_NYT <- media_NYT %>% 
-  mutate(mentions = 
-           (str_count(media_NYT$Article, paste(community_resistance_words, collapse="|")) +
-           str_count(media_NYT$Headline, paste(community_resistance_words, collapse="|")))/as.numeric(Word_Count)) 
+  left_join(lemmatized_articles_NYT, by = c ("ID" = "doc_id")) %>% 
+  select(-lemmas)
+
+media_NYT <- media_NYT %>% 
+  mutate(mentions_wc = mentions/as.numeric(Word_Count))
+
 
 # Generate the community resistance table
 # NEED TO UPDATE THIS (4, 5, 7, 8)
@@ -240,14 +293,14 @@ neighbourhood_resistance <- neighbourhood_resistance %>%
   mutate(opposition_NYT_pct = opposition_NYT/mentions_NYT) %>% 
   mutate(CI = (mentions_local/
                  nrow(locations_local %>% 
-                  select("doc_id") %>% 
-                  st_drop_geometry() %>% 
-                  distinct()) +
+                        select("doc_id") %>% 
+                        st_drop_geometry() %>% 
+                        distinct()) +
                  mentions_NYT/ 
-                  nrow(locations_NYT %>% 
-                         select("doc_id") %>% 
-                         st_drop_geometry() %>% 
-                          distinct()))/2) %>% 
+                 nrow(locations_NYT %>% 
+                        select("doc_id") %>% 
+                        st_drop_geometry() %>% 
+                        distinct()))/2) %>% 
   mutate(CRI = (opposition_local/
                   nrow(locations_local %>% 
                          select("doc_id") %>% 

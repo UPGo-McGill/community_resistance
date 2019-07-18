@@ -110,8 +110,8 @@ source1_local <- FactivaSource("txt_files/montreal/montreal_local_FTV_1.htm")
 corpus1_local <- Corpus(source1_local, list(language = NA)) 
 
 # if there is more than one file, repeat the following.
-source2_local <- FactivaSource("txt_files/montreal/montreal_local_FTV_2.htm")
-corpus2_local <- Corpus(source2_local, list(language = NA))
+source3_local <- FactivaSource("txt_files/montreal/montreal_local_FTV_3.htm")
+corpus3_local <- Corpus(source3_local, list(language = NA))
 
 # if there is more than one file, merge
 corpus_local = tm:::c.VCorpus(corpus1_local, corpus2_local, corpus3_local)
