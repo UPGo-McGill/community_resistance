@@ -24,8 +24,8 @@ ner_local <- rbind(
            entity_type == "LOC" |
            entity_type == "PERSON") %>% 
   filter(entity != cityname) %>% 
-  filter(nchar(entity) > 2),
-  #select(doc_id, entity),
+  filter(nchar(entity) > 2) %>% 
+  select(doc_id, entity),
   spacy_parse(media_local$Headline) %>% 
     entity_extract(type = "named", concatenator = " ") %>% 
     filter(entity_type == "GPE" |
@@ -34,8 +34,8 @@ ner_local <- rbind(
              entity_type == "LOC" |
              entity_type == "PERSON") %>% 
     filter(entity != cityname) %>% 
-    filter(nchar(entity) > 2)) %>% 
-   # select(doc_id, entity)) %>% 
+    filter(nchar(entity) > 2) %>% 
+   select(doc_id, entity)) %>% 
   distinct()
 
 ner_NYT <- rbind(
@@ -135,8 +135,9 @@ locations_NYT$doc_id <- as.numeric(gsub("text", "",locations_NYT$doc_id))
 
 
 # Determine the community resistance index
-neighbourhood_resistance <- tibble(city = character(0), neighbourhood_name = character(0), mentions_local = numeric(0), opposition_local = numeric(0),
-                                   mentions_NYT = numeric(0), opposition_NYT = numeric(0)) 
+neighbourhood_resistance <- tibble(city = character(0), neighbourhood_name = character(0), mentions_local = numeric(0), 
+                                   opposition_local = numeric(0), opposition_local_weighted = numeric(0),
+                                   mentions_NYT = numeric(0), opposition_NYT = numeric(0), opposition_NYT_weighted = numeric(0))
 
 community_resistance_words = c("protest", "anti", "community led", "affordability", 
                                "oppose",  "resist", "opposition", "gentrification", 
@@ -149,6 +150,16 @@ community_resistance_words = c("protest", "anti", "community led", "affordabilit
                                "housing stock", "multiple listings", "disturbance", "damage")
 
 # Perform query and sentiment analysis
+
+media_local <- media_local %>% 
+  mutate(mentions = 
+           (str_count(media_local$Article, paste(community_resistance_words, collapse="|")) +
+              str_count(media_local$Headline, paste(community_resistance_words, collapse="|")))/as.numeric(Word_Count)) 
+
+media_NYT <- media_NYT %>% 
+  mutate(mentions = 
+           (str_count(media_NYT$Article, paste(community_resistance_words, collapse="|")) +
+           str_count(media_NYT$Headline, paste(community_resistance_words, collapse="|")))/as.numeric(Word_Count)) 
 
 n = 1
 
@@ -165,7 +176,7 @@ repeat{
   
   neighbourhood_resistance[n,4] <- 
     media_local %>% 
-    filter(str_detect(Article, paste(community_resistance_words, collapse="|"))) %>% 
+    filter(mentions > 0) %>% 
     select("ID") %>% 
     inner_join(locations_local %>% 
                  filter(neighbourhood == neighbourhoods$neighbourhood[n]) %>% 
@@ -175,16 +186,27 @@ repeat{
     distinct() %>% 
     nrow()
   
-  neighbourhood_resistance[n,5] <- locations_NYT %>% 
+  neighbourhood_resistance[n,5] <- 
+    media_local %>% 
+    filter(mentions > 0) %>% 
+    inner_join(locations_local %>% 
+                 filter(neighbourhood == neighbourhoods$neighbourhood[n]) %>% 
+                 select("doc_id") %>% 
+                 st_drop_geometry() %>% 
+                 distinct(), ., by = c("doc_id" = "ID")) %>%
+    summarise(mentions_avg = mean(mentions, na.rm = TRUE))
+  
+  
+  neighbourhood_resistance[n,6] <- locations_NYT %>% 
     filter(neighbourhood == neighbourhoods$neighbourhood[n]) %>% 
     select("doc_id") %>% 
     st_drop_geometry() %>% 
     distinct() %>% 
     nrow()
   
-  neighbourhood_resistance[n,6] <- 
+  neighbourhood_resistance[n,7] <- 
     media_NYT %>% 
-    filter(str_detect(Article, paste(community_resistance_words, collapse="|"))) %>% 
+    filter(mentions > 0) %>% 
     select("ID") %>% 
     inner_join(locations_NYT %>% 
                  filter(neighbourhood == neighbourhoods$neighbourhood[n]) %>% 
@@ -193,6 +215,16 @@ repeat{
                  distinct(), ., by = c("doc_id" = "ID")) %>% 
     distinct() %>% 
     nrow()
+  
+  neighbourhood_resistance[n,8] <- 
+    media_NYT %>% 
+    filter(mentions > 0) %>% 
+    inner_join(locations_NYT %>% 
+                 filter(neighbourhood == neighbourhoods$neighbourhood[n]) %>% 
+                 select("doc_id") %>% 
+                 st_drop_geometry() %>% 
+                 distinct(), ., by = c("doc_id" = "ID")) %>%
+    summarise(mentions_avg = mean(mentions, na.rm = TRUE))
   
   n = n+1
   
