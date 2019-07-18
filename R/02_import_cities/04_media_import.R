@@ -203,7 +203,8 @@ media_local_temp$Article <- str_replace(gsub("\\s+", " ", str_trim(media_local_t
 
 
 # search for Airbnb mentions in the cleaned text
-airbnb <- c("airbnb", "homeshar", "home shar", "shortterm", "short term", "str ", "strs")
+airbnb <- c("airbnb", "homeshar", "home shar", "shortterm", "short term", "str ", "strs", "guest",
+            "shortstay", "short stay", "home stay", "homestay", "hotel")
 
 media_local_temp <- media_local_temp %>% 
   mutate(mentions = 
@@ -249,7 +250,7 @@ media_local <- media_local %>%
 media_NYT <- media_NYT %>% 
   mutate(ID = 1:nrow(media_NYT))
 
-s## 3.5 EXPORT
+## 3.5 EXPORT
 # export the table(s) as .csv so that this does not need to be rerun.
 
 write_csv(media_local, "txt_files/montreal/media_montreal_local.csv")

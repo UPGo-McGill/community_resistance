@@ -24,8 +24,8 @@ ner_local <- rbind(
            entity_type == "LOC" |
            entity_type == "PERSON") %>% 
   filter(entity != cityname) %>% 
-  filter(nchar(entity) > 2) %>% 
-  select(doc_id, entity),
+  filter(nchar(entity) > 2),
+  #select(doc_id, entity),
   spacy_parse(media_local$Headline) %>% 
     entity_extract(type = "named", concatenator = " ") %>% 
     filter(entity_type == "GPE" |
@@ -34,11 +34,11 @@ ner_local <- rbind(
              entity_type == "LOC" |
              entity_type == "PERSON") %>% 
     filter(entity != cityname) %>% 
-    filter(nchar(entity) > 2) %>% 
-    select(doc_id, entity)) %>% 
+    filter(nchar(entity) > 2)) %>% 
+   # select(doc_id, entity)) %>% 
   distinct()
 
-ner_NYT_2 <- rbind(
+ner_NYT <- rbind(
   spacy_parse(media_NYT$Article) %>% 
     entity_extract(type = "named", concatenator = " ") %>% 
     filter(entity_type == "GPE" |
@@ -120,7 +120,7 @@ locations_NYT <- locations_NYT %>%
   st_as_sf(coords = c ("lon", "lat"), crs = 4326) %>% 
   st_transform(32618)
 
-# Perform a spatial join to determine what locations fall into which neighbourhoods.
+# Perform a spatial join to determine what locations fall into which neighbourhoods
 locations_local <- locations_local %>% 
   st_join( neighbourhoods,join = st_intersects) %>% 
   filter(!is.na(neighbourhood))
@@ -134,7 +134,7 @@ locations_NYT <- locations_NYT %>%
 locations_NYT$doc_id <- as.numeric(gsub("text", "",locations_NYT$doc_id))
 
 
-# Determine the community resistance index.
+# Determine the community resistance index
 neighbourhood_resistance <- tibble(city = character(0), neighbourhood_name = character(0), mentions_local = numeric(0), opposition_local = numeric(0),
                                    mentions_NYT = numeric(0), opposition_NYT = numeric(0)) 
 
@@ -150,7 +150,7 @@ community_resistance_words = c("protest", "anti", "community led", "affordabilit
 
 # Perform query and sentiment analysis
 
-n = 5
+n = 1
 
 repeat{
   neighbourhood_resistance[n, 1] <- cityname
