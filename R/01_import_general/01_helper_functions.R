@@ -22,6 +22,8 @@ library(stats)
 library(spacyr)
 library(ggmap)
 library(mapview)
+library(tidytext)
+
 # Note: spaCy requires the user to download a version of miniconda and follow a set of instructions to set up
 
 # Run Canadian census API key

@@ -110,8 +110,8 @@ source1_local <- FactivaSource("txt_files/montreal/montreal_local_FTV_1.htm")
 corpus1_local <- Corpus(source1_local, list(language = NA)) 
 
 # if there is more than one file, repeat the following.
-source3_local <- FactivaSource("txt_files/montreal/montreal_local_FTV_3.htm")
-corpus3_local <- Corpus(source3_local, list(language = NA))
+source2_local <- FactivaSource("txt_files/montreal/montreal_local_FTV_2.htm")
+corpus2_local <- Corpus(source2_local, list(language = NA))
 
 # if there is more than one file, merge
 corpus_local = tm:::c.VCorpus(corpus1_local, corpus2_local, corpus3_local)
@@ -165,83 +165,91 @@ media_NYT <- media_LN_NYT %>%
 media_local <- media_LN_local %>% 
   select(1:9)
 
-## 3.3 REMOVE IRRELEVANT ARTICLES
+## 3.3 ADD AN ID
+# allows for natural language processing
+
+media_local <- media_local %>% 
+  mutate(ID = 1:nrow(media_local))
+
+media_NYT <- media_NYT %>% 
+  mutate(ID = 1:nrow(media_NYT))
+
+
+## 3.4 REMOVE IRRELEVANT ARTICLES
 # Remove articles that only mention Airbnb once. These are more often than not just referencing the 
 # sharing economy in another sense. 
 
-# clean text temporarily to allow for easy search
-media_NYT_temp <- media_NYT
-media_local_temp <- media_local
+# Initialize spaCy
+spacy_initialize()
 
-media_NYT_temp$Headline <- media_NYT_temp$Headline %>% 
-  str_to_lower() %>% 
-  iconv(to = "ASCII//TRANSLIT") %>% 
-  str_replace("—", " ") %>% 
-  gsub("[[:punct:]]", " ", .)
-media_NYT_temp$Headline <- str_replace(gsub("\\s+", " ", str_trim(media_NYT_temp$Headline)), "B", "b")
+# Prepare articles for word search by removing stop words and lemmatizing
+spacy_articles_local <- spacy_parse(as.character(media_local$Article),
+                                    pos = FALSE, entity = FALSE, tag = FALSE)
 
-media_NYT_temp$Article <- media_NYT_temp$Article %>% 
-  str_to_lower() %>% 
-  iconv(to = "ASCII//TRANSLIT") %>% 
-  str_replace("—", " ") %>% 
-  gsub("[[:punct:]]", " ", .)
-media_NYT_temp$Article <- str_replace(gsub("\\s+", " ", str_trim(media_NYT_temp$Article)), "B", "b")
+lemmatized_articles_local <- spacy_articles_local %>%
+  group_by(doc_id) %>%
+  filter(lemma != "-PRON-") %>%
+  mutate(lemma = str_replace_all(lemma, "[^a-zA-Z0-9 ]", " ")) %>%
+  filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
+  mutate(lemma = strsplit(as.character(lemma), " ")) %>%
+  unnest(lemma) %>%
+  filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
+  dplyr::summarise(lemmas = paste(as.character(lemma), collapse = " ")) %>%
+  mutate(doc_id = as.numeric(paste(flatten(str_extract_all(doc_id,"[[:digit:]]+"))))) %>%
+  arrange(doc_id) %>%
+  mutate_each(list(tolower)) %>%
+  mutate(lemmas = str_squish(str_replace_all(lemmas, "[^a-zA-Z0-9 ]", " "))) %>%
+  mutate(lemmas = gsub('\\b\\w{1,2}\\b','', lemmas))
 
-media_local_temp$Headline <- media_local_temp$Headline %>% 
-  str_to_lower() %>% 
-  iconv(to = "ASCII//TRANSLIT") %>% 
-  str_replace("—", " ") %>% 
-  gsub("[[:punct:]]", " ", .)
-media_local_temp$Headline <- str_replace(gsub("\\s+", " ", str_trim(media_local_temp$Headline)), "B", "b")
+spacy_articles_NYT <- spacy_parse(as.character(media_NYT$Article),
+                                    pos = FALSE, entity = FALSE, tag = FALSE)
 
-media_local_temp$Article <- media_local_temp$Article %>% 
-  str_to_lower() %>% 
-  iconv(to = "ASCII//TRANSLIT") %>% 
-  str_replace("—", " ") %>% 
-  gsub("[[:punct:]]", " ", .)
-media_local_temp$Article <- str_replace(gsub("\\s+", " ", str_trim(media_local_temp$Article)), "B", "b")
-
+lemmatized_articles_NYT <- spacy_articles_NYT %>%
+  group_by(doc_id) %>%
+  filter(lemma != "-PRON-") %>%
+  mutate(lemma = str_replace_all(lemma, "[^a-zA-Z0-9 ]", " ")) %>%
+  filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
+  mutate(lemma = strsplit(as.character(lemma), " ")) %>%
+  unnest(lemma) %>%
+  filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
+  dplyr::summarise(lemmas = paste(as.character(lemma), collapse = " ")) %>%
+  mutate(doc_id = as.numeric(paste(flatten(str_extract_all(doc_id,"[[:digit:]]+"))))) %>%
+  arrange(doc_id) %>%
+  mutate_each(list(tolower)) %>%
+  mutate(lemmas = str_squish(str_replace_all(lemmas, "[^a-zA-Z0-9 ]", " "))) %>%
+  mutate(lemmas = gsub('\\b\\w{1,2}\\b','', lemmas))
 
 # search for Airbnb mentions in the cleaned text
 airbnb <- c("airbnb", "homeshar", "home shar", "shortterm", "short term", "str ", "strs", "guest",
-            "shortstay", "short stay", "home stay", "homestay", "hotel")
+            "shortstay", "short stay", "home stay", "homestay", "hotel", "home share", "airbnb host",
+            "host", "home sharing", "homeshare", "homesharing", "timeshare", "letting", "shortterm rental",
+            "longterm", "rental", "legislation", "short term rental", "hotelization", "legalization")
 
-media_local_temp <- media_local_temp %>% 
+lemmatized_articles_local <- lemmatized_articles_local %>% 
   mutate(mentions = 
-           str_count(media_local_temp$Article, paste(airbnb, collapse="|")) +
-           str_count(media_local_temp$Headline, paste(airbnb, collapse="|"))) %>% 
+           str_count(lemmatized_articles_local$lemmas, paste(airbnb, collapse="|"))) %>% 
   filter(mentions > 1) %>%
-  select(-c(mentions)) %>% 
-  group_by(Author) %>% 
-  distinct(Headline, .keep_all = TRUE) %>% 
-  ungroup()
+  select(-c(mentions)) 
 
-media_NYT_temp <- media_NYT_temp %>% 
+lemmatized_articles_NYT <- lemmatized_articles_NYT %>% 
   mutate(mentions = 
-           str_count(media_NYT$Article, paste(airbnb, collapse="|")) +
-           str_count(media_NYT$Headline, paste(airbnb, collapse="|"))) %>% 
+           str_count(lemmatized_articles_NYT$lemmas, paste(airbnb, collapse="|"))) %>% 
   filter(mentions > 1) %>%
-  select(-c(mentions))%>% 
-  group_by(Author) %>% 
-  distinct(Headline, .keep_all = TRUE) %>% 
-  ungroup()
+  select(-c(mentions))
 
 # trim the original media files to include only those that mention Airbnb more than once
 
  media_local <- media_local %>% 
-   mutate(relevant = media_local$Source_ID %in% media_local_temp$Source_ID) %>% 
+   mutate(relevant = media_local$ID %in% lemmatized_articles_local$doc_id) %>% 
    filter(relevant == TRUE) %>% 
    select(-relevant)
 
  media_NYT <- media_NYT %>% 
-   mutate(relevant = media_NYT$Source_ID %in% media_NYT_temp$Source_ID) %>% 
+   mutate(relevant = media_NYT$ID %in% lemmatized_articles_NYT$doc_id) %>% 
    filter(relevant == TRUE) %>% 
    select(-relevant)
- 
-rm(airbnb, media_local_temp, media_NYT_temp)
 
-
-## 3.4 ADD AN ID
+## 3.5 REASSIGN ID
 # The following Named Entity Recognition and embedding model use an ID.
 
 media_local <- media_local %>% 
@@ -250,7 +258,7 @@ media_local <- media_local %>%
 media_NYT <- media_NYT %>% 
   mutate(ID = 1:nrow(media_NYT))
 
-## 3.5 EXPORT
+## 3.6 EXPORT
 # export the table(s) as .csv so that this does not need to be rerun.
 
 write_csv(media_local, "txt_files/montreal/media_montreal_local.csv")

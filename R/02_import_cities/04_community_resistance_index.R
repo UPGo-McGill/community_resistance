@@ -10,9 +10,6 @@ neighbourhoods <-
   st_transform(32618) %>% 
   select(MUN_ID = MUNID, CODE_ID = CODEID, neighbourhood = NOM, geometry) 
 
-# Initialize spaCy
-spacy_initialize()
-
 # Perform Named Entity Recognition to determine what articles mention what locations
 # Remove the city name as one of the locations as this will geo-locate to a specific point within one borough
 ner_local <- rbind(
@@ -133,11 +130,8 @@ locations_NYT <- locations_NYT %>%
 
 locations_NYT$doc_id <- as.numeric(gsub("text", "",locations_NYT$doc_id))
 
-
-# Determine the community resistance index
-neighbourhood_resistance <- tibble(city = character(0), neighbourhood_name = character(0), mentions_local = numeric(0), 
-                                   opposition_local = numeric(0), opposition_local_weighted = numeric(0),
-                                   mentions_NYT = numeric(0), opposition_NYT = numeric(0), opposition_NYT_weighted = numeric(0))
+# Set up community resistance words
+# NEED TO UPDATE THIS
 
 community_resistance_words = c("protest", "anti", "community led", "affordability", 
                                "oppose",  "resist", "opposition", "gentrification", 
@@ -149,7 +143,8 @@ community_resistance_words = c("protest", "anti", "community led", "affordabilit
                                "activist", "activism", "displace", "illegal", "affordable housing",
                                "housing stock", "multiple listings", "disturbance", "damage")
 
-# Perform query and sentiment analysis
+# Calculate mentions as a function of total word count
+# NEED TO UPDATE THIS
 
 media_local <- media_local %>% 
   mutate(mentions = 
@@ -161,6 +156,11 @@ media_NYT <- media_NYT %>%
            (str_count(media_NYT$Article, paste(community_resistance_words, collapse="|")) +
            str_count(media_NYT$Headline, paste(community_resistance_words, collapse="|")))/as.numeric(Word_Count)) 
 
+# Generate the community resistance table
+# NEED TO UPDATE THIS (4, 5, 7, 8)
+neighbourhood_resistance <- tibble(city = character(0), neighbourhood_name = character(0), mentions_local = numeric(0), 
+                                   opposition_local = numeric(0), opposition_local_weighted = numeric(0),
+                                   mentions_NYT = numeric(0), opposition_NYT = numeric(0), opposition_NYT_weighted = numeric(0))
 n = 1
 
 repeat{
