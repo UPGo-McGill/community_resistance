@@ -3,12 +3,15 @@
 source("R/01_import_general/01_helper_functions.R")
 
 # Enter city name and upload required geometries. Ensure that there is a field titled neighbourhood in the geometries file
-cityname <- "Montreal"
+cityname <- "Toronto"
 
 neighbourhoods <-
-  read_sf(dsn = "Data", layer = "montreal")%>%
-  st_transform(32618) %>% 
-  select(MUN_ID = MUNID, CODE_ID = CODEID, neighbourhood = NOM, geometry) 
+  read_sf(dsn = "Data", layer = "toronto")%>%
+  st_transform(32618)%>% 
+  select(CODE_ID = AREA_S_CD, neighbourhood = AREA_NAME, geometry)
+
+neighbourhoods <- neighbourhoods %>% 
+  separate(neighbourhood, into = c("neighbourhood", NA), sep = "[(]")
 
 # Perform Named Entity Recognition to determine what articles mention what locations
 # Remove the city name as one of the locations as this will geo-locate to a specific point within one borough
@@ -284,4 +287,4 @@ neighbourhood_resistance <- neighbourhood_resistance %>%
                          distinct())*opposition_NYT_weighted)/2)
 
 # Export as a table
-save(neighbourhood_resistance, file = "neighbourhood_resistance/montreal.Rdata")
+save(neighbourhood_resistance, file = "neighbourhood_resistance/toronto.Rdata")

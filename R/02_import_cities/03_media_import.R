@@ -9,7 +9,7 @@ source("R/01_import_general/01_helper_functions.R")
 ############################# 1 - IMPORT NECESSARY FILES FROM THE NYT ############################################################################################################################
 ## 1.1 COMPLETE THIS SECTION IF LEXISNEXIS, OTHERWISE SKIP.
 # import LexisNexis txt file(s) with airbnb + city name from the New York Times
-media_LN_NYT <- lnt_read("txt_files/montreal/montreal_NYT_LN.TXT")
+media_LN_NYT <- lnt_read("txt_files/toronto/toronto_NYT_LN.TXT")
 
 # if there is only one file, run the following.
 media_LN_NYT <- media_LN_NYT@meta %>% 
@@ -38,7 +38,7 @@ media_LN_NYT$Date <- as.character(media_LN_NYT$Date)
 
 ## 1.2 COMPLETE THIS SECTION IF FACTIVA, OTHERWISE SKIP. 
 # 1.2.1 import the source and corpus Factiva HTML files for airbnb + city name from the New York Times
-source1_NYT <- FactivaSource("txt_files/montreal/montreal_NYT_FTV.htm")
+source1_NYT <- FactivaSource("txt_files/toronto/toronto_NYT_FTV.htm")
 corpus_NYT <- Corpus(source1_NYT, list(language = NA)) 
 
 # if there is more than one file, repeat the following.
@@ -76,7 +76,7 @@ rm(source1_NYT, source2_NYT, corpus1_NYT, corpus2_NYT, corpus_NYT)
 ############################# 2 - IMPORT NECESSARY FILES FROM THE LOCAL PAPER ############################################################################################################################
 ## 2.1 COMPLETE THIS SECTION IF LEXISNEXIS, OTHERWISE SKIP.
 # import LexisNexis txt file(s) with airbnb + city name from the local newspaper
-media_LN_local <- lnt_read("txt_files/montreal/montreal_local_LN.TXT")
+media1_LN_local <- lnt_read("txt_files/toronto/toronto_local_LN_1.TXT")
 
 # if there is only one file, run the following
 media_LN_local <- media_LN_local@meta %>% 
@@ -84,7 +84,7 @@ media_LN_local <- media_LN_local@meta %>%
   select(-c("Source_File", "Graphic", "ID"))
 
 # if there is more than one file, repeat the following.
-media2_LN_local <- lnt_read("txt_files/toronto_local/airbnb_toronto_local_LN_2.TXT") 
+media2_LN_local <- lnt_read("txt_files/toronto/toronto_local_LN_2.TXT") 
 
 # if there is more than one file, merge and remove files.
 media_LN_local <- rbind(media1_LN_local@meta %>% 
@@ -106,15 +106,16 @@ media_LN_local$Date <- as.character(media_LN_local$Date)
 
 ## 2.2 COMPLETE THIS SECTION IF FACTIVA, OTHERWISE SKIP. 
 # import the source and corpus Factiva HTML files for airbnb + city name from the local newspaper
-source1_local <- FactivaSource("txt_files/montreal/montreal_local_FTV_1.htm")
+source1_local <- FactivaSource("txt_files/toronto/toronto_local_FTV_1.htm")
 corpus1_local <- Corpus(source1_local, list(language = NA)) 
 
 # if there is more than one file, repeat the following.
-source2_local <- FactivaSource("txt_files/montreal/montreal_local_FTV_2.htm")
-corpus2_local <- Corpus(source2_local, list(language = NA))
+source8_local <- FactivaSource("txt_files/toronto/toronto_local_FTV_8.htm")
+corpus8_local <- Corpus(source8_local, list(language = NA))
 
 # if there is more than one file, merge
-corpus_local = tm:::c.VCorpus(corpus1_local, corpus2_local, corpus3_local)
+corpus_local = tm:::c.VCorpus(corpus1_local, corpus2_local, corpus3_local, corpus4_local,
+                              corpus5_local, corpus6_local, corpus7_local, corpus8_local)
 
 # transform into a data table
 media_FTV_local <- tibble(Source_ID = numeric(0), Newspaper = character(0), Date = character(0), 
@@ -262,13 +263,13 @@ lemmatized_articles_local <- lemmatized_articles_local %>%
   mutate(doc_id = 1:nrow(lemmatized_articles_local))
 
 lemmatized_articles_NYT <- lemmatized_articles_NYT %>% 
-  mutate(ID = 1:nrow(lemmatized_articles_NYT))
+  mutate(doc_id = 1:nrow(lemmatized_articles_NYT))
 
 ## 3.6 EXPORT
 # export the table(s) as .csv so that this does not need to be rerun.
 
-write_csv(media_local, "txt_files/montreal/media_montreal_local.csv")
-write_csv(media_NYT, "txt_files/montreal/media_montreal_NYT.csv")
+write_csv(media_local, "txt_files/toronto/media_toronto_local.csv")
+write_csv(media_NYT, "txt_files/toronto/media_toronto_NYT.csv")
 
 
 
