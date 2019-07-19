@@ -131,8 +131,6 @@ locations_NYT <- locations_NYT %>%
 locations_NYT$doc_id <- as.numeric(gsub("text", "",locations_NYT$doc_id))
 
 # Set up community resistance words
-# NEED TO UPDATE THIS
-
 community_resistance_words = c("protest", "anti", "community led", "affordability", 
                                "oppose",  "resist", "opposition", "gentrification", 
                                "threat", "manifestation", "complaint", "disapprove",
@@ -141,44 +139,19 @@ community_resistance_words = c("protest", "anti", "community led", "affordabilit
                                "crisis", "shortage", "blame", "garbage", "noise", "complain", 
                                "concern", "coalition", "hostile", "hostility", "fairbnb", 
                                "activist", "activism", "displace", "illegal", "affordable housing",
-                               "housing stock", "multiple listings", "disturbance", "damage")
+                               "housing stock", "multiple listings", "disturbance", "damage",
+                               "protester", "riot", "accusation", "proliferation", "community", 
+                               "unaffordability", "housing afford", "unaffordable", "criticize",
+                               "resistance", "lawsuit", "desist", "objection", "plight", "gentrify", 
+                               "gentrified", "socioeconomic", "inequality", "unfair", "competition",
+                               "manifesto", "neighbour", "issue", "disappoint", "tenant", "eviction",
+                               "hypertourism",  "negative", "inadequate", "disrespectful",
+                               "discriminate", "racism", "bias", "illegal hotel", "criticise", 
+                               "detrimental", "adverse", "enforcement",
+                               "worsen", "drain", "party", "partying", "upset", "stag",
+                               "fear", "safety", "problem", "toxic", "violent", "illegality", 
+                               "illegaly", "violate", "housing", "disturb", "suffer", "loss")
 
-# Clean the text for easy word search
-spacy_articles_local <- spacy_parse(as.character(media_local$Article),
-                                    pos = FALSE, entity = FALSE, tag = FALSE)
-
-lemmatized_articles_local <- spacy_articles_local %>%
-  group_by(doc_id) %>%
-  filter(lemma != "-PRON-") %>%
-  mutate(lemma = str_replace_all(lemma, "[^a-zA-Z0-9 ]", " ")) %>%
-  filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
-  mutate(lemma = strsplit(as.character(lemma), " ")) %>%
-  unnest(lemma) %>%
-  filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
-  dplyr::summarise(lemmas = paste(as.character(lemma), collapse = " ")) %>%
-  mutate(doc_id = as.numeric(paste(flatten(str_extract_all(doc_id,"[[:digit:]]+"))))) %>%
-  arrange(doc_id) %>%
-  mutate_each(list(tolower)) %>%
-  mutate(lemmas = str_squish(str_replace_all(lemmas, "[^a-zA-Z0-9 ]", " "))) %>%
-  mutate(lemmas = gsub('\\b\\w{1,2}\\b','', lemmas))
-
-spacy_articles_NYT <- spacy_parse(as.character(media_NYT$Article),
-                                  pos = FALSE, entity = FALSE, tag = FALSE)
-
-lemmatized_articles_NYT <- spacy_articles_NYT %>%
-  group_by(doc_id) %>%
-  filter(lemma != "-PRON-") %>%
-  mutate(lemma = str_replace_all(lemma, "[^a-zA-Z0-9 ]", " ")) %>%
-  filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
-  mutate(lemma = strsplit(as.character(lemma), " ")) %>%
-  unnest(lemma) %>%
-  filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
-  dplyr::summarise(lemmas = paste(as.character(lemma), collapse = " ")) %>%
-  mutate(doc_id = as.numeric(paste(flatten(str_extract_all(doc_id,"[[:digit:]]+"))))) %>%
-  arrange(doc_id) %>%
-  mutate_each(list(tolower)) %>%
-  mutate(lemmas = str_squish(str_replace_all(lemmas, "[^a-zA-Z0-9 ]", " "))) %>%
-  mutate(lemmas = gsub('\\b\\w{1,2}\\b','', lemmas))
 
 # Calculate mentions
 lemmatized_articles_local <- lemmatized_articles_local %>% 
@@ -210,7 +183,6 @@ media_NYT <- media_NYT %>%
 
 
 # Generate the community resistance table
-# NEED TO UPDATE THIS (4, 5, 7, 8)
 neighbourhood_resistance <- tibble(city = character(0), neighbourhood_name = character(0), mentions_local = numeric(0), 
                                    opposition_local = numeric(0), opposition_local_weighted = numeric(0),
                                    mentions_NYT = numeric(0), opposition_NYT = numeric(0), opposition_NYT_weighted = numeric(0))
@@ -229,7 +201,7 @@ repeat{
   
   neighbourhood_resistance[n,4] <- 
     media_local %>% 
-    filter(mentions > 0) %>% 
+    filter(mentions_wc > 0) %>% 
     select("ID") %>% 
     inner_join(locations_local %>% 
                  filter(neighbourhood == neighbourhoods$neighbourhood[n]) %>% 
@@ -241,13 +213,13 @@ repeat{
   
   neighbourhood_resistance[n,5] <- 
     media_local %>% 
-    filter(mentions > 0) %>% 
+    filter(mentions_wc > 0) %>% 
     inner_join(locations_local %>% 
                  filter(neighbourhood == neighbourhoods$neighbourhood[n]) %>% 
                  select("doc_id") %>% 
                  st_drop_geometry() %>% 
                  distinct(), ., by = c("doc_id" = "ID")) %>%
-    summarise(mentions_avg = mean(mentions, na.rm = TRUE))
+    summarise(mentions_wc_avg = mean(mentions_wc, na.rm = TRUE))
   
   
   neighbourhood_resistance[n,6] <- locations_NYT %>% 
@@ -259,7 +231,7 @@ repeat{
   
   neighbourhood_resistance[n,7] <- 
     media_NYT %>% 
-    filter(mentions > 0) %>% 
+    filter(mentions_wc > 0) %>% 
     select("ID") %>% 
     inner_join(locations_NYT %>% 
                  filter(neighbourhood == neighbourhoods$neighbourhood[n]) %>% 
@@ -271,13 +243,13 @@ repeat{
   
   neighbourhood_resistance[n,8] <- 
     media_NYT %>% 
-    filter(mentions > 0) %>% 
+    filter(mentions_wc > 0) %>% 
     inner_join(locations_NYT %>% 
                  filter(neighbourhood == neighbourhoods$neighbourhood[n]) %>% 
                  select("doc_id") %>% 
                  st_drop_geometry() %>% 
                  distinct(), ., by = c("doc_id" = "ID")) %>%
-    summarise(mentions_avg = mean(mentions, na.rm = TRUE))
+    summarise(mentions_wc_avg = mean(mentions_wc, na.rm = TRUE))
   
   n = n+1
   
@@ -285,7 +257,6 @@ repeat{
     break
   }
 }
-
 
 # Calculate percent opposition and community index and community resistance index
 neighbourhood_resistance <- neighbourhood_resistance %>% 
@@ -305,12 +276,12 @@ neighbourhood_resistance <- neighbourhood_resistance %>%
                   nrow(locations_local %>% 
                          select("doc_id") %>% 
                          st_drop_geometry() %>% 
-                         distinct()) +
+                         distinct())*opposition_local_weighted +
                   opposition_NYT/ 
                   nrow(locations_NYT %>% 
                          select("doc_id") %>% 
                          st_drop_geometry() %>% 
-                         distinct()))/2)
+                         distinct())*opposition_NYT_weighted)/2)
 
 # Export as a table
 save(neighbourhood_resistance, file = "neighbourhood_resistance/montreal.Rdata")

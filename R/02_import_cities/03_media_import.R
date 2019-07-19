@@ -110,8 +110,8 @@ source1_local <- FactivaSource("txt_files/montreal/montreal_local_FTV_1.htm")
 corpus1_local <- Corpus(source1_local, list(language = NA)) 
 
 # if there is more than one file, repeat the following.
-source3_local <- FactivaSource("txt_files/montreal/montreal_local_FTV_3.htm")
-corpus3_local <- Corpus(source3_local, list(language = NA))
+source2_local <- FactivaSource("txt_files/montreal/montreal_local_FTV_2.htm")
+corpus2_local <- Corpus(source2_local, list(language = NA))
 
 # if there is more than one file, merge
 corpus_local = tm:::c.VCorpus(corpus1_local, corpus2_local, corpus3_local)
@@ -257,6 +257,12 @@ media_local <- media_local %>%
 
 media_NYT <- media_NYT %>% 
   mutate(ID = 1:nrow(media_NYT))
+
+lemmatized_articles_local <- lemmatized_articles_local %>% 
+  mutate(doc_id = 1:nrow(lemmatized_articles_local))
+
+lemmatized_articles_NYT <- lemmatized_articles_NYT %>% 
+  mutate(ID = 1:nrow(lemmatized_articles_NYT))
 
 ## 3.6 EXPORT
 # export the table(s) as .csv so that this does not need to be rerun.
