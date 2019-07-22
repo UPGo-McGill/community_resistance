@@ -97,29 +97,28 @@ daily <- inner_join(daily, st_drop_geometry(property)) %>%
          HomeAway_HID, Listing_Type)
 
 
-## Find FREH listings and revenue
-property <- 
-  daily %>%
-  group_by(Property_ID) %>% 
-  summarize(
-    n_reserved = sum(Status == "R"),
-    n_available = sum(Status == "A" | Status == "R"),
-    revenue = sum((Status == "R") * Price),
-    FREH = if_else(
-      first(Listing_Type) == "Entire home/apt" & n_reserved >= 90 &
-        n_available >= 183, TRUE, FALSE)) %>% 
-  inner_join(property, .)
+## Find FREH listings
+daily_FREH <- strr_FREH(daily, start_date = end_date, end_date = end_date)
 
+daily_FREH <- daily_FREH %>% 
+  filter(FREH == TRUE) %>% 
+  select(Property_ID) %>% 
+  distinct()
+
+property <- property %>% 
+  mutate(FREH = property$Property_ID %in% daily_FREH$Property_ID)
+
+rm(daily_FREH)
 
 ## Find multi-listings
-daily <- strr_multilistings(daily, listing_type = Listing_Type,
-                            host_ID = Airbnb_HID, date = Date)
+# daily <- strr_multilistings(daily, listing_type = Listing_Type,
+#                            host_ID = Airbnb_HID, date = Date)
 
-property <- 
-  daily %>%
-  group_by(Property_ID) %>% 
-  summarize(ML = as.logical(ceiling(mean(ML)))) %>% 
-  inner_join(property, .)
+# property <- 
+ #  daily %>%
+ #  group_by(Property_ID) %>% 
+ #  summarize(ML = as.logical(ceiling(mean(ML)))) %>% 
+ #  inner_join(property, .)
 
 
 # Identify ghost hotels
@@ -136,6 +135,6 @@ property <-
 
 rm(GH_list)
 
-# Save files so that you do not need to re run
-save(property, file = "airbnb/montreal_property.Rdata")
-save(daily, file = "airbnb/montreal_daily.Rdata")
+# Save files
+save(property, file = "airbnb/toronto_property.Rdata")
+save(daily, file = "airbnb/toronto_daily.Rdata")

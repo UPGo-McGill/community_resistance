@@ -90,5 +90,4 @@ repeat{
 }
 
 # Export as a table
-save(airbnb, file = "airbnb/montreal.Rdata")
-
+save(neighbourhood_property, file = "airbnb/toronto_fail.Rdata")

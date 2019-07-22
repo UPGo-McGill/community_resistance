@@ -23,7 +23,8 @@ library(spacyr)
 library(ggmap)
 library(mapview)
 library(tidytext)
-
+library(parallel)
+library(pbapply)
 # Note: spaCy requires the user to download a version of miniconda and follow a set of instructions to set up
 
 # Run Canadian census API key
@@ -45,6 +46,46 @@ loadRdata <- function(fileName){
   load(fileName)
   get(ls()[ls() != "fileName"])
 }
+
+## FREH function
+strr_FREH <- function(daily, start_date, end_date, R_cut = 90, AR_cut = 183,
+                      cores = 1) {
+  
+  library(data.table)
+  
+  # Wrangle dates
+  start_date <- as.Date(start_date, origin = "1970-01-01")
+  end_date <- as.Date(end_date, origin = "1970-01-01")
+  
+  # Filter daily file
+  setDT(daily)
+  
+  daily <- 
+    daily[Status %in% c("A", "R") & Date >= start_date - 364 & 
+            Date <= end_date & Listing_Type == "Entire home/apt"]
+  
+  if (cores > 1) {
+    cl <- parallel::makeForkCluster(cores)
+    pbapply::pblapply(start_date:end_date, function(date) {
+      daily <- daily[Date >= date - 364 & Date <= date]
+      daily[, AR := .N, by = Property_ID]
+      daily[, R := sum(Status == "R"), by = Property_ID]
+      daily[, list(Date = as.Date(date, origin = "1970-01-01"), 
+                   FREH = as.logical((mean(AR) >= AR_cut) * (mean(R) >= R_cut))),
+            by = Property_ID]
+    }) %>% rbindlist()
+  } else {
+    lapply(start_date:end_date, function(date) {
+      daily <- daily[Date >= date - 364 & Date <= date]
+      daily[, AR := .N, by = Property_ID]
+      daily[, R := sum(Status == "R"), by = Property_ID]
+      daily[, list(Date = as.Date(date, origin = "1970-01-01"), 
+                   FREH = as.logical((mean(AR) >= AR_cut) * (mean(R) >= R_cut))),
+            by = Property_ID]
+    }) %>% rbindlist()
+  }
+}
+
 
 ## Multilistings function
 
