@@ -290,5 +290,10 @@ neighbourhood_resistance <- neighbourhood_resistance %>%
 
 neighbourhood_resistance[is.nan(neighbourhood_resistance)] <- 0
 
+# Add geometries to the table
+neighbourhood_resistance <- neighbourhood_resistance %>% 
+  left_join(neighbourhoods,  by = c("neighbourhood_name" = "neighbourhood")) %>% 
+  select(1:12, "geometry")
+
 # Export as a table
 save(neighbourhood_resistance, file = "neighbourhood_resistance/toronto.Rdata")
