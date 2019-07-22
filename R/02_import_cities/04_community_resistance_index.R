@@ -261,6 +261,8 @@ repeat{
   }
 }
 
+neighbourhood_resistance[is.nan(neighbourhood_resistance)] <- 0
+
 # Calculate percent opposition and community index and community resistance index
 neighbourhood_resistance <- neighbourhood_resistance %>% 
   mutate(opposition_local_pct = opposition_local/mentions_local) %>% 
@@ -285,6 +287,8 @@ neighbourhood_resistance <- neighbourhood_resistance %>%
                          select("doc_id") %>% 
                          st_drop_geometry() %>% 
                          distinct())*opposition_NYT_weighted)/2)
+
+neighbourhood_resistance[is.nan(neighbourhood_resistance)] <- 0
 
 # Export as a table
 save(neighbourhood_resistance, file = "neighbourhood_resistance/toronto.Rdata")

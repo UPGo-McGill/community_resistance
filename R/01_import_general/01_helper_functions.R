@@ -36,6 +36,10 @@ options(cancensus.cache_path = "~/Desktop/AirBnB Internship/AirBnB-GIT/community
 # Run Google Maps API Key
 # register_google(key = "personal_key", write = TRUE)
 
+# Function to replace NaN with 0
+is.nan.data.frame <- function(x)
+  do.call(cbind, lapply(x, is.nan))
+
 # Data loader that allows for in place renaming
 loadRdata <- function(fileName){
   load(fileName)
