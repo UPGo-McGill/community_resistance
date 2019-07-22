@@ -64,7 +64,7 @@ repeat{
                              summarize(n = sum(housing_units)) %>% 
                              ungroup()
   
-  airbnb[n, 9] <-  ifelse(nrow(temp) == 0, 0, temp %>% 
+  airbnb[n, 9] <- ifelse(nrow(temp) == 0, 0, temp %>% 
                             summarize(GH_housing_loss = sum(n))) %>% 
                             as.numeric() +
                    nrow(neighbourhood_daily %>% 
@@ -90,4 +90,4 @@ repeat{
 }
 
 # Export as a table
-save(neighbourhood_property, file = "airbnb/toronto.Rdata")
+save(airbnb, file = "airbnb/toronto.Rdata")
