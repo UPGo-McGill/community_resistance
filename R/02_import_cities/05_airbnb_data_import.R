@@ -136,5 +136,5 @@ property <-
 rm(GH_list)
 
 # Save files
-save(property, file = "airbnb/toronto_property.Rdata")
-save(daily, file = "airbnb/toronto_daily.Rdata")
+save(property, file = "airbnb/vancouver_property.Rdata")
+save(daily, file = "airbnb/vancouver_daily.Rdata")

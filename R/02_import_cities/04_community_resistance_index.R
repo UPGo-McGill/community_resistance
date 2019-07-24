@@ -3,12 +3,12 @@
 source("R/01_import_general/01_helper_functions.R")
 
 # Enter city name and upload required geometries. Ensure that there is a field titled neighbourhood in the geometries file
-cityname <- "Toronto"
+cityname <- "Vancouver"
 
 neighbourhoods <-
-  read_sf(dsn = "Data", layer = "toronto")%>%
+  read_sf(dsn = "Data", layer = "vancouver")%>%
   st_transform(32618)%>% 
-  select(CODE_ID = AREA_S_CD, neighbourhood = AREA_NAME, geometry)
+  select(CODE_ID = MAPID, neighbourhood = NAME, geometry)
 
 neighbourhoods <- neighbourhoods %>% 
   separate(neighbourhood, into = c("neighbourhood", NA), sep = "[(]")
@@ -296,4 +296,4 @@ neighbourhood_resistance <- neighbourhood_resistance %>%
   select(1:12, "geometry")
 
 # Export as a table
-save(neighbourhood_resistance, file = "neighbourhood_resistance/toronto.Rdata")
+save(neighbourhood_resistance, file = "neighbourhood_resistance/vancouver.Rdata")

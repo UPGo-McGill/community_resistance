@@ -74,7 +74,7 @@ social_capital <- social_capital %>%
            citizen_z + white_z)
 
 # Export as a table
-save(social_capital, file = "social_capital/toronto.Rdata")
+save(social_capital, file = "social_capital/vancouver.Rdata")
 
 
 
