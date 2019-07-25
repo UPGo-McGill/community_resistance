@@ -11,7 +11,7 @@ social_capital <- tibble(city = character(0), neighbourhood_name = character(0),
                          official_language_z = numeric (0), citizen_z = numeric (0), white_z = numeric (0))
  
 CTs_city <- st_intersect_summarize(
-  CTs_us,
+  CTs_canada,
   neighbourhoods,
   group_vars = vars(neighbourhood),
   population = population,
@@ -85,7 +85,7 @@ social_capital <- social_capital %>%
            citizen_z + white_z)
 
 # Export as a table
-save(social_capital, file = "social_capital/washington.Rdata")
+save(social_capital, file = "social_capital/vancouver.Rdata")
 
 
 

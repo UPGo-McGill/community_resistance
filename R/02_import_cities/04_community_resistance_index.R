@@ -3,13 +3,13 @@
 source("R/01_import_general/01_helper_functions.R")
 
 # Enter city name and upload required geometries. Ensure that there is a field titled neighbourhood in the geometries file
-cityname <- "Washington DC"
+cityname <- "Vancouver"
 
 neighbourhoods <-
-  read_sf(dsn = "Data", layer = "washington")%>%
- # st_transform(32618)%>% CANADA
-  st_transform(26918) %>% 
-  select(CODE_ID = NAME, neighbourhood = NBH_NAMES, geometry)
+  read_sf(dsn = "Data", layer = "vancouver")%>%
+  st_transform(32618)%>% 
+  # st_transform(26918) %>% 
+  select(CODE_ID = MAPID, neighbourhood = NAME, geometry)
 
 neighbourhoods <- neighbourhoods %>% 
   separate(neighbourhood, into = c("neighbourhood", NA), sep = "[(]")
