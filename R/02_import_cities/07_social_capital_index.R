@@ -9,55 +9,66 @@ social_capital <- tibble(city = character(0), neighbourhood_name = character(0),
                          med_income_z = numeric(0), university_education_z = numeric (0), 
                          housing_need_z = numeric (0), non_mover_z = numeric(0), owner_occupied_z = numeric(0), 
                          official_language_z = numeric (0), citizen_z = numeric (0), white_z = numeric (0))
-                   
+ 
+CTs_city <- st_intersect_summarize(
+  CTs_us,
+  neighbourhoods,
+  group_vars = vars(neighbourhood),
+  population = population,
+  sum_vars = vars(households, university_education, housing_need, non_mover, owner_occupied,
+                  rental, official_language, citizen, white),
+  mean_vars = vars(med_income, population_z, households_z, med_income_z, university_education_z,
+                   housing_need_z, non_mover_z, owner_occupied_z, rental_z, official_language_z,
+                   citizen_z, white_z)) %>% 
+  ungroup() %>% 
+  drop_units()
+
 n = 1
 
 repeat{
-  
-  CTs_neighbourhood <- CTs_canada %>% 
-    st_join(st_buffer(neighbourhoods[n, "geometry"], 200),
-            join = st_within, left = FALSE)
 
+  CTs_neighbourhood <- CTs_city %>% 
+    filter(neighbourhood == neighbourhoods$neighbourhood[n])
+  
   social_capital[n, 1] <- cityname
   
   social_capital[n, 2] <- neighbourhoods$neighbourhood[n]
   
-  social_capital[n, 3] = sum(CTs_neighbourhood$population, na.rm = TRUE)
+  social_capital[n, 3] = CTs_neighbourhood$population
   
-  social_capital[n, 4] = sum(CTs_neighbourhood$households, na.rm = TRUE)
+  social_capital[n, 4] = CTs_neighbourhood$households*CTs_neighbourhood$population
   
-  social_capital[n, 5] = sum(CTs_neighbourhood$population * CTs_neighbourhood$med_income, na.rm = TRUE)/
-                              sum(CTs_neighbourhood$population, na.rm = TRUE)
+  social_capital[n, 5] = CTs_neighbourhood$med_income
   
-  social_capital[n, 6] = sum(CTs_neighbourhood$university_education, na.rm = TRUE)
+  social_capital[n, 6] = CTs_neighbourhood$university_education*CTs_neighbourhood$population
   
-  social_capital[n, 7] = sum(CTs_neighbourhood$housing_need, na.rm = TRUE)
+  social_capital[n, 7] = CTs_neighbourhood$housing_need*CTs_neighbourhood$population
   
-  social_capital[n, 8] = sum(CTs_neighbourhood$non_mover, na.rm = TRUE)
+  social_capital[n, 8] = CTs_neighbourhood$non_mover*CTs_neighbourhood$population
   
-  social_capital[n, 9] = sum(CTs_neighbourhood$owner_occupied, na.rm = TRUE)
+  social_capital[n, 9] = CTs_neighbourhood$owner_occupied*CTs_neighbourhood$population
   
-  social_capital[n, 10] = sum(CTs_neighbourhood$official_language, na.rm = TRUE)
+  social_capital[n, 10] = CTs_neighbourhood$official_language*CTs_neighbourhood$population
   
-  social_capital[n, 11] = sum(CTs_neighbourhood$citizen, na.rm = TRUE)
+  social_capital[n, 11] = CTs_neighbourhood$citizen*CTs_neighbourhood$population
   
-  social_capital[n, 12] = sum(CTs_neighbourhood$white, na.rm = TRUE)
+  social_capital[n, 12] = CTs_neighbourhood$white**CTs_neighbourhood$population
   
-  social_capital[n, 13] = weighted.mean(CTs_neighbourhood$med_income_z, CTs_neighbourhood$population, na.rm = TRUE)
+  social_capital[n, 13] = CTs_neighbourhood$med_income_z
   
-  social_capital[n, 14] = weighted.mean(CTs_neighbourhood$university_education_z, CTs_neighbourhood$population, na.rm = TRUE)
+  social_capital[n, 14] = CTs_neighbourhood$university_education_z
   
-  social_capital[n, 15] = weighted.mean(CTs_neighbourhood$housing_need_z, CTs_neighbourhood$population, na.rm = TRUE)
+  social_capital[n, 15] = CTs_neighbourhood$housing_need_z
   
-  social_capital[n, 16] = weighted.mean(CTs_neighbourhood$non_mover_z, CTs_neighbourhood$population, na.rm = TRUE)
+  social_capital[n, 16] = CTs_neighbourhood$non_mover_z
   
-  social_capital[n, 17] = weighted.mean(CTs_neighbourhood$owner_occupied_z, CTs_neighbourhood$population, na.rm = TRUE)
+  social_capital[n, 17] = CTs_neighbourhood$owner_occupied_z
   
-  social_capital[n, 18] = weighted.mean(CTs_neighbourhood$official_language_z, CTs_neighbourhood$population, na.rm = TRUE)
+  social_capital[n, 18] = CTs_neighbourhood$official_language_z
   
-  social_capital[n, 19] = weighted.mean(CTs_neighbourhood$citizen_z, CTs_neighbourhood$population, na.rm = TRUE)
+  social_capital[n, 19] = CTs_neighbourhood$citizen_z
   
-  social_capital[n, 20] = weighted.mean(CTs_neighbourhood$white_z, CTs_neighbourhood$population, na.rm = TRUE)
+  social_capital[n, 20] = CTs_neighbourhood$white_z
   
   n = n+1
   
@@ -74,7 +85,7 @@ social_capital <- social_capital %>%
            citizen_z + white_z)
 
 # Export as a table
-save(social_capital, file = "social_capital/vancouver.Rdata")
+save(social_capital, file = "social_capital/washington.Rdata")
 
 
 

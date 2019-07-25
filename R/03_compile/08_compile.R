@@ -23,5 +23,12 @@ airbnb_neighbourhoods <- rbind(montreal, toronto, vancouver)
 airbnb_neighbourhoods <- airbnb_neighbourhoods %>% 
   mutate(housing_loss_pct = housing_loss/households)
 
+# Create the dummy variables for spatial effects
+airbnb_neighbourhoods <- airbnb_neighbourhoods %>% 
+  mutate(vancouver = ifelse(city == "Vancouver", TRUE, FALSE)) %>% 
+  mutate(toronto = ifelse(city == "Toronto", TRUE, FALSE))
+
 # Save the data table
 save(airbnb_neighbourhoods, file = "airbnb_neighbourhoods.Rdata")
+
+

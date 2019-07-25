@@ -5,6 +5,6 @@ source("R/03_compile/08_compile.R:")
 
 # Linear regression modelling
 airbnb_neighbourhoods %>% 
-  filter(mentions_local >= 2) %>% 
-  lm(CRI ~ housing_loss_pct + active_listings + med_income_z + population + housing_need_z + white_z + university_education_z, data = .) %>% 
+#  filter(mentions_local >= 2) %>% 
+  lm(CRI ~ FREH  + active_listings + med_income_z + population + housing_need_z + white_z + toronto + vancouver, data = .) %>% 
   summary()
