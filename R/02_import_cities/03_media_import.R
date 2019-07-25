@@ -9,7 +9,7 @@ source("R/01_import_general/01_helper_functions.R")
 ############################# 1 - IMPORT NECESSARY FILES FROM THE NYT ############################################################################################################################
 ## 1.1 COMPLETE THIS SECTION IF LEXISNEXIS, OTHERWISE SKIP.
 # import LexisNexis txt file(s) with airbnb + city name from the New York Times
-media_LN_NYT <- lnt_read("txt_files/vancouver/vancouver_NYT_LN.TXT")
+media_LN_NYT <- lnt_read("txt_files/washington_dc/washington_NYT_LN_1.TXT")
 
 # if there is only one file, run the following.
 media_LN_NYT <- media_LN_NYT@meta %>% 
@@ -17,11 +17,11 @@ media_LN_NYT <- media_LN_NYT@meta %>%
   select(-c("Source_File", "Graphic", "ID"))
 
 # if there is more than one file, repeat the following.
-media2_LN_NYT <- lnt_read("txt_files/airbnb_toronto_2.TXT") 
+media2_LN_NYT <- lnt_read("txt_files/washington_dc/washington_NYT_LN_2.TXT") 
 
 # if there is more than one file, merge and remove files.
-media_LN_NYT <- rbind(media1_LN_NYT@meta %>% 
-                        right_join(media1_LN_NYT@articles, by = "ID"), 
+media_LN_NYT <- rbind(media_LN_NYT@meta %>% 
+                        right_join(media_LN_NYT@articles, by = "ID"), 
                       media2_LN_NYT@meta %>% 
                         right_join(media2_LN_NYT@articles, by = "ID")) %>% 
   select(-c("Source_File", "Graphic", "ID"))
@@ -38,15 +38,15 @@ media_LN_NYT$Date <- as.character(media_LN_NYT$Date)
 
 ## 1.2 COMPLETE THIS SECTION IF FACTIVA, OTHERWISE SKIP. 
 # 1.2.1 import the source and corpus Factiva HTML files for airbnb + city name from the New York Times
-source1_NYT <- FactivaSource("txt_files/vancouver/vancouver_NYT_FTV.htm")
-corpus_NYT <- Corpus(source1_NYT, list(language = NA)) 
+source1_NYT <- FactivaSource("txt_files/washington_dc/washington_NYT_FTV_1.htm")
+corpus1_NYT <- Corpus(source1_NYT, list(language = NA)) 
 
 # if there is more than one file, repeat the following.
-source2_NYT <- FactivaSource("txt_files/Factiva.htm")
-corpus2_NYT <- Corpus(source1_NYT, list(language = NA))
+source4_NYT <- FactivaSource("txt_files/washington_dc/washington_NYT_FTV_4.htm")
+corpus4_NYT <- Corpus(source4_NYT, list(language = NA))
 
 # if there is more than one file, merge
-corpus_NYT = tm:::c.VCorpus(corpus1_NYT, corpus2_NYT)
+corpus_NYT = tm:::c.VCorpus(corpus1_NYT, corpus2_NYT, corpus3_NYT, corpus4_NYT)
 
 # transform into a data table
 media_FTV_NYT <- tibble(Source_ID = numeric(0), Newspaper = character(0), Date = character(0), 
@@ -76,7 +76,7 @@ rm(source1_NYT, source2_NYT, corpus1_NYT, corpus2_NYT, corpus_NYT)
 ############################# 2 - IMPORT NECESSARY FILES FROM THE LOCAL PAPER ############################################################################################################################
 ## 2.1 COMPLETE THIS SECTION IF LEXISNEXIS, OTHERWISE SKIP.
 # import LexisNexis txt file(s) with airbnb + city name from the local newspaper
-media_LN_local <- lnt_read("txt_files/vancouver/vancouver_local_LN.TXT")
+media1_LN_local <- lnt_read("txt_files/washington_dc/washington_local_LN_1.TXT")
 
 # if there is only one file, run the following
 media_LN_local <- media_LN_local@meta %>% 
@@ -84,7 +84,7 @@ media_LN_local <- media_LN_local@meta %>%
   select(-c("Source_File", "Graphic", "ID"))
 
 # if there is more than one file, repeat the following.
-media2_LN_local <- lnt_read("txt_files/toronto/toronto_local_LN_2.TXT") 
+media2_LN_local <- lnt_read("txt_files/washington_dc/washington_local_LN_2.TXT") 
 
 # if there is more than one file, merge and remove files.
 media_LN_local <- rbind(media1_LN_local@meta %>% 
@@ -106,15 +106,17 @@ media_LN_local$Date <- as.character(media_LN_local$Date)
 
 ## 2.2 COMPLETE THIS SECTION IF FACTIVA, OTHERWISE SKIP. 
 # import the source and corpus Factiva HTML files for airbnb + city name from the local newspaper
-source1_local <- FactivaSource("txt_files/vancouver/vancouver_local_FTV_1.htm")
+source1_local <- FactivaSource("txt_files/washington_dc/washington_local_FTV_1.htm")
 corpus1_local <- Corpus(source1_local, list(language = NA)) 
 
 # if there is more than one file, repeat the following.
-source4_local <- FactivaSource("txt_files/vancouver/vancouver_local_FTV_4.htm")
-corpus4_local <- Corpus(source4_local, list(language = NA))
+source6_local <- FactivaSource("txt_files/washington_dc/washington_local_FTV_6.htm")
+corpus6_local <- Corpus(source6_local, list(language = NA, fill = TRUE))
 
 # if there is more than one file, merge
-corpus_local = tm:::c.VCorpus(corpus1_local, corpus2_local, corpus3_local, corpus4_local)
+corpus_local = tm:::c.VCorpus(corpus1_local, corpus2_local, corpus3_local, corpus4_local, corpus5_local,
+                              corpus6_local, corpus7_local, corpus8_local, corpus9_local, corpus10_local,
+                              corpus11_local, corpus12_local)
 
 # transform into a data table
 media_FTV_local <- tibble(Source_ID = numeric(0), Newspaper = character(0), Date = character(0), 

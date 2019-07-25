@@ -11,7 +11,7 @@ social_capital <- tibble(city = character(0), neighbourhood_name = character(0),
                          official_language_z = numeric (0), citizen_z = numeric (0), white_z = numeric (0))
  
 CTs_city <- st_intersect_summarize(
-  CTs_canada,
+  CTs_us,
   neighbourhoods,
   group_vars = vars(neighbourhood),
   population = population,
@@ -52,7 +52,7 @@ repeat{
   
   social_capital[n, 11] = CTs_neighbourhood$citizen*CTs_neighbourhood$population
   
-  social_capital[n, 12] = CTs_neighbourhood$white**CTs_neighbourhood$population
+  social_capital[n, 12] = CTs_neighbourhood$white*CTs_neighbourhood$population
   
   social_capital[n, 13] = CTs_neighbourhood$med_income_z
   
@@ -85,9 +85,4 @@ social_capital <- social_capital %>%
            citizen_z + white_z)
 
 # Export as a table
-save(social_capital, file = "social_capital/vancouver.Rdata")
-
-
-
-
-
+save(social_capital, file = "social_capital/miami.Rdata")
