@@ -4,7 +4,7 @@ source("R/01_import_general/01_helper_functions.R")
 
 # Enter city name and upload required geometries. Ensure that there is a field titled neighbourhood in the geometries file
 # Use st_transform to 32618 for Canada or 26918 for the United States
-cityname <- "Miami"
+cityname <- "New York City"
 
 neighbourhoods <-
   read_sf(dsn = "Data", layer = "new_orleans")%>%
@@ -13,7 +13,7 @@ neighbourhoods <-
   select(CODE_ID = OBJECTID, neighbourhood = GNOCDC_LAB, geometry)
 
 # New York and Florida import 
-neighbourhoods <- pumas("FL", class = "sf") %>% 
+neighbourhoods <- pumas("NY", class = "sf") %>% 
   st_transform(26918) %>%
   as_tibble() %>% 
   st_as_sf() %>%
@@ -21,7 +21,7 @@ neighbourhoods <- pumas("FL", class = "sf") %>%
   select(-GEOID10, -NAMELSAD10, -STATEFP10, -MTFCC10, -FUNCSTAT10, -ALAND10,
          -AWATER10, -INTPTLAT10, -INTPTLON10) %>% 
   select(CODE_ID = PUMACE10, neighbourhood, geometry)%>%
-  filter(str_detect(neighbourhood, "Miami-"))
+  filter(str_detect(neighbourhood, "NYC-"))
 
 # Run for Toronto
 neighbourhoods <- neighbourhoods %>% 
@@ -119,16 +119,21 @@ repeat{
   }
 }
 
+# Collapse the named entity recognition to reduce property times and api queries
+ner_local_compressed <- ner_local %>% 
+                        select(entity) %>% 
+                        distinct()
+
+ner_NYT_compressed <- ner_NYT %>% 
+                      select(entity) %>% 
+                      distinct()
+
 # Query Google to geocode the locations for their latitude and longitude
-locations_local <- mutate_geocode(ner_local, entity)
+locations_local <- mutate_geocode(ner_local_compressed, entity)
 
-locations_NYT <- mutate_geocode(ner_NYT, entity)
+locations_NYT <- mutate_geocode(ner_NYT_compressed, entity)
 
-# Save the locations so that this does not need to be rerun
-save(locations_local, file = "neighbourhood_resistance/locations_local_miami.Rdata")
-save(locations_NYT, file = "neighbourhood_resistance/locations_NYT_miami.Rdata")
-
-# Find the locations within the specified neighbourhoods
+# Remove the locations that were not geocoded
 locations_local <- locations_local %>% 
   filter(!is.na(lon)) %>% 
   st_as_sf(coords = c ("lon", "lat"), crs = 4326) %>% 
@@ -139,8 +144,20 @@ locations_NYT <- locations_NYT %>%
   st_as_sf(coords = c ("lon", "lat"), crs = 4326) %>% 
   st_transform(32618)
 
+# Perform a join to associate each entity with each document id
+locations_local <- ner_local %>% 
+  left_join(locations_local)
+
+locations_NYT <- ner_NYT %>% 
+                inner_join(locations_NYT)
+
+# Save the locations so that this does not need to be rerun
+save(locations_local, file = "neighbourhood_resistance/locations_local_nyc.Rdata")
+save(locations_NYT, file = "neighbourhood_resistance/locations_NYT_nyc.Rdata")
+
 # Perform a spatial join to determine what locations fall into which neighbourhoods
 locations_local <- locations_local %>%
+  st_as_sf() %>% 
   st_transform(26918) %>% 
   st_join( neighbourhoods,join = st_intersects) %>% 
   filter(!is.na(neighbourhood))
@@ -148,8 +165,9 @@ locations_local <- locations_local %>%
 locations_local$doc_id <- as.numeric(gsub("text", "",locations_local$doc_id))
 
 locations_NYT <- locations_NYT %>% 
+  st_as_sf() %>% 
   st_transform(26918) %>% 
-  st_join( neighbourhoods,join = st_intersects) %>% 
+  st_join(neighbourhoods,join = st_intersects) %>% 
   filter(!is.na(neighbourhood))
 
 locations_NYT$doc_id <- as.numeric(gsub("text", "",locations_NYT$doc_id))

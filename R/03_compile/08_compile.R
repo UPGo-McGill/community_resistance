@@ -35,5 +35,3 @@ airbnb_neighbourhoods <- airbnb_neighbourhoods %>%
 
 # Save the data table
 save(airbnb_neighbourhoods, file = "airbnb_neighbourhoods.Rdata")
-
-
