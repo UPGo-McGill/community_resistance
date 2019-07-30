@@ -26,7 +26,12 @@ airbnb_neighbourhoods <- airbnb_neighbourhoods %>%
 # Create the dummy variables for spatial effects
 airbnb_neighbourhoods <- airbnb_neighbourhoods %>% 
   mutate(vancouver = ifelse(city == "Vancouver", TRUE, FALSE)) %>% 
-  mutate(toronto = ifelse(city == "Toronto", TRUE, FALSE))
+  mutate(toronto = ifelse(city == "Toronto", TRUE, FALSE)) %>% 
+  mutate(washington = ifelse(city == "Washington", TRUE, FALSE)) %>% 
+  mutate(nyc = ifelse(city == "New York City", TRUE, FALSE)) %>% 
+  mutate(miami = ifelse (city == "Miami", TRUE, FALSE)) %>% 
+  mutate(new_orleans = ifelse (city == "New Orleans", TRUE, FALSE)) %>% 
+  mutate(canada = ifelse (city == "Vancouver" | city == "Toronto" | city == "Montreal", TRUE, FALSE))
 
 # Save the data table
 save(airbnb_neighbourhoods, file = "airbnb_neighbourhoods.Rdata")
