@@ -7,10 +7,10 @@ source("R/01_import_general/01_helper_functions.R")
 cityname <- "Miami"
 
 neighbourhoods <-
-  read_sf(dsn = "Data", layer = "new_york")%>%
+  read_sf(dsn = "Data", layer = "new_orleans")%>%
   #st_transform(32618)%>% 
   st_transform(26918) %>% 
-  select(CODE_ID = slug, neighbourhood = name, geometry)
+  select(CODE_ID = OBJECTID, neighbourhood = GNOCDC_LAB, geometry)
 
 # New York and Florida import 
 neighbourhoods <- pumas("FL", class = "sf") %>% 
@@ -124,6 +124,11 @@ locations_local <- mutate_geocode(ner_local, entity)
 
 locations_NYT <- mutate_geocode(ner_NYT, entity)
 
+# Save the locations so that this does not need to be rerun
+save(locations_local, file = "neighbourhood_resistance/locations_local_miami.Rdata")
+save(locations_NYT, file = "neighbourhood_resistance/locations_NYT_miami.Rdata")
+
+# Find the locations within the specified neighbourhoods
 locations_local <- locations_local %>% 
   filter(!is.na(lon)) %>% 
   st_as_sf(coords = c ("lon", "lat"), crs = 4326) %>% 
@@ -135,13 +140,15 @@ locations_NYT <- locations_NYT %>%
   st_transform(32618)
 
 # Perform a spatial join to determine what locations fall into which neighbourhoods
-locations_local <- locations_local %>% 
+locations_local <- locations_local %>%
+  st_transform(26918) %>% 
   st_join( neighbourhoods,join = st_intersects) %>% 
   filter(!is.na(neighbourhood))
 
 locations_local$doc_id <- as.numeric(gsub("text", "",locations_local$doc_id))
 
 locations_NYT <- locations_NYT %>% 
+  st_transform(26918) %>% 
   st_join( neighbourhoods,join = st_intersects) %>% 
   filter(!is.na(neighbourhood))
 
@@ -310,4 +317,4 @@ neighbourhood_resistance <- neighbourhood_resistance %>%
   select(1:12, "geometry")
 
 # Export as a table
-save(neighbourhood_resistance, file = "neighbourhood_resistance/vancouver.Rdata")
+save(neighbourhood_resistance, file = "neighbourhood_resistance/miami.Rdata")

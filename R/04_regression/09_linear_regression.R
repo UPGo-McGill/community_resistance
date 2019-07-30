@@ -28,7 +28,15 @@ airbnb_neighbourhoods %>%
 ggplot(airbnb_neighbourhoods %>% filter(CRI < 0.002), aes(x = log(CRI), y = log(CRI + error), colour = city)) +
   geom_point()
 
-scale_coord
+# Logging the variables - the LHS 
+# remap residuals
+
+# Log the rest of the variables except the dummy variables
+  # convert 0 to 0.000000000000000001
+
+
+# Add a country dummy variable
+
 
 
 

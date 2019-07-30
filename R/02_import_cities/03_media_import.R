@@ -53,7 +53,6 @@ media_FTV_NYT <- tibble(Source_ID = numeric(0), Newspaper = character(0), Date =
                         Word_Count = numeric(0), Section = character(0), Author = character(0), 
                         Edition = character(0), Headline = character(0), Article = character(0))
 
-n = 1
 
 for (n in c(1:length(corpus_NYT))) {
   
@@ -67,10 +66,9 @@ for (n in c(1:length(corpus_NYT))) {
   media_FTV_NYT[n,8] = paste(corpus_NYT[[n]]$meta$heading, collapse = "")
   media_FTV_NYT[n,9] = paste(corpus_NYT[[n]]$content, collapse = "")
   
-  n = n+1
 }
 
-rm(source1_NYT, source2_NYT, corpus1_NYT, corpus2_NYT, corpus_NYT)
+rm(source1_NYT, source2_NYT, corpus1_NYT, corpus2_NYT, corpus_NYT, corpus3_NYT, source3_NYT, corpus4_NYT, source4_NYT)
 
 
 ############################# 2 - IMPORT NECESSARY FILES FROM THE LOCAL PAPER ############################################################################################################################
@@ -110,8 +108,8 @@ source1_local <- FactivaSource("txt_files/washington_dc/washington_local_FTV_1.h
 corpus1_local <- Corpus(source1_local, list(language = NA)) 
 
 # if there is more than one file, repeat the following.
-source6_local <- FactivaSource("txt_files/washington_dc/washington_local_FTV_6.htm")
-corpus6_local <- Corpus(source6_local, list(language = NA, fill = TRUE))
+source11_local <- FactivaSource("txt_files/washington_dc/washington_local_FTV_11.htm")
+corpus11_local <- Corpus(source11_local, list(language = NA))
 
 # if there is more than one file, merge
 corpus_local = tm:::c.VCorpus(corpus1_local, corpus2_local, corpus3_local, corpus4_local, corpus5_local,
@@ -122,8 +120,6 @@ corpus_local = tm:::c.VCorpus(corpus1_local, corpus2_local, corpus3_local, corpu
 media_FTV_local <- tibble(Source_ID = numeric(0), Newspaper = character(0), Date = character(0), 
                           Word_Count = numeric(0), Section = character(0), Author = character(0), 
                           Edition = character(0), Headline = character(0), Article = character(0))
-
-n = 1
 
 for (n in c(1:length(corpus_local))) {
   
@@ -137,7 +133,6 @@ for (n in c(1:length(corpus_local))) {
   media_FTV_local[n,8] = paste(corpus_local[[n]]$meta$heading, collapse = "")
   media_FTV_local[n,9] = paste(corpus_local[[n]]$content, collapse = "")
   
-  n = n+1
 }
 
 rm(source1_local, source2_local, source3_local, source4_local, source5_local, source6_local,
@@ -269,8 +264,8 @@ lemmatized_articles_NYT <- lemmatized_articles_NYT %>%
 ## 3.6 EXPORT
 # export the table(s) as .csv so that this does not need to be rerun.
 
-write_csv(media_local, "txt_files/vancouver/media_vancouver_local.csv")
-write_csv(media_NYT, "txt_files/vancouver/media_vancouver_NYT.csv")
+write_csv(media_local, "txt_files/washington_dc/media_washington_local.csv")
+write_csv(media_NYT, "txt_files/washington_dc/media_washington_NYT.csv")
 
 
 
