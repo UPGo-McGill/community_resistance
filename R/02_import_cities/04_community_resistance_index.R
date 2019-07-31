@@ -4,13 +4,13 @@ source("R/01_import_general/01_helper_functions.R")
 
 # Enter city name and upload required geometries. Ensure that there is a field titled neighbourhood in the geometries file
 # Use st_transform to 32618 for Canada or 26918 for the United States
-cityname <- "New York City"
+cityname <- "Washington"
 
 neighbourhoods <-
-  read_sf(dsn = "Data", layer = "new_orleans")%>%
+  read_sf(dsn = "Data", layer = "washington")%>%
   #st_transform(32618)%>% 
   st_transform(26918) %>% 
-  select(CODE_ID = OBJECTID, neighbourhood = GNOCDC_LAB, geometry)
+  select(CODE_ID = NAME, neighbourhood = NBH_NAMES, geometry)
 
 # New York and Florida import 
 neighbourhoods <- pumas("NY", class = "sf") %>% 
@@ -26,6 +26,10 @@ neighbourhoods <- pumas("NY", class = "sf") %>%
 # Run for Toronto
 neighbourhoods <- neighbourhoods %>% 
   separate(neighbourhood, into = c("neighbourhood", NA), sep = "[(]")
+
+# Run for all neighbourhoods to remove punctuation
+neighbourhoods$neighbourhood <- neighbourhoods$neighbourhood %>% 
+  gsub("[[:punct:]]", " ", .)
 
 # Perform Named Entity Recognition to determine what articles mention what locations
 # Remove the city name as one of the locations as this will geo-locate to a specific point within one borough
@@ -81,9 +85,6 @@ ner_local$entity <- ner_local$entity %>%
   gsub("[[:punct:]]", " ", .)
 
 ner_NYT$entity <- ner_NYT$entity %>% 
-  gsub("[[:punct:]]", " ", .)
-
-neighbourhoods$neighbourhood <- neighbourhoods$neighbourhood %>% 
   gsub("[[:punct:]]", " ", .)
 
 # Add the city name to the entity if it is part of any neighbourhood name
@@ -146,10 +147,10 @@ locations_NYT <- locations_NYT %>%
 
 # Perform a join to associate each entity with each document id
 locations_local <- ner_local %>% 
-  left_join(locations_local)
+                   inner_join(locations_local)
 
 locations_NYT <- ner_NYT %>% 
-                inner_join(locations_NYT)
+                 inner_join(locations_NYT)
 
 # Save the locations so that this does not need to be rerun
 save(locations_local, file = "neighbourhood_resistance/locations_local_nyc.Rdata")
@@ -335,4 +336,4 @@ neighbourhood_resistance <- neighbourhood_resistance %>%
   select(1:12, "geometry")
 
 # Export as a table
-save(neighbourhood_resistance, file = "neighbourhood_resistance/miami.Rdata")
+save(neighbourhood_resistance, file = "neighbourhood_resistance/nyc.Rdata")

@@ -38,7 +38,7 @@ property <- property %>%
               "Airbnb_HID", "HomeAway_PID", "HomeAway_HID")) %>% 
   arrange(Property_ID) %>% 
   st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326) %>%
-  st_transform(32618) %>% 
+  st_transform(26918) %>% 
   filter(Property_Type %in% c(
     "House", "Private room in house", "Apartment", "Cabin",
     "Entire condominium", "Townhouse", "Condominium", "Entire apartment",
@@ -72,20 +72,9 @@ property <- property %>%
     "Entire casa particular", "")) %>% 
   select(-Property_Type)
 
-daily <-
-  read_csv("data/daily_montreal.csv", col_types = cols(
-    `Property ID` = col_character(),
-    Date = col_date(format = ""),
-    Status = col_factor(levels = c("U", "B", "A", "R")),
-    `Booked Date` = col_skip(),
-    `Price (USD)` = col_double(),
-    `Price (Native)` = col_skip(),
-    `Currency Native` = col_skip(),
-    `Reservation ID` = col_skip(),
-    `Airbnb Property ID` = col_double(),
-    `HomeAway Property ID` = col_character())) %>%
-  set_names(c("Property_ID", "Date", "Status", "Price", "Airbnb_PID",
-              "HomeAway_PID")) %>%
+daily <- daily %>% 
+  select(c("property_ID", "date", "status", "price")) %>%
+  set_names(c("Property_ID", "Date", "Status", "Price")) %>%
   filter(!is.na(Status)) %>%
   arrange(Property_ID, Date)
   
@@ -127,5 +116,5 @@ property <-
 rm(GH_list)
 
 # Save files
-save(property, file = "airbnb/vancouver_property.Rdata")
-save(daily, file = "airbnb/vancouver_daily.Rdata")
+save(property, file = "airbnb/miami_property.Rdata")
+save(daily, file = "airbnb/miami_daily.Rdata")

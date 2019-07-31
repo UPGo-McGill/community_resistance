@@ -89,9 +89,9 @@ strr_expand_daily <- function(daily, start = NULL, end = NULL) {
 
 # Expand each date range to one-row-per-date
 daily <-
-  setDT(daily)[, list(apid = apid,
+  setDT(daily)[, list(property_ID = property_ID,
                       date = seq(start_date, end_date, by = "day"),
-                      status = status, rid = rid, cost = cost),
+                      status = status, res_id = res_id, price = price),
                by = 1:nrow(daily)]
 
 # Optionally trim based on start date

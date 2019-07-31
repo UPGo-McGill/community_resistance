@@ -15,9 +15,25 @@ vancouver <- left_join(loadRdata("neighbourhood_resistance/vancouver.Rdata"),
                        left_join(loadRdata("airbnb/vancouver.Rdata"), loadRdata("social_capital/vancouver.Rdata"), 
                                  by = c("city", "neighbourhood_name")))
 
+new_york <- left_join(loadRdata("neighbourhood_resistance/nyc.Rdata"), 
+                      left_join(loadRdata("airbnb/nyc.Rdata"), loadRdata("social_capital/nyc.Rdata"), 
+                                by = c("city", "neighbourhood_name")))
+
+washington <- left_join(loadRdata("neighbourhood_resistance/washington.Rdata"), 
+                        left_join(loadRdata("airbnb/washington.Rdata"), loadRdata("social_capital/washington.Rdata"), 
+                                  by = c("city", "neighbourhood_name")))
+
+new_orleans <- left_join(loadRdata("neighbourhood_resistance/new_orleans.Rdata"), 
+                         left_join(loadRdata("airbnb/new_orleans.Rdata"), loadRdata("social_capital/new_orleans.Rdata"), 
+                                   by = c("city", "neighbourhood_name")))
+
+miami <-  left_join(loadRdata("neighbourhood_resistance/miami.Rdata"), 
+                    left_join(loadRdata("airbnb/miami.Rdata"), loadRdata("social_capital/miami.Rdata"), 
+                              by = c("city", "neighbourhood_name")))
+
 
 # Create a new table with one row per neighbourhood
-airbnb_neighbourhoods <- rbind(montreal, toronto, vancouver)
+airbnb_neighbourhoods <- rbind(montreal, toronto, vancouver, new_york, washington, new_orleans, miami)
 
 # Calculate housing loss as percentage of dwellings
 airbnb_neighbourhoods <- airbnb_neighbourhoods %>% 
@@ -31,7 +47,7 @@ airbnb_neighbourhoods <- airbnb_neighbourhoods %>%
   mutate(nyc = ifelse(city == "New York City", TRUE, FALSE)) %>% 
   mutate(miami = ifelse (city == "Miami", TRUE, FALSE)) %>% 
   mutate(new_orleans = ifelse (city == "New Orleans", TRUE, FALSE)) %>% 
-  mutate(canada = ifelse (city == "Vancouver" | city == "Toronto" | city == "Montreal", TRUE, FALSE))
+  mutate(usa = ifelse (city == "Vancouver" | city == "Toronto" | city == "Montreal", FALSE, TRUE))
 
 # Save the data table
 save(airbnb_neighbourhoods, file = "airbnb_neighbourhoods.Rdata")
