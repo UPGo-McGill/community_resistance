@@ -31,13 +31,32 @@ miami <-  left_join(loadRdata("neighbourhood_resistance/miami.Rdata"),
                     left_join(loadRdata("airbnb/miami.Rdata"), loadRdata("social_capital/miami.Rdata"), 
                               by = c("city", "neighbourhood_name")))
 
+los_angeles <- left_join(loadRdata("neighbourhood_resistance/los_angeles.Rdata"), 
+                         left_join(loadRdata("airbnb/los_angeles.Rdata"), loadRdata("social_capital/los_angeles.Rdata"), 
+                                   by = c("city", "neighbourhood_name")))
+
+san_fran <- left_join(loadRdata("neighbourhood_resistance/san_fran.Rdata"), 
+                      left_join(loadRdata("airbnb/san_fran.Rdata"), loadRdata("social_capital/san_francisco.Rdata"), 
+                                by = c("city", "neighbourhood_name")))
+
 
 # Create a new table with one row per neighbourhood
-airbnb_neighbourhoods <- rbind(montreal, toronto, vancouver, new_york, washington, new_orleans, miami)
+airbnb_neighbourhoods <- rbind(montreal, toronto, vancouver, new_york, washington, 
+                               new_orleans, miami, los_angeles, san_fran)
 
 # Calculate housing loss as percentage of dwellings
 airbnb_neighbourhoods <- airbnb_neighbourhoods %>% 
   mutate(housing_loss_pct = housing_loss/households)
+
+# Calculate census variables as a function of population or households
+airbnb_neighbourhoods <- airbnb_neighbourhoods %>% 
+mutate_at(
+  .vars = c("university_education", "non_mover", 
+            "official_language", "citizen", "white"),
+  .funs = list(`pct_pop` = ~{. / population})) %>% 
+  mutate_at(
+    .vars = c("housing_need", "owner_occupied"),
+    .funs = list(`pct_household` = ~{. / households}))
 
 # Create the dummy variables for spatial effects
 airbnb_neighbourhoods <- airbnb_neighbourhoods %>% 
@@ -47,6 +66,8 @@ airbnb_neighbourhoods <- airbnb_neighbourhoods %>%
   mutate(nyc = ifelse(city == "New York City", TRUE, FALSE)) %>% 
   mutate(miami = ifelse (city == "Miami", TRUE, FALSE)) %>% 
   mutate(new_orleans = ifelse (city == "New Orleans", TRUE, FALSE)) %>% 
+  mutate(los_angeles = ifelse (city == "Los Angeles", TRUE, FALSE)) %>% 
+  mutate(san_francisco = ifelse (city == "San Francisco", TRUE, FALSE)) %>% 
   mutate(usa = ifelse (city == "Vancouver" | city == "Toronto" | city == "Montreal", FALSE, TRUE))
 
 # Save the data table

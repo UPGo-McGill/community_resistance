@@ -4,13 +4,13 @@ source("R/01_import_general/01_helper_functions.R")
 
 # Enter city name and upload required geometries. Ensure that there is a field titled neighbourhood in the geometries file
 # Use st_transform to 32618 for Canada or 26918 for the United States
-cityname <- "Washington"
+cityname <- "Los Angeles"
 
 neighbourhoods <-
-  read_sf(dsn = "Data", layer = "washington")%>%
+  read_sf(dsn = "Data", layer = "los_angeles")%>%
   #st_transform(32618)%>% 
   st_transform(26918) %>% 
-  select(CODE_ID = NAME, neighbourhood = NBH_NAMES, geometry)
+  select(CODE_ID = slug, neighbourhood = display_na, geometry)
 
 # New York and Florida import 
 neighbourhoods <- pumas("NY", class = "sf") %>% 
@@ -120,7 +120,7 @@ repeat{
   }
 }
 
-# Collapse the named entity recognition to reduce property times and api queries
+# Collapse the named entity recognition to reduce processing times and number of api queries
 ner_local_compressed <- ner_local %>% 
                         select(entity) %>% 
                         distinct()
@@ -153,8 +153,8 @@ locations_NYT <- ner_NYT %>%
                  inner_join(locations_NYT)
 
 # Save the locations so that this does not need to be rerun
-save(locations_local, file = "neighbourhood_resistance/locations_local_nyc.Rdata")
-save(locations_NYT, file = "neighbourhood_resistance/locations_NYT_nyc.Rdata")
+save(locations_local, file = "neighbourhood_resistance/locations_local_los_angeles.Rdata")
+save(locations_NYT, file = "neighbourhood_resistance/locations_NYT_los_angeles.Rdata")
 
 # Perform a spatial join to determine what locations fall into which neighbourhoods
 locations_local <- locations_local %>%
@@ -336,4 +336,4 @@ neighbourhood_resistance <- neighbourhood_resistance %>%
   select(1:12, "geometry")
 
 # Export as a table
-save(neighbourhood_resistance, file = "neighbourhood_resistance/nyc.Rdata")
+save(neighbourhood_resistance, file = "neighbourhood_resistance/los_angeles.Rdata")
