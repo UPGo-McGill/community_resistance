@@ -15,7 +15,8 @@ n = 1
 repeat{
   
   neighbourhood_property <- property %>% 
-          st_join(st_buffer(neighbourhoods[n, "geometry"], 200),
+    st_transform(26918) %>% 
+          st_join(neighbourhoods[n, "geometry"],
           join = st_within, left = FALSE)
   
   neighbourhood_daily <- daily %>% 
@@ -25,8 +26,9 @@ repeat{
   
   airbnb[n, 2] <- neighbourhoods$neighbourhood[n]
   
-  airbnb[n, 3] <- neighbourhood_daily %>% 
-    filter(Date == end_date) %>% 
+  airbnb[n, 3] <- neighbourhood_property %>% 
+    filter(Created <= end_date,
+           Scraped >= end_date) %>% 
     group_by(Property_ID) %>% 
     nrow()
   
@@ -90,4 +92,4 @@ repeat{
 }
 
 # Export as a table
-save(airbnb, file = "airbnb/los_angeles.Rdata")
+save(airbnb, file = "airbnb/san_fran_no_buffer.Rdata")

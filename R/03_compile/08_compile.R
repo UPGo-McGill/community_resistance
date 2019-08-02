@@ -4,39 +4,39 @@ source("R/01_import_general/01_helper_functions.R")
 
 # Import a table for each city
 montreal <- left_join(loadRdata("neighbourhood_resistance/montreal.Rdata"), 
-                      left_join(loadRdata("airbnb/montreal.Rdata"), loadRdata("social_capital/montreal.Rdata"), 
+                      left_join(loadRdata("airbnb/montreal_no_buffer.Rdata"), loadRdata("social_capital/montreal.Rdata"), 
                                 by = c("city", "neighbourhood_name")))
 
 toronto <- left_join(loadRdata("neighbourhood_resistance/toronto.Rdata"), 
-                                 left_join(loadRdata("airbnb/toronto.Rdata"), loadRdata("social_capital/toronto.Rdata"), 
+                                 left_join(loadRdata("airbnb/toronto_no_buffer.Rdata"), loadRdata("social_capital/toronto.Rdata"), 
                                            by = c("city", "neighbourhood_name")))
 
 vancouver <- left_join(loadRdata("neighbourhood_resistance/vancouver.Rdata"), 
-                       left_join(loadRdata("airbnb/vancouver.Rdata"), loadRdata("social_capital/vancouver.Rdata"), 
+                       left_join(loadRdata("airbnb/vancouver_no_buffer.Rdata"), loadRdata("social_capital/vancouver.Rdata"), 
                                  by = c("city", "neighbourhood_name")))
 
 new_york <- left_join(loadRdata("neighbourhood_resistance/nyc.Rdata"), 
-                      left_join(loadRdata("airbnb/nyc.Rdata"), loadRdata("social_capital/nyc.Rdata"), 
+                      left_join(loadRdata("airbnb/nyc_no_buffer.Rdata"), loadRdata("social_capital/nyc.Rdata"), 
                                 by = c("city", "neighbourhood_name")))
 
 washington <- left_join(loadRdata("neighbourhood_resistance/washington.Rdata"), 
-                        left_join(loadRdata("airbnb/washington.Rdata"), loadRdata("social_capital/washington.Rdata"), 
+                        left_join(loadRdata("airbnb/washington_no_buffer.Rdata"), loadRdata("social_capital/washington.Rdata"), 
                                   by = c("city", "neighbourhood_name")))
 
 new_orleans <- left_join(loadRdata("neighbourhood_resistance/new_orleans.Rdata"), 
-                         left_join(loadRdata("airbnb/new_orleans.Rdata"), loadRdata("social_capital/new_orleans.Rdata"), 
+                         left_join(loadRdata("airbnb/new_orleans_no_buffer.Rdata"), loadRdata("social_capital/new_orleans.Rdata"), 
                                    by = c("city", "neighbourhood_name")))
 
 miami <-  left_join(loadRdata("neighbourhood_resistance/miami.Rdata"), 
-                    left_join(loadRdata("airbnb/miami.Rdata"), loadRdata("social_capital/miami.Rdata"), 
+                    left_join(loadRdata("airbnb/miami_no_buffer.Rdata"), loadRdata("social_capital/miami.Rdata"), 
                               by = c("city", "neighbourhood_name")))
 
 los_angeles <- left_join(loadRdata("neighbourhood_resistance/los_angeles.Rdata"), 
-                         left_join(loadRdata("airbnb/los_angeles.Rdata"), loadRdata("social_capital/los_angeles.Rdata"), 
+                         left_join(loadRdata("airbnb/los_angeles_no_buffer.Rdata"), loadRdata("social_capital/los_angeles.Rdata"), 
                                    by = c("city", "neighbourhood_name")))
 
 san_fran <- left_join(loadRdata("neighbourhood_resistance/san_fran.Rdata"), 
-                      left_join(loadRdata("airbnb/san_fran.Rdata"), loadRdata("social_capital/san_francisco.Rdata"), 
+                      left_join(loadRdata("airbnb/san_fran_no_buffer.Rdata"), loadRdata("social_capital/san_francisco.Rdata"), 
                                 by = c("city", "neighbourhood_name")))
 
 

@@ -86,7 +86,10 @@ property <-
 # Join property and daily file
 daily <- inner_join(daily, st_drop_geometry(property)) %>% 
   select(Property_ID, Date, Status, Price, Airbnb_PID, HomeAway_PID, Airbnb_HID,
-         HomeAway_HID, Listing_Type)
+         HomeAway_HID, Listing_Type, Created, Scraped)
+
+daily <- daily %>% 
+  filter(Date >= Created, Date <= Scraped + 30)
 
 # Find FREH listings
 daily_FREH <- strr_FREH(daily, start_date = end_date, end_date = end_date)
@@ -116,5 +119,5 @@ property <-
 rm(GH_list)
 
 # Save files
-save(property, file = "airbnb/miami_property.Rdata")
-save(daily, file = "airbnb/miami_daily.Rdata")
+save(property, file = "airbnb/san_fran_property.Rdata")
+save(daily, file = "airbnb/san_fran_daily.Rdata")
