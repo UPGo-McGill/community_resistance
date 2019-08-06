@@ -192,7 +192,7 @@ airbnb_neighbourhoods_error <- airbnb_neighbourhoods %>%
   filter(active_listings>0) %>% 
   mutate(error = resid(random_intercept))
 
-ggplot(airbnb_neighbourhoods_error , aes(x = CRI, y = error), colour = city) +
+ggplot(airbnb_neighbourhoods_error , aes(x = CRI, y = CRI - error), colour = city) +
   geom_point() +
     geom_smooth(method = "lm", se = FALSE)
 
