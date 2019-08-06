@@ -52,17 +52,81 @@ linear_model <- airbnb_neighbourhoods %>%
        los_angeles +
        san_francisco +
        usa, 
-       data = .) %>% 
-  summary()
+       data = .)
+
+class(linear_model)
+names(linear_model)
+confint(linear_model)
+
+# Plot a histogram of the residuals to see if the deviation is normally distributed
+hist(residuals(linear_model))
+  # As the distribution is normal, the normality assumption is likely to be true.
+  # Underlying assumptions are valid.
 
 # Residual error
 airbnb_neighbourhoods_error <- airbnb_neighbourhoods %>% 
   filter(active_listings> 0) %>% 
-  mutate(error = resid(linear_model))
+  mutate(error = residuals(linear_model))
  
-ggplot(airbnb_neighbourhoods_error , aes(x = (CRI), y = (CRI - error))) +
+ggplot(airbnb_neighbourhoods_error , aes(x = (CRI), y = (CRI-error))) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE)
+
+# Plot residuals versus indepedent variables to see if a higher order term must be introduced.
+  # If linear, the model is fine.
+ggplot(airbnb_neighbourhoods_error , aes(x = (scale(university_education_z)), y = (error))) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+  # Higher order terms are not necessary for any indepedent variable.
+
+# Remove insignificant terms
+linear_model_reduced <- airbnb_neighbourhoods %>% 
+  filter(active_listings > 0) %>% 
+  lm(scale(CRI) ~ 
+       scale(active_listings) + 
+       scale(revenue) + 
+       scale(housing_loss_pct) + 
+       scale(housing_need_z) + 
+       scale(non_mover_z) + 
+       toronto + 
+       vancouver + 
+       nyc + 
+       washington + 
+       new_orleans + 
+       miami + 
+       los_angeles +
+       san_francisco +
+       usa, 
+     data = .) 
+
+anova(linear_model, linear_model_reduced)
+
+# There is weak evidence of a statistically significant effect when reducing the model. 
+airbnb_neighbourhoods_error <- airbnb_neighbourhoods %>% 
+  filter(active_listings> 0) %>% 
+  mutate(error = residuals(linear_model_reduced))
+
+ggplot(airbnb_neighbourhoods_error , aes(x = (CRI), y = (CRI-error))) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+# Test the significance of the dummy variables
+linear_model_reduced_2 <-  airbnb_neighbourhoods %>% 
+  filter(active_listings > 0) %>% 
+  lm(scale(CRI) ~ 
+       scale(active_listings) + 
+       scale(revenue) + 
+       scale(housing_loss_pct) + 
+       scale(housing_need_z) + 
+       scale(non_mover_z),
+     data = .)
+
+anova(linear_model_reduced_2, linear_model_reduced)
+# There is strong evidence that removing the dummy variables is statistically significant.
+# The dummy variables must be included. This implies that a mixed model may be beneficial, 
+# with city as the grouping variable.
+
+# Linear_model_reduced 
 
 ######################################### RANDOM SLOPE MODEL ########################################
 random_slope <- airbnb_neighbourhoods %>% 
