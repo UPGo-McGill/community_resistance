@@ -51,8 +51,7 @@ gamma <- fitdistr(airbnb_neighbourhoods$CRI, "gamma")
 qqp(airbnb_neighbourhoods$CRI, "gamma", shape = gamma$estimate[[1]], rate = gamma$estimate[[2]])
   # clearly the best fit but has trouble capturing the larger CRIs
 
-# NOTE: As the data is not normally distributed, we cannot use linear modelling. The following sections
-  # do not apply.
+# NOTE: As the data is not normally distributed, we should not use linear modelling.
 
 ############################################ LINEAR MODELLING #########################################
 linear_model <- airbnb_neighbourhoods %>% 
@@ -382,3 +381,45 @@ random_slope <- airbnb_neighbourhoods %>%
         REML = FALSE)
 # city explains 4.8% of variance and revenue 38.2%.
 
+
+####################################### PENALIZED QUASILIKELIHOOD #####################################
+# biased estimates for binary responses, or if the response variable fits a discrete count distribution
+  # not the case
+airbnb_neighbourhoods$CRI <- (airbnb_neighbourhoods$CRI/max(airbnb_neighbourhoods$CRI)) + 0.0000001
+
+# find appropriate starting values
+airbnb_neighbourhoods %>% 
+  filter(active_listings > 0) %>% 
+  lmer ((CRI) ~ 
+          scale(active_listings) +
+          scale(revenue) + 
+          scale(housing_loss_pct) + 
+          scale(med_income_z)+ 
+          scale(population)+ 
+          scale(housing_need_z) + 
+          scale(non_mover_z) + 
+          scale(owner_occupied_z) +
+          (1 | city),
+        data = .,
+        REML = FALSE) %>% 
+  coef()
+
+pql <- airbnb_neighbourhoods %>% 
+  filter(active_listings > 0) %>% 
+  glmmPQL((CRI) ~
+            scale(active_listings) +
+            scale(revenue) + 
+            scale(housing_loss_pct) + 
+            scale(med_income_z) +
+            scale(population)+ 
+            scale(housing_need_z) + 
+            scale(non_mover_z) + 
+            scale(owner_occupied_z),
+          ~ 1 | city, 
+          family = Gamma(link = "log"),
+          data = ., 
+          verbose = FALSE,
+          start = c(0,0,0,0,0,0,0,0,0))
+
+pql %>% 
+  summary()
