@@ -2,31 +2,57 @@
 
 source("R/01_import_general/01_helper_functions.R")
 
+## Census variable choices
+# absolute values - need to account for population and number of households - i do not think this is a 
+# sensible choice.
+# percentages - a step up from absolute values as it takes into account population size and number of 
+# households. it also allows for comparison between neighbourhoods in different cities, though i still 
+# don't think this is the best measure. in NYC for example, it is likely more common that there are less 
+# white people and less owner-occupied households on average than in Vancouver due to general city make=up. 
+# Shouldn't this be taken into account?
+# z scored with city-wide average - i think this is best as it allows for consistent relativity. CRI is 
+# currently being measured in relation to the city-wide media coverage. Therefore i think it makes 
+# logical sense that z scores be used to capture intra-city variations, especially as we will be 
+# accounting for inter-city differences when using city as either dummy or grouping variable.
+
+# Scaling
+# After doing some research online, it seems like general practice to scale the variables. Scaling  
+# is done by dividing the centered values of x by their standard deviations. Normalizes the distribution.
+# The log of the population takes the effect of a % increase in population, rather than absolute. 
+# Taking the log of the population, rather than scaling, reduces inter-city bariations betwen cities
+# and the significance of the population variable itself. As we want to control for population, 
+# this makes most sense?
+
 # Examine the probability density function
 ggplot(data = airbnb_neighbourhoods, aes((CRI))) +
   stat_function(fun = dnorm, n = 580, args = list(mean = 0, sd = 1)) + ylab("") +
   scale_y_continuous(breaks = NULL)
 
-## Census variable choices
-  # absolute values - need to account for population and number of households - i do not think this is a 
-    # sensible choice.
-  # percentages - a step up from absolute values as it takes into account population size and number of 
-    # households. it also allows for comparison between neighbourhoods in different cities, though i still 
-    # don't think this is the best measure. in NYC for example, it is likely more common that there are less 
-    # white people and less owner-occupied households on average than in Vancouver due to general city make=up. 
-    # Shouldn't this be taken into account?
-  # z scored with city-wide average - i think this is best as it allows for consistent relativity. CRI is 
-    # currently being measured in relation to the city-wide media coverage. Therefore i think it makes 
-    # logical sense that z scores be used to capture intra-city variations, especially as we will be 
-    # accounting for inter-city differences when using city as either dummy or grouping variable.
+# Determine which probability density function best fits the data
+# Manipulate CRI such that it is scaled and there are no 0s.
+airbnb_neighbourhoods$CRI <- (airbnb_neighbourhoods$CRI/max(airbnb_neighbourhoods$CRI)) + 0.0000001
 
-# Scaling
-  # After doing some research online, it seems like general practice to scale the variables. Scaling  
-  # is done by dividing the centered values of x by their standard deviations. Normalizes the distribution.
-  # The log of the population takes the effect of a % increase in population, rather than absolute. 
-  # Taking the log of the population, rather than scaling, reduces inter-city bariations betwen cities
-  # and the significance of the population variable itself. As we want to control for population, 
-  # this makes most sense?
+# Normal distribution
+qqp(airbnb_neighbourhoods$CRI, "norm")
+  # not a good fit
+
+# Lognormal distribution
+qqp(airbnb_neighbourhoods$CRI, "lnorm")
+  # not a good fit
+
+# Negative binomial distribution
+  # only works for discrete values - does not apply
+
+# Poisson distribution
+  # only works for discrete values - does not apply
+
+# Gamma distribution
+gamma <- fitdistr(airbnb_neighbourhoods$CRI, "gamma")
+qqp(airbnb_neighbourhoods$CRI, "gamma", shape = gamma$estimate[[1]], rate = gamma$estimate[[2]])
+  # clearly the best fit but has trouble capturing the larger CRIs
+
+# NOTE: As the data is not normally distributed, we cannot use linear modelling. The following sections
+  # do not apply.
 
 ############################################ LINEAR MODELLING #########################################
 linear_model <- airbnb_neighbourhoods %>% 
@@ -338,6 +364,7 @@ coef(random_slope)
   # population  - we fail to accept the null hypothesis - 0.01547
 
   # revenue random slope is much more significant than population.
+  # NOTE: apparently you cannot treat continuous variables as random effects, therefore is this model invalid?
 
 random_slope <- airbnb_neighbourhoods %>% 
   filter(active_listings > 0) %>% 
@@ -352,8 +379,6 @@ random_slope <- airbnb_neighbourhoods %>%
           scale(owner_occupied_z) +
           (1 + scale(revenue)| city),
         data = .,
-        REML = FALSE) %>% summary()
+        REML = FALSE)
 # city explains 4.8% of variance and revenue 38.2%.
-
-
 

@@ -29,6 +29,8 @@ library(units)
 library(RPostgres)
 library(data.table)
 library(lme4)
+require(MASS)
+require(car)
 # Note: spaCy requires the user to download a version of miniconda and follow a set of instructions to set up
 
 # Run Canadian census API key
