@@ -131,15 +131,33 @@ airbnb_neighbourhoods %>%
   filter(active_listings > 0) %>% 
   lm(scale(CRI) ~ 
        scale(active_listings) *
-       scale(revenue) + 
-       scale(housing_loss_pct) *
-       scale(housing_need_z) + 
-       scale(non_mover_z),
+       scale(revenue) +
+       scale(housing_loss_pct) +
+       scale(housing_need_z) +
+       scale(non_mover_z) +
+       scale(revenue) * scale(housing_loss_pct) + 
+       toronto + 
+       vancouver + 
+       nyc + 
+       washington + 
+       new_orleans + 
+       miami + 
+       los_angeles +
+       san_francisco +
+       usa,
      data = .) %>% 
   summary()
-  # revenue and active_listings, and housing_loss and housing_need are interactive variables
-  # this increases rthe r squared value, but also makes the intercept statistically significant 
-  # and removes the significance of housing_loss as a stand-alone variable
+  # revenue and active_listings,
+  # active_listings and housing_loss, (inverse relationship)
+  # revenue and housing_loss,
+  # revenue and non-mover, (inverse relationship)
+  # housing_loss and non-mover,
+  # housing_need and non_mover,
+      # are interactive variables when individually added to the model. 
+      # when all are added, only the interaction between active_listings and revenue, and
+      # revenue and housing_loss_pct are significant.
+  # this increases the r squared value, but also reduces the significance of
+  # housing_loss as a stand-alone variable
 
 ######################################### RANDOM SLOPE MODEL ########################################
 random_slope <- airbnb_neighbourhoods %>% 
