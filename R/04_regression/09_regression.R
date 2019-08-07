@@ -159,7 +159,108 @@ airbnb_neighbourhoods %>%
   # this increases the r squared value, but also reduces the significance of
   # housing_loss as a stand-alone variable
 
+
+######################################## MIXED EFFECTS INTRO ######################################
+null <- airbnb_neighbourhoods %>% 
+  filter(active_listings > 0) %>% 
+  lmer(scale(CRI) ~ 1 + 
+         (1 |city),
+       data = ., 
+       REML = FALSE) 
+# 8.1% of variance is at the city level
+# now, add fixed-effects predictors
+
+######################################### RANDOM INTERCEPT MODEL #############################################
+random_intercept <- airbnb_neighbourhoods %>% 
+  filter(active_listings > 0) %>% 
+  lmer (scale(CRI) ~ 
+          scale(active_listings) +
+          scale(revenue) + 
+          scale(housing_loss_pct) + 
+          scale(med_income_z)+ 
+          scale(population)+ 
+          scale(housing_need_z) + 
+          scale(non_mover_z) + 
+          scale(owner_occupied_z) +
+          (1 | city),
+        data = .,
+        REML = FALSE)
+
+# The null model
+random_intercept_null <-  airbnb_neighbourhoods %>% 
+  filter(active_listings > 0) %>% 
+  lmer (scale(CRI) ~ 
+          scale(active_listings) +
+          scale(revenue) + 
+          scale(housing_loss_pct) + 
+          scale(med_income_z)+ 
+          scale(population)+ 
+          scale(housing_need_z) + 
+          scale(non_mover_z) + 
+          # scale(owner_occupied_z) +
+          (1 | city),
+        data = ., 
+        REML = FALSE)
+
+anova(random_intercept, random_intercept_null)
+
+# Lets take an alpha value of 0.05 
+
+# active_listings
+# we cannot accept the null hypothesis
+
+# revenue
+# we cannot accept the null hypothesis
+
+# housing_loss_pct
+# we cannot accept the null hypothesis
+
+# med_income_z
+# we CAN accept the null hypothesis 
+
+# population  
+# we cannot accept the null hypothesis
+
+# housing_need_z
+# we cannot accept the null hypothesis
+
+# non_mover_z 
+# we cannot accept the null hypothesis
+
+# owner_occupier_z
+# we CAN accept the null hypothesis
+
+# Final model - STATISTICALLY SIGNIFICANT
+random_intercept <- airbnb_neighbourhoods %>% 
+  filter(active_listings > 0) %>% 
+  lmer (scale(CRI) ~ 
+          scale(active_listings) +
+          scale(revenue) + 
+          scale(housing_loss_pct) + 
+          #  scale(med_income_z) +
+          scale(population)+ 
+          scale(housing_need_z) + 
+          scale(non_mover_z) + 
+          #  scale(owner_occupied_z)+
+          (1 | city),
+        data = .,
+        REML = FALSE)
+# city explains 6.9% of variance.
+# adding the other variables further explains the variance between cities.
+
+# Residual plot using the random intercept model
+airbnb_neighbourhoods_error <- airbnb_neighbourhoods %>% 
+  filter(active_listings>0) %>% 
+  mutate(error = resid(random_intercept))
+
+ggplot(airbnb_neighbourhoods_error , aes(x = CRI, y = CRI - error), colour = city) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+# Note high error. Neighbourhoods with the highest CRI are also prone to the highest error. 
+
 ######################################### RANDOM SLOPE MODEL ########################################
+
 random_slope <- airbnb_neighbourhoods %>% 
   filter(active_listings > 0) %>% 
   lmer (scale(CRI) ~ 
@@ -167,19 +268,21 @@ random_slope <- airbnb_neighbourhoods %>%
           scale(revenue) + 
           scale(housing_loss_pct) + 
           scale(med_income_z)+ 
-          log(population)+ 
+          scale(population)+ 
           scale(housing_need_z) + 
           scale(non_mover_z) + 
           scale(owner_occupied_z) +
-          (1 + scale(med_income_z) | city),
+          (scale(owner_occupied_z) | city),
         data = .,
         REML = FALSE)
 
 isSingular(random_slope)
 
-# All random slopes are singular except for med_income_z
-# Though the singular models are well defined, it may correspond to 
-# overfitting. Remove terms that produce singular fitting.
+# All random slopes are singular except for revenue, housing_loss_pct, med_income_z, 
+    # population, and non_mover_z.
+# Though the singular models are well defined, they may correspond to overfitting.
+
+# Test the significance of the random slopes
 
 # Despite individual variation in med_income_z, the values of the slope are quite
 # simiar to eachother. There is consistency in how median income affects CRI.
@@ -206,93 +309,6 @@ anova(random_slope_null, random_slope)
 
 # We fail to reject the null hypothesis.
 
-######################################### RANDOM INTERCEPT MODEL #############################################
-random_intercept <- airbnb_neighbourhoods %>% 
-  filter(active_listings > 0) %>% 
-  lmer (scale(CRI) ~ 
-        scale(active_listings) +
-        scale(revenue) + 
-        scale(housing_loss_pct) + 
-        scale(med_income_z)+ 
-        log(population)+ 
-        scale(housing_need_z) + 
-        scale(non_mover_z) + 
-        scale(owner_occupied_z) +
-        (1   | city),
-     data = .,
-     REML = FALSE)
-
-# The null model
-random_intercept_null <-  airbnb_neighbourhoods %>% 
-  filter(active_listings > 0) %>% 
-  lmer (scale(CRI) ~ 
-       # scale(active_listings) +
-        scale(revenue) + 
-        scale(housing_loss_pct) + 
-        scale(med_income_z)+ 
-        log(population)+ 
-        scale(housing_need_z) + 
-        scale(non_mover_z) + 
-        scale(owner_occupied_z) +
-          (1 | city),
-        data = ., 
-        REML = FALSE)
-
-anova(random_intercept, random_intercept_null)
-
-# Lets take an alpha value of 0.05 
-
-  # active_listings
-  # we cannot accept the null hypothesis
-
-  # revenue
-  # we cannot accept the null hypothesis
-
-  # housing_loss_pct
-  # we cannot accept the null hypothesis
-
-  # med_income_z
-  # we CAN accept the null hypothesis 
-
-  # population  
-  # we cannot accept the null hypothesis
-
-  # housing_need_z
-  # we cannot accept the null hypothesis
-
-  # non_mover_z 
-  # we cannot accept the null hypothesis
-
-  # owner_occupier_z
-  # we CAN accept the null hypothesis
-
-# Final model - STATISTICALLY SIGNIFICANT
-random_intercept <- airbnb_neighbourhoods %>% 
-  filter(active_listings > 0) %>% 
-  lmer (scale(CRI) ~ 
-          scale(active_listings) +
-          scale(revenue) + 
-          scale(housing_loss_pct) + 
-        #  scale(med_income_z) +
-          log (population)+ 
-          scale(housing_need_z) + 
-          scale(non_mover_z) + 
-        #  scale(owner_occupied_z)+
-          (1 | city),
-        data = .,
-        REML = FALSE)
-
-# Residual plot using the random intercept model
-airbnb_neighbourhoods_error <- airbnb_neighbourhoods %>% 
-  filter(active_listings>0) %>% 
-  mutate(error = resid(random_intercept))
-
-ggplot(airbnb_neighbourhoods_error , aes(x = CRI, y = CRI - error), colour = city) +
-  geom_point() +
-    geom_smooth(method = "lm", se = FALSE)
-
-# Note high error. Neighbourhoods with the highest CRI
-  # are also prone to the highest error. 
 
 
 
