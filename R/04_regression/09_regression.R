@@ -259,7 +259,7 @@ ggplot(airbnb_neighbourhoods_error , aes(x = CRI, y = CRI - error), colour = cit
 
 # Note high error. Neighbourhoods with the highest CRI are also prone to the highest error. 
 
-######################################### RANDOM SLOPE MODEL ########################################
+######################################### RANDOM SLOPE AND INTERCEPT MODEL ########################################
 
 random_slope <- airbnb_neighbourhoods %>% 
   filter(active_listings > 0) %>% 
@@ -272,7 +272,7 @@ random_slope <- airbnb_neighbourhoods %>%
           scale(housing_need_z) + 
           scale(non_mover_z) + 
           scale(owner_occupied_z) +
-          (scale(owner_occupied_z) | city),
+          (scale(non_mover_z) | city),
         data = .,
         REML = FALSE)
 
@@ -283,34 +283,77 @@ isSingular(random_slope)
 # Though the singular models are well defined, they may correspond to overfitting.
 
 # Test the significance of the random slopes
-
-# Despite individual variation in med_income_z, the values of the slope are quite
-# simiar to eachother. There is consistency in how median income affects CRI.
-# San Fran is the only city where lower incomes suggest higher CRI.
-coef(random_slope)
-
-# Create a null model to test for statistical significance.
 random_slope_null <- airbnb_neighbourhoods %>% 
   filter(active_listings > 0) %>% 
   lmer (scale(CRI) ~ 
           scale(active_listings) +
           scale(revenue) + 
           scale(housing_loss_pct) + 
-          # scale(med_income_z) +
-          log(population) + 
+          scale(med_income_z) +
+          scale(population) + 
           scale(housing_need_z) + 
           scale(non_mover_z) + 
           scale(owner_occupied_z) +
-          (1 + scale(med_income_z) | city),
+          (1 | city),
+        data = .,
+        REML = FALSE)
+anova(random_slope_null, random_slope)
+  # revenue - cannot accept the null hypothesis
+  # housing_loss_pct - can accept the null hypothesis
+  # med_income_z - can accept the null hypothesis
+  # population - cannot accept the null hypothesis
+  # non_mover_z - can accept the null hypothesis
+
+# Can take revenue and population as random slopes.
+random_slope <- airbnb_neighbourhoods %>% 
+  filter(active_listings > 0) %>% 
+  lmer (scale(CRI) ~ 
+          scale(active_listings) +
+          scale(revenue) + 
+          scale(housing_loss_pct) + 
+          scale(med_income_z)+ 
+          scale(population)+ 
+          scale(housing_need_z) + 
+          scale(non_mover_z) + 
+          scale(owner_occupied_z) +
+          (scale(population)| city),
         data = .,
         REML = FALSE)
 
-anova(random_slope_null, random_slope)
+coef(random_slope)
+  # population has a positive affect across all cities, though much more influential in vancouver.
+      # this explains some of the variation in the linear model, where vancouver was consistently seen
+      # as an outlier
+  # revenue has a positive effect cross all cities, though more influential in vancouver, washington,
+      # new york city, and san fransisco.
+  # however, when we take both population and revenue as random slopes, the fit is singular. 
+  # this implies that the random effects structure is too complex to be supported by the data.
+  # general advice indicates to remove the most complex part of the random effects structure, usually a 
+  # random slope.
 
-# We fail to reject the null hypothesis.
+# Run an anova analysis between the random slope model and the null model to test for statistical 
+# significance for revenue and population.
 
+  # revenue - we fail to accept the null hypothesis - 1.587x10^-9
+  # population  - we fail to accept the null hypothesis - 0.01547
 
+  # revenue random slope is much more significant than population.
 
+random_slope <- airbnb_neighbourhoods %>% 
+  filter(active_listings > 0) %>% 
+  lmer (scale(CRI) ~ 
+          scale(active_listings) +
+          scale(revenue) + 
+          scale(housing_loss_pct) + 
+          scale(med_income_z)+ 
+          scale(population)+ 
+          scale(housing_need_z) + 
+          scale(non_mover_z) + 
+          scale(owner_occupied_z) +
+          (1 + scale(revenue)| city),
+        data = .,
+        REML = FALSE) %>% summary()
+# city explains 4.8% of variance and revenue 38.2%.
 
 
 
