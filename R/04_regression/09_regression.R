@@ -52,7 +52,7 @@ linear_model <- airbnb_neighbourhoods %>%
        los_angeles +
        san_francisco +
        usa, 
-       data = .)
+       data = .) 
 
 class(linear_model)
 names(linear_model)
@@ -97,7 +97,7 @@ linear_model_reduced <- airbnb_neighbourhoods %>%
        los_angeles +
        san_francisco +
        usa, 
-     data = .) 
+     data = .)
 
 anova(linear_model, linear_model_reduced)
 
@@ -126,7 +126,20 @@ anova(linear_model_reduced_2, linear_model_reduced)
 # The dummy variables must be included. This implies that a mixed model may be beneficial, 
 # with city as the grouping variable.
 
-# Linear_model_reduced 
+# Modeling Interactions
+airbnb_neighbourhoods %>% 
+  filter(active_listings > 0) %>% 
+  lm(scale(CRI) ~ 
+       scale(active_listings) *
+       scale(revenue) + 
+       scale(housing_loss_pct) *
+       scale(housing_need_z) + 
+       scale(non_mover_z),
+     data = .) %>% 
+  summary()
+  # revenue and active_listings, and housing_loss and housing_need are interactive variables
+  # this increases rthe r squared value, but also makes the intercept statistically significant 
+  # and removes the significance of housing_loss as a stand-alone variable
 
 ######################################### RANDOM SLOPE MODEL ########################################
 random_slope <- airbnb_neighbourhoods %>% 
