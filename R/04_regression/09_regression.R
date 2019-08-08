@@ -28,6 +28,11 @@ ggplot(data = airbnb_neighbourhoods, aes((CRI))) +
   stat_function(fun = dnorm, n = 580, args = list(mean = 0, sd = 1)) + ylab("") +
   scale_y_continuous(breaks = NULL)
 
+# Explore the data
+airbnb_neighbourhoods %>% 
+  ggplot() +
+  geom_point(aes(x = CRI, y = housing_loss_pct)) 
+
 # Determine which probability density function best fits the data
 # Manipulate CRI such that it is scaled and there are no 0s.
 airbnb_neighbourhoods$CRI <- (airbnb_neighbourhoods$CRI/max(airbnb_neighbourhoods$CRI)) + 0.0000001
@@ -451,7 +456,9 @@ laplace %>%
 laplace %>% 
   overdisp_fun()
 # the data is overdispersed 
-  # more variability in the data than would be expected based on the model
+  # more variability in the data than would be expected based on the model - as there is less than three
+  # random effects, we should use GHQ anyways.
+# OVERDISPERSION IS IRRELEVANT FOR MODELS THAT ESTIMATE A SCALE PARAMETER.
 
 #################################### GUASS-HERMITE QUADRATURE ####################################
 # GHQ is more accurate than laplace due to repeated iterations, but only works when there are
@@ -471,6 +478,7 @@ ghq <- airbnb_neighbourhoods %>%
         family = Gamma(link = "log"),
         data = ., 
         nAGQ = 100)
+
 ghq %>% 
   summary()
 
@@ -479,6 +487,15 @@ ghq %>%
 
 # the data is overdispersed
   # more variability in the data than would be expected based on the model
+# in the case of overdispersion, model it as a random effect with one random effect for each 
+  # observation (ie. neighbourhood_name).
+# OVERDISPERSION IS IRRELEVANT FOR MODELS THAT ESTIMATE A SCALE PARAMETER.
 
-# in the case of overdispersion, 
+# Ultimately, GHQ is the model best suited for the data given its gamma distribution, 
+  # continuous nature of CRI, minimum random effects, and increased iterations. 
+
+plot(fitted(ghq), residuals(ghq), xlab = "Fitted Values", ylab = "Residuals")
+abline(h = 0, lty = 2)xw
+lines(smooth.spline(fitted(ghq), residuals(ghq)))
+
 
