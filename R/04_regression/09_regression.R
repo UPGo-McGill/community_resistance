@@ -448,6 +448,11 @@ laplace %>%
 # the authors of the package are set to increase the tolerance to 0.01 (from 0.001), in which case,
 # the model would have converged.
 
+laplace %>% 
+  overdisp_fun()
+# the data is overdispersed 
+  # more variability in the data than would be expected based on the model
+
 #################################### GUASS-HERMITE QUADRATURE ####################################
 # GHQ is more accurate than laplace due to repeated iterations, but only works when there are
   # maximum 2-3 random effect (true in this case)
@@ -465,10 +470,15 @@ ghq <- airbnb_neighbourhoods %>%
           (1 | city), 
         family = Gamma(link = "log"),
         data = ., 
-        nAGQ = 25)
+        nAGQ = 100)
 ghq %>% 
   summary()
 
+ghq %>% 
+  overdisp_fun()
 
+# the data is overdispersed
+  # more variability in the data than would be expected based on the model
 
+# in the case of overdispersion, 
 
