@@ -386,6 +386,8 @@ random_slope <- airbnb_neighbourhoods %>%
         REML = FALSE)
 # city explains 4.8% of variance and revenue 38.2%.
 
+random_slope %>% 
+  confint()
 
 ####################################### PENALIZED QUASILIKELIHOOD #####################################
 # biased estimates for small means, binary responses, or if the response variable fits a discrete count distribution
@@ -481,10 +483,10 @@ ghq <- airbnb_neighbourhoods %>%
 
 ghq %>% 
   summary()
+# city is responsible for 60.9% of variance
 
 ghq %>% 
   overdisp_fun()
-
 # the data is overdispersed
   # more variability in the data than would be expected based on the model
 # in the case of overdispersion, model it as a random effect with one random effect for each 
@@ -494,8 +496,36 @@ ghq %>%
 # Ultimately, GHQ is the model best suited for the data given its gamma distribution, 
   # continuous nature of CRI, minimum random effects, and increased iterations. 
 
+# Examine the significance
+ghq_null <- airbnb_neighbourhoods %>% 
+  filter(active_listings > 0) %>% 
+  glmer((CRI) ~
+          1 + 
+         (1 | city), 
+        family = Gamma(link = "log"),
+        data = ., 
+        nAGQ = 100)
+
+anova(ghq, ghq_null)
+# fail to accept the null hypothesis
+
 plot(fitted(ghq), residuals(ghq), xlab = "Fitted Values", ylab = "Residuals")
-abline(h = 0, lty = 2)xw
+abline(h = 0, lty = 2)
 lines(smooth.spline(fitted(ghq), residuals(ghq)))
 
+# Residual plot using the ghq model
+airbnb_neighbourhoods_error <- airbnb_neighbourhoods %>% 
+  filter(active_listings>0) %>% 
+  mutate(error = resid(ghq))
+
+ggplot(airbnb_neighbourhoods_error , aes(x = CRI, y = CRI - error), colour = city) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+# Plot error 
+airbnb_neighbourhoods_error %>% 
+  filter(city == "New York City") %>%  
+  dplyr::select(c("geometry", "error")) %>% 
+  st_as_sf() %>% 
+  mapview()
 
