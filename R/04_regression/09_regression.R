@@ -383,7 +383,7 @@ random_slope <- airbnb_neighbourhoods %>%
 
 
 ####################################### PENALIZED QUASILIKELIHOOD #####################################
-# biased estimates for binary responses, or if the response variable fits a discrete count distribution
+# biased estimates for small means, binary responses, or if the response variable fits a discrete count distribution
   # not the case
 airbnb_neighbourhoods$CRI <- (airbnb_neighbourhoods$CRI/max(airbnb_neighbourhoods$CRI)) + 0.0000001
 
@@ -423,3 +423,52 @@ pql <- airbnb_neighbourhoods %>%
 
 pql %>% 
   summary()
+####################################### LA PLACE APPROXIMATION #####################################
+# less flexible than PQL, but is not biased in cases with small means 
+
+laplace <- airbnb_neighbourhoods %>% 
+  filter(active_listings > 0) %>% 
+  glmer((CRI) ~
+          scale(active_listings) +
+          scale(revenue) + 
+          scale(housing_loss_pct) + 
+          scale(med_income_z) +
+          scale(population)+ 
+          scale(housing_need_z) + 
+          scale(non_mover_z) + 
+          scale(owner_occupied_z)+
+          (1 | city), 
+        family = Gamma(link = "log"),
+        data = .)
+
+laplace %>% 
+  summary()
+
+# convergence error. the current version of the lme4 package generates a lot of false positives.
+# the authors of the package are set to increase the tolerance to 0.01 (from 0.001), in which case,
+# the model would have converged.
+
+#################################### GUASS-HERMITE QUADRATURE ####################################
+# GHQ is more accurate than laplace due to repeated iterations, but only works when there are
+  # maximum 2-3 random effect (true in this case)
+ghq <- airbnb_neighbourhoods %>% 
+  filter(active_listings > 0) %>% 
+  glmer((CRI) ~
+          scale(active_listings) +
+          scale(revenue) + 
+          scale(housing_loss_pct) + 
+          scale(med_income_z) +
+          scale(population)+ 
+          scale(housing_need_z) + 
+          scale(non_mover_z) + 
+          scale(owner_occupied_z)+
+          (1 | city), 
+        family = Gamma(link = "log"),
+        data = ., 
+        nAGQ = 25)
+ghq %>% 
+  summary()
+
+
+
+
