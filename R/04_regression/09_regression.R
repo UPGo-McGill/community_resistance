@@ -465,6 +465,11 @@ laplace %>%
 #################################### GUASS-HERMITE QUADRATURE ####################################
 # GHQ is more accurate than laplace due to repeated iterations, but only works when there are
   # maximum 2-3 random effect (true in this case)
+
+# must manipulate CRI such that there are only positive values.
+airbnb_neighbourhoods <- airbnb_neighbourhoods %>% 
+  mutate(CRI = CRI / max(CRI) + 0.000001)
+
 ghq <- airbnb_neighbourhoods %>% 
   filter(active_listings > 0) %>% 
   glmer((CRI) ~
@@ -500,7 +505,6 @@ ghq %>%
 ghq_null <- airbnb_neighbourhoods %>% 
   filter(active_listings > 0) %>% 
   glmer((CRI) ~
-          1 + 
          (1 | city), 
         family = Gamma(link = "log"),
         data = ., 
@@ -509,6 +513,136 @@ ghq_null <- airbnb_neighbourhoods %>%
 anova(ghq, ghq_null)
 # fail to accept the null hypothesis
 
+# test individual variables
+ghq_null <- airbnb_neighbourhoods %>% 
+  filter(active_listings > 0) %>% 
+  glmer((CRI) ~
+          scale(active_listings) +
+          scale(revenue) + 
+          scale(housing_loss_pct) + 
+          scale(med_income_z) +
+          scale(population)+ 
+          scale(housing_need_z) + 
+          scale(non_mover_z) + 
+         # scale(owner_occupied_z)+
+          (1 | city), 
+        family = Gamma(link = "log"),
+        data = ., 
+        nAGQ = 100)
+anova(ghq, ghq_null)
+
+# active listings
+  # accept the null hypothesis
+  # higher AIC - including worsens the model
+
+# revenue
+  # accept the null hypothesis
+  # higher AIC - including worsens the model
+
+# housing_loss_pct
+  # fail to accept the null hypothesis
+  # lower AIC - including betters the model
+
+# med_income_z
+  # fail to accept the null hypothesis
+  # lower AIC - including betters the model
+
+# population
+  # fail to accept the null hypothesis
+  # lower AIC - including betters the model
+
+# housing_need_z
+  # fail to accept the null hypothesis
+  # lower AIC - including betters the model
+
+# non_mover_z
+  # fail to accept the null hypothesis
+  # lower AIC - including betters the model
+
+# owner_occupied_z
+  # fail to accept the null hypothesis (though weak relationship)
+  # lower AIC - including betters the model
+
+# updated model
+ghq <- airbnb_neighbourhoods %>% 
+  filter(active_listings > 0) %>% 
+  glmer((CRI) ~
+          scale(housing_loss_pct) + 
+          scale(med_income_z) +
+          scale(population)+ 
+          scale(housing_need_z) + 
+          scale(non_mover_z) + 
+          scale(owner_occupied_z)+
+          (1 | city), 
+        family = Gamma(link = "log"),
+        data = ., 
+        nAGQ = 100)
+
+ghq %>% 
+  summary()
+
+# interaction between variables
+ghq_interaction <- airbnb_neighbourhoods %>% 
+  filter(active_listings > 0) %>% 
+  glmer((CRI) ~
+          scale(housing_loss_pct) +  
+          scale(med_income_z) *
+          scale(housing_need_z) + 
+          scale(non_mover_z) +
+          scale(population) + 
+          scale(owner_occupied_z)+
+          (1 | city), 
+        family = Gamma(link = "log"),
+        data = ., 
+        nAGQ = 100)
+
+ghq_interaction %>% 
+  summary()
+
+anova(ghq, ghq_interaction)
+
+  # population and non_mover
+    # insignificant interaction
+    # increased AIC
+
+  # population and owner_occupied
+    # weak interaction
+    # slightly increased AIC 
+
+  # med_income_z and housing_loss_pct
+    # significant interaction
+    # lower AIC
+    # inverse relationship
+      # as one increases by one, the slope of the other decreases
+      # as median income increases, housing_loss becomes less significant (though still significant)
+
+  # med_income_z and housing_need_z
+    # significant interaction
+    # lower AIC 
+    # proportional relationship
+      # as one increases by one, the slope of the other increases
+      # as median income icnreases, housing need becomes MORE significant
+
+# updated model
+ghq_interaction <- airbnb_neighbourhoods %>% 
+  filter(active_listings > 0) %>% 
+  glmer((CRI) ~
+          scale(med_income_z) *  
+          scale(housing_loss_pct) + 
+          scale(housing_need_z) *
+          scale(med_income_z) + 
+          scale(non_mover_z) +
+          scale(population) + 
+          scale(owner_occupied_z)+
+          (1 | city), 
+        family = Gamma(link = "log"),
+        data = ., 
+        nAGQ = 100)
+
+ghq_interaction %>% 
+  summary()
+
+# explore the model
 plot(fitted(ghq), residuals(ghq), xlab = "Fitted Values", ylab = "Residuals")
 abline(h = 0, lty = 2)
 lines(smooth.spline(fitted(ghq), residuals(ghq)))
@@ -516,15 +650,15 @@ lines(smooth.spline(fitted(ghq), residuals(ghq)))
 # Residual plot using the ghq model
 airbnb_neighbourhoods_error <- airbnb_neighbourhoods %>% 
   filter(active_listings>0) %>% 
-  mutate(error = resid(ghq))
+  mutate(error = resid(ghq_interaction))
 
-ggplot(airbnb_neighbourhoods_error , aes(x = CRI, y = CRI - error), colour = city) +
+ggplot(airbnb_neighbourhoods_error , aes(x = CRI, y = error), colour = city) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE)
 
 # Plot error 
 airbnb_neighbourhoods_error %>% 
-  filter(city == "Toronto") %>%  
+  filter(city == "New Orleans") %>%  
   dplyr::select(c("geometry", "error")) %>% 
   st_as_sf() %>% 
   mapview()
