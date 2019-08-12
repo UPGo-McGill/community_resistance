@@ -650,9 +650,10 @@ lines(smooth.spline(fitted(ghq), residuals(ghq)))
 # Residual plot using the ghq model
 airbnb_neighbourhoods_error <- airbnb_neighbourhoods %>% 
   filter(active_listings>0) %>% 
-  mutate(error = resid(ghq_interaction))
+  mutate(error = resid(ghq_interaction)) %>% 
+  mutate(variance = error^2)
 
-ggplot(airbnb_neighbourhoods_error , aes(x = CRI, y = error), colour = city) +
+ggplot(airbnb_neighbourhoods_error , aes(x = CRI, y = variance)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE)
 
@@ -663,3 +664,9 @@ airbnb_neighbourhoods_error %>%
   st_as_sf() %>% 
   mapview()
 
+# Calculate r squared
+  # R2m referes to the marginal variance explained by fixed effects
+  # R2c refers to the conditional variance explained by the entire model
+  # delta works for all models 
+  # lognormal and trigamma are limited to distributions with logarithmic link
+r.squaredGLMM(ghq)
