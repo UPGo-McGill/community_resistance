@@ -524,7 +524,7 @@ ggplot(airbnb_neighbourhoods_error , aes(x = CRI, y = CRI - error), colour = cit
 
 # Plot error 
 airbnb_neighbourhoods_error %>% 
-  filter(city == "New York City") %>%  
+  filter(city == "Toronto") %>%  
   dplyr::select(c("geometry", "error")) %>% 
   st_as_sf() %>% 
   mapview()
