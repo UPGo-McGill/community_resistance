@@ -668,5 +668,24 @@ airbnb_neighbourhoods_error %>%
   # R2m referes to the marginal variance explained by fixed effects
   # R2c refers to the conditional variance explained by the entire model
   # delta works for all models 
-  # lognormal and trigamma are limited to distributions with logarithmic link
-r.squaredGLMM(ghq)
+      # first order Taylor series expansion 
+      # most flexible as it works for all kinds of distributions and link functions 
+  # lognormal is limited to distributions with logarithmic link (such as this case)
+  # trigamma is limited to distributions with logarithmic link (such as this case)
+      # most accurate estimate of the observation level variance
+
+r.squaredGLMM(ghq_interaction)
+
+# Reported values using delta estimation - the only one that allows for direct comparison
+# linear_model - 0.422
+# linear_model_reduced - 0.412
+# linear_model_reduced_2 - 0.379
+# random_intercept - 0.443
+# random_slope - 0.730 - pretty sure this model is invalid
+# pql - 0.567
+# laplace - 0.680
+# ghq - 0.730
+# ghq_interaction - 0.735
+
+# Evidently ghq_interaction is the best model, both theoretically and statistically.
+  # Though a high R squred of 0.735, must report the lognormal and trigamma results as well
