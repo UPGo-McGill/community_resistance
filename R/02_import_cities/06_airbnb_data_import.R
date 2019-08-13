@@ -2,10 +2,11 @@
 
 source("R/01_import_general/01_helper_functions.R")
 
+# Set up date range
 start_date <- "2018-05-01"
 end_date <- "2019-04-30"
 
-# Set up database connection
+# Set up database connection. This requires a VPN.
 con <- RPostgres::dbConnect(RPostgres::Postgres(), dbname = "airdna")
 
 property_db <- tbl(con, "property")
@@ -38,7 +39,7 @@ property <- property %>%
               "Airbnb_HID", "HomeAway_PID", "HomeAway_HID")) %>% 
   arrange(Property_ID) %>% 
   st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326) %>%
-  st_transform(26918) %>% 
+  st_transform(transform) %>% 
   filter(Property_Type %in% c(
     "House", "Private room in house", "Apartment", "Cabin",
     "Entire condominium", "Townhouse", "Condominium", "Entire apartment",
@@ -119,5 +120,5 @@ property <-
 rm(GH_list)
 
 # Save files
-save(property, file = "airbnb/san_fran_property.Rdata")
-save(daily, file = "airbnb/san_fran_daily.Rdata")
+save(property, file = ".Rdata")
+save(daily, file = ".Rdata")

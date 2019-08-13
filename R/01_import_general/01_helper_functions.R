@@ -35,8 +35,8 @@ library(MuMIn)
 # Note: spaCy requires the user to download a version of miniconda and follow a set of instructions to set up
 
 # Run Canadian census API key
-options(cancensus.api_key = "CensusMapper_4be2cf3bf91d0cabf967f4934dbdc63b")
-options(cancensus.cache_path = "~/Desktop/AirBnB Internship/AirBnB-GIT/community_resistance")
+# options(cancensus.api_key = "personal_key")
+# options(cancensus.cache_path = "path")
 
 # Run US census API key
 # census_api_key("dab993e99dc7faf74295fc559dc2e1764b60e6b9", install = TRUE, overwrite = TRUE)
@@ -55,7 +55,6 @@ loadRdata <- function(fileName){
 }
 
 ## st_intersect_summarize helper function
-
 st_intersect_summarize <- function(data, poly, group_vars, population, sum_vars,
                                    mean_vars) {
   
@@ -88,7 +87,7 @@ st_intersect_summarize <- function(data, poly, group_vars, population, sum_vars,
   
 }
 
-# Expand the daily file
+# Function to expand the daily file
 strr_expand_daily <- function(daily, start = NULL, end = NULL) {
 
 # Expand each date range to one-row-per-date

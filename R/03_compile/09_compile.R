@@ -51,24 +51,33 @@ airbnb_neighbourhoods <- airbnb_neighbourhoods %>%
 # Calculate census variables as a function of population or households
 airbnb_neighbourhoods <- airbnb_neighbourhoods %>% 
 mutate_at(
-  .vars = c("university_education", "non_mover", 
-            "official_language", "citizen", "white"),
-  .funs = list(`pct_pop` = ~{. / population})) %>% 
+  .vars = c("university_education_pct_pop", "non_mover_pct_pop", 
+            "official_language_pct_pop", "citizen_pct_pop", "white_pct_pop"),
+  .funs = list(`total` = ~{. * population})) %>% 
   mutate_at(
-    .vars = c("housing_need", "owner_occupied"),
-    .funs = list(`pct_household` = ~{. / households}))
+    .vars = c("housing_need_pct_household", "owner_occupied_pct_household"),
+    .funs = list(`total` = ~{. * households}))
+
+airbnb_neighbourhoods_test <- airbnb_neighbourhoods_test %>% 
+  rename(university_education = university_education_pct_pop_total,
+         non_mover = non_mover_pct_pop_total,
+         official_language = official_language_pct_pop_total,
+         citizen = citizen_pct_pop_total,
+         white = white_pct_pop_total,
+         housing_need = housing_need_pct_household_total
+         owner_occupied = owner_occupied_pct_household_total)
 
 # Create the dummy variables for spatial effects
 airbnb_neighbourhoods <- airbnb_neighbourhoods %>% 
-  mutate(vancouver = ifelse(city == "Vancouver", TRUE, FALSE)) %>% 
-  mutate(toronto = ifelse(city == "Toronto", TRUE, FALSE)) %>% 
-  mutate(washington = ifelse(city == "Washington", TRUE, FALSE)) %>% 
-  mutate(nyc = ifelse(city == "New York City", TRUE, FALSE)) %>% 
-  mutate(miami = ifelse (city == "Miami", TRUE, FALSE)) %>% 
-  mutate(new_orleans = ifelse (city == "New Orleans", TRUE, FALSE)) %>% 
-  mutate(los_angeles = ifelse (city == "Los Angeles", TRUE, FALSE)) %>% 
-  mutate(san_francisco = ifelse (city == "San Francisco", TRUE, FALSE)) %>% 
-  mutate(usa = ifelse (city == "Vancouver" | city == "Toronto" | city == "Montreal", FALSE, TRUE))
+  mutate(vancouver = ifelse(city == "Vancouver", TRUE, FALSE),
+         toronto = ifelse(city == "Toronto", TRUE, FALSE), 
+         washington = ifelse(city == "Washington", TRUE, FALSE),
+         nyc = ifelse(city == "New York City", TRUE, FALSE),
+         miami = ifelse (city == "Miami", TRUE, FALSE),
+         new_orleans = ifelse (city == "New Orleans", TRUE, FALSE),
+         los_angeles = ifelse (city == "Los Angeles", TRUE, FALSE),
+         san_francisco = ifelse (city == "San Francisco", TRUE, FALSE),
+         usa = ifelse (city == "Vancouver" | city == "Toronto" | city == "Montreal", FALSE, TRUE))
 
 # Save the data table
 save(airbnb_neighbourhoods, file = "airbnb_neighbourhoods.Rdata")

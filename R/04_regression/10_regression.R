@@ -642,28 +642,6 @@ ghq_interaction <- airbnb_neighbourhoods %>%
 ghq_interaction %>% 
   summary()
 
-# explore the model
-plot(fitted(ghq), residuals(ghq), xlab = "Fitted Values", ylab = "Residuals")
-abline(h = 0, lty = 2)
-lines(smooth.spline(fitted(ghq), residuals(ghq)))
-
-# Residual plot using the ghq model
-airbnb_neighbourhoods_error <- airbnb_neighbourhoods %>% 
-  filter(active_listings>0) %>% 
-  mutate(error = resid(ghq_interaction)) %>% 
-  mutate(variance = error^2)
-
-ggplot(airbnb_neighbourhoods_error , aes(x = CRI, y = variance)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE)
-
-# Plot error 
-airbnb_neighbourhoods_error %>% 
-  filter(city == "New Orleans") %>%  
-  dplyr::select(c("geometry", "error")) %>% 
-  st_as_sf() %>% 
-  mapview()
-
 # Calculate r squared
   # R2m referes to the marginal variance explained by fixed effects
   # R2c refers to the conditional variance explained by the entire model
@@ -689,3 +667,26 @@ r.squaredGLMM(ghq_interaction)
 
 # Evidently ghq_interaction is the best model, both theoretically and statistically.
   # Though a high R squred of 0.735, must report the lognormal and trigamma results as well
+
+# Explore the model
+plot(fitted(ghq), residuals(ghq), xlab = "Fitted Values", ylab = "Residuals")
+abline(h = 0, lty = 2)
+lines(smooth.spline(fitted(ghq), residuals(ghq)))
+
+# Residual plot using the ghq model
+airbnb_neighbourhoods_error <- airbnb_neighbourhoods %>% 
+  filter(active_listings>0) %>% 
+  mutate(error = resid(ghq_interaction), 
+         variance = error^2, 
+         predicted = CRI - error)
+
+ggplot(airbnb_neighbourhoods_error , aes(x = CRI, y = error)) +
+  geom_point() 
+
+# Plot error 
+airbnb_neighbourhoods_error %>% 
+  filter(city == "Montreal") %>%  
+  dplyr::select(c("geometry", "error")) %>% 
+  st_as_sf() %>% 
+  mapview()
+

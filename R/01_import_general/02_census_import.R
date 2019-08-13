@@ -2,7 +2,7 @@
 
 source("R/01_import_general/01_helper_functions.R")
 
-# census import for all census tracts in Canada and the census tracts in the US in the following states
+# Census import for all census tracts in Canada and the census tracts in the US in the following states
 states <- unique(fips_codes$state)[1:51] 
 states <- c("NY", "CA", "LA", "FL", "DC")
 
@@ -70,7 +70,6 @@ CMAs_canada <- CMAs_canada%>%
 
 CMAs_canada$CMA_name <- substr(CMAs_canada$CMA_name, 1, nchar(CMAs_canada$CMA_name) - 1)
 
-
 # 1.4 IMPORT CENSUS VARIABLES FOR ALL CENSUS TRACTS
 CTs_canada <-
   get_census(
@@ -103,12 +102,9 @@ CTs_canada <- CTs_canada%>%
 
 
 # 1.5 Z SCORES
-
-n = 1
-
 datalist = list()
 
-repeat{
+for (n in c(1:nrow(CMAs_canada))) {
 
   CTs_canada_temp <- CTs_canada %>% 
     filter(CMA_UID == as.numeric(st_drop_geometry(CMAs_canada[n, 1]))) %>% 
@@ -119,14 +115,8 @@ repeat{
       .funs = list(`z` = ~{(.- mean(., na.rm = TRUE))/sd(., na.rm = TRUE)})) 
   
   datalist[[n]] <- CTs_canada_temp
-
-  n = n + 1
-  
-  if (n > nrow(CMAs_canada)) {
-    break
     
   }
-}
 
 CTs_canada = do.call(rbind, datalist)
 
@@ -259,7 +249,6 @@ MSAs_us <- core_based_statistical_areas(cb = TRUE, class = "sf", refresh = TRUE)
   st_as_sf(sf_column_name = "geometry")
 
 # 2.4 IMPORT CENSUS VARIABLES FOR ALL CENSUS TRACTS (include geometries)
-
 CTs_us <- reduce(
   map(states, function(x) {
   get_acs(geography = "tract", variables = c("B01003_001", 
@@ -287,7 +276,7 @@ CTs_us <- reduce(
   rbind
 )
 
-# tidy the naming and coding of census tracts
+# Tidy the naming and coding of census tracts
 CTs_us <- CTs_us %>% 
   st_transform(26918) %>% 
   select(-c("moe")) %>% 
@@ -301,7 +290,7 @@ CTs_us <- CTs_us %>%
          CT_UID = as.numeric(gsub("Census Tract ", "", CT))) %>% 
   select(-c("CT", "State_name"))
 
-# tidy the variables
+# Tidy the variables
 CTs_us <- CTs_us %>% 
   mutate(official_language = B06007_002 + B06007_003 + B06007_007,
          housing_need = B25070_007 + B25070_008 + B25070_009 + B25070_010 +
@@ -336,12 +325,9 @@ CTs_us <- CTs_us %>%
   select(c(1, 24, 25, 2, 5:23, 46)) 
 
 # 2.5 Z SCORES
-
-n = 1
-
 datalist = list()
 
-repeat{
+for (n in c(1:nrow(MSAs_us))) {
   
   CTs_us_temp <- CTs_us %>% 
     filter(CMA_UID == as.numeric(st_drop_geometry(MSAs_us[n, 1]))) %>% 
@@ -352,13 +338,6 @@ repeat{
       .funs = list(`z` = ~{(.- mean(., na.rm = TRUE))/sd(., na.rm = TRUE)})) 
   
   datalist[[n]] <- CTs_us_temp
-  
-  n = n + 1
-  
-  if (n > nrow(MSAs_us)) {
-    break
-    
-  }
 }
 
 CTs_us = do.call(rbind, datalist)

@@ -10,12 +10,10 @@ airbnb <- tibble(city = character(0), neighbourhood_name = character(0), active_
 
 # Perform airbnb analysis for all neighbourhoods 
 
-n = 1
-
-repeat{
+for (n in c(1:nrow(neighbourhoods))) {
   
   neighbourhood_property <- property %>% 
-    st_transform(26918) %>% 
+    st_transform(transform) %>% 
           st_join(neighbourhoods[n, "geometry"],
           join = st_within, left = FALSE)
   
@@ -81,15 +79,10 @@ repeat{
                       filter(rev > 0) %>%
                   summarize(
                       `Top 10%` = sum(rev[rev > quantile(rev, c(0.90))] / sum(rev)))
-    
-  n = n+1
+  
   
   rm(neighbourhood_property, neighbourhood_daily, temp)
-  
-  if (n > nrow(neighbourhoods)) {
-    break
-  }
 }
 
 # Export as a table
-save(airbnb, file = "airbnb/san_fran_no_buffer.Rdata")
+save(airbnb, file = ".Rdata")
