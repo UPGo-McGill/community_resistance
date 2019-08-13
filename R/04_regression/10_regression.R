@@ -56,7 +56,7 @@ gamma <- fitdistr(airbnb_neighbourhoods$CRI, "gamma")
 qqp(airbnb_neighbourhoods$CRI, "gamma", shape = gamma$estimate[[1]], rate = gamma$estimate[[2]])
   # clearly the best fit but has trouble capturing the larger CRIs
 
-# NOTE: As the data is not normally distributed, we should not use linear modelling.
+# NOTE: As the residuals are not normally distributed, we should not use linear modelling.
 
 ############################################ LINEAR MODELLING #########################################
 linear_model <- airbnb_neighbourhoods %>% 

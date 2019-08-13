@@ -2,32 +2,32 @@
 
 source("R/01_import_general/01_helper_functions.R")
 
-# must input file paths and make some adjustments depending on what files you would like to import
-# when complete, export table and run community resistance index
-# repeat for all cities
+# NOTE: follow the instructions carefully. You must input file paths and make some adjustments 
+  # depending on what files you would like to import.
 
 ############################# 1 - IMPORT NECESSARY FILES FROM THE NYT ############################################################################################################################
 ## 1.1 COMPLETE THIS SECTION IF LEXISNEXIS, OTHERWISE SKIP.
-# import LexisNexis txt file(s) with airbnb + city name from the New York Times
-media_LN_NYT <- lnt_read("txt_files/washington_dc/washington_NYT_LN_1.TXT")
+# Import LexisNexis txt file(s) with airbnb + city name from the New York Times
+media_LN_NYT <- lnt_read("")
 
-# if there is only one file, run the following.
+# If there is only one LexisNexis file, run the following.
 media_LN_NYT <- media_LN_NYT@meta %>% 
   right_join(media_LN_NYT@articles, by = "ID") %>% 
   select(-c("Source_File", "Graphic", "ID"))
 
-# if there is more than one file, repeat the following.
-media2_LN_NYT <- lnt_read("txt_files/washington_dc/washington_NYT_LN_2.TXT") 
+# If there is more than one file, repeat the following until all are imported
+media2_LN_NYT <- lnt_read("") 
 
-# if there is more than one file, merge and remove files.
+# If there is more than one file, merge and remove unnecessary files.
 media_LN_NYT <- rbind(media_LN_NYT@meta %>% 
                         right_join(media_LN_NYT@articles, by = "ID"), 
                       media2_LN_NYT@meta %>% 
                         right_join(media2_LN_NYT@articles, by = "ID")) %>% 
   select(-c("Source_File", "Graphic", "ID"))
-rm(media1_LN_NYT, media2_LN_NYT)
 
-# reformat the table
+rm()
+
+# Reformat the table
 media_LN_NYT <- media_LN_NYT %>% 
   mutate(Source_ID = paste("LN", 1:nrow(media_LN_NYT))) %>% 
   select(9, 1:8) %>% 
@@ -37,22 +37,21 @@ media_LN_NYT$Date <- as.character(media_LN_NYT$Date)
 
 
 ## 1.2 COMPLETE THIS SECTION IF FACTIVA, OTHERWISE SKIP. 
-# 1.2.1 import the source and corpus Factiva HTML files for airbnb + city name from the New York Times
-source1_NYT <- FactivaSource("txt_files/washington_dc/washington_NYT_FTV_1.htm")
+# 1.2.1 Import the source and corpus Factiva HTML files for airbnb + city name from the New York Times
+source1_NYT <- FactivaSource("")
 corpus1_NYT <- Corpus(source1_NYT, list(language = NA)) 
 
-# if there is more than one file, repeat the following.
-source4_NYT <- FactivaSource("txt_files/washington_dc/washington_NYT_FTV_4.htm")
-corpus4_NYT <- Corpus(source4_NYT, list(language = NA))
+# If there is more than one Factiva file, repeat the following
+source2_NYT <- FactivaSource("")
+corpus2_NYT <- Corpus(source2_NYT, list(language = NA))
 
-# if there is more than one file, merge
-corpus_NYT = tm:::c.VCorpus(corpus1_NYT, corpus2_NYT, corpus3_NYT, corpus4_NYT)
+# If there is more than one file, merge all
+corpus_NYT = tm:::c.VCorpus(corpus1_NYT, corpus2_NYT)
 
-# transform into a data table
+# Transform the corpus into a data table
 media_FTV_NYT <- tibble(Source_ID = numeric(0), Newspaper = character(0), Date = character(0), 
                         Word_Count = numeric(0), Section = character(0), Author = character(0), 
                         Edition = character(0), Headline = character(0), Article = character(0))
-
 
 for (n in c(1:length(corpus_NYT))) {
   
@@ -68,32 +67,33 @@ for (n in c(1:length(corpus_NYT))) {
   
 }
 
-rm(source1_NYT, source2_NYT, corpus1_NYT, corpus2_NYT, corpus_NYT, corpus3_NYT, source3_NYT, corpus4_NYT, source4_NYT)
+# Remove unnecessary files
+rm()
 
 
 ############################# 2 - IMPORT NECESSARY FILES FROM THE LOCAL PAPER ############################################################################################################################
 ## 2.1 COMPLETE THIS SECTION IF LEXISNEXIS, OTHERWISE SKIP.
-# import LexisNexis txt file(s) with airbnb + city name from the local newspaper
-media1_LN_local <- lnt_read("txt_files/washington_dc/washington_local_LN_1.TXT")
+# Import LexisNexis txt file(s) with airbnb + city name from the local newspaper
+media1_LN_local <- lnt_read("")
 
-# if there is only one file, run the following
+# If there is only one LexisNexis file, run the following
 media_LN_local <- media_LN_local@meta %>% 
   right_join(media_LN_local@articles, by = "ID") %>% 
   select(-c("Source_File", "Graphic", "ID"))
 
-# if there is more than one file, repeat the following.
-media2_LN_local <- lnt_read("txt_files/washington_dc/washington_local_LN_2.TXT") 
+# If there is more than one file, repeat the following until all imported
+media2_LN_local <- lnt_read("") 
 
-# if there is more than one file, merge and remove files.
+# If there is more than one file, merge and remove unnecessary files.
 media_LN_local <- rbind(media1_LN_local@meta %>% 
                           right_join(media1_LN_local@articles, by = "ID"), 
                         media2_LN_local@meta %>% 
                           right_join(media2_LN_local@articles, by = "ID")) %>% 
   select(-c("Source_File", "Graphic", "ID"))
 
-rm(media1_LN_local, media2_LN_local)
+rm()
 
-# reformat table
+# Reformat table
 media_LN_local <- media_LN_local %>% 
   mutate(Source_ID = paste("LN", 1:nrow(media_LN_local))) %>% 
   select(9, 1:8) %>% 
@@ -103,18 +103,16 @@ media_LN_local$Date <- as.character(media_LN_local$Date)
 
 
 ## 2.2 COMPLETE THIS SECTION IF FACTIVA, OTHERWISE SKIP. 
-# import the source and corpus Factiva HTML files for airbnb + city name from the local newspaper
-source1_local <- FactivaSource("txt_files/washington_dc/washington_local_FTV_1.htm")
+# Import the source and corpus Factiva HTML files for airbnb + city name from the local newspaper
+source1_local <- FactivaSource("")
 corpus1_local <- Corpus(source1_local, list(language = NA)) 
 
-# if there is more than one file, repeat the following.
-source11_local <- FactivaSource("txt_files/washington_dc/washington_local_FTV_11.htm")
-corpus11_local <- Corpus(source11_local, list(language = NA))
+# If there is more than one Factiva file, repeat the following
+source2_local <- FactivaSource("")
+corpus2_local <- Corpus(source2_local, list(language = NA))
 
-# if there is more than one file, merge
-corpus_local = tm:::c.VCorpus(corpus1_local, corpus2_local, corpus3_local, corpus4_local, corpus5_local,
-                              corpus6_local, corpus7_local, corpus8_local, corpus9_local, corpus10_local,
-                              corpus11_local, corpus12_local)
+# If there is more than one file, merge
+corpus_local = tm:::c.VCorpus(corpus1_local, corpus2_local)
 
 # transform into a data table
 media_FTV_local <- tibble(Source_ID = numeric(0), Newspaper = character(0), Date = character(0), 
@@ -135,9 +133,8 @@ for (n in c(1:length(corpus_local))) {
   
 }
 
-rm(source1_local, source2_local, source3_local, source4_local, source5_local, source6_local,
-   source7_local, source8_local, corpus1_local, corpus2_local, corpus3_local, corpus4_local, 
-   corpus5_local, corpus6_local, corpus7_local, corpus8_local, corpus_local)
+# Remove original corpus and source files
+rm()
 
 
 ######################### 3 - MERGE AND TIDY ##############################################################################################################################
@@ -155,7 +152,6 @@ media_local <- rbind(media_FTV_local, media_LN_local) %>%
   ungroup()
 
 ## 3.2 OTHERWISE RENAME THE DATAFRAME AS CITY
-
 media_NYT <- media_LN_NYT %>% 
   select(1:9) 
 
@@ -163,8 +159,7 @@ media_local <- media_LN_local %>%
   select(1:9)
 
 ## 3.3 ADD AN ID
-# allows for natural language processing
-
+# To allow for natural language processing
 media_local <- media_local %>% 
   mutate(ID = 1:nrow(media_local))
 
@@ -216,7 +211,7 @@ lemmatized_articles_NYT <- spacy_articles_NYT %>%
   mutate(lemmas = str_squish(str_replace_all(lemmas, "[^a-zA-Z0-9 ]", " "))) %>%
   mutate(lemmas = gsub('\\b\\w{1,2}\\b','', lemmas))
 
-# search for Airbnb mentions in the cleaned text
+# Search for Airbnb mentions in the cleaned text
 airbnb <- c("airbnb", "homeshar", "home shar", "shortterm", "short term", "str ", "strs", "guest",
             "shortstay", "short stay", "home stay", "homestay", "hotel", "home share", "airbnb host",
             "host", "home sharing", "homeshare", "homesharing", "timeshare", "letting", "shortterm rental",
@@ -234,8 +229,7 @@ lemmatized_articles_NYT <- lemmatized_articles_NYT %>%
   filter(mentions > 1) %>%
   select(-c(mentions))
 
-# trim the original media files to include only those that mention Airbnb more than once
-
+# Trim the original media files to include only those that mention Airbnb more than once
  media_local <- media_local %>% 
    mutate(relevant = media_local$ID %in% lemmatized_articles_local$doc_id) %>% 
    filter(relevant == TRUE) %>% 
@@ -248,7 +242,6 @@ lemmatized_articles_NYT <- lemmatized_articles_NYT %>%
 
 ## 3.5 REASSIGN ID
 # The following Named Entity Recognition and embedding model use an ID.
-
 media_local <- media_local %>% 
   mutate(ID = 1:nrow(media_local))
 
@@ -263,9 +256,8 @@ lemmatized_articles_NYT <- lemmatized_articles_NYT %>%
 
 ## 3.6 EXPORT
 # export the table(s) as .csv so that this does not need to be rerun.
-
-write_csv(media_local, "txt_files/washington_dc/media_washington_local.csv")
-write_csv(media_NYT, "txt_files/washington_dc/media_washington_NYT.csv")
+write_csv(media_local, "")
+write_csv(media_NYT, "")
 
 
 
