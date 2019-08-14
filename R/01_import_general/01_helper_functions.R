@@ -32,6 +32,8 @@ library(lme4)
 require(MASS)
 require(car)
 library(MuMIn)
+library(ggplot2)
+library(cowplot)
 # Note: spaCy requires the user to download a version of miniconda and follow a set of instructions to set up
 
 # Run Canadian census API key
@@ -981,3 +983,140 @@ overdisp_fun <- function(model) {
   pval <- pchisq(Pearson.chisq, df = rdf, lower.tail = FALSE)
   c(chisq = Pearson.chisq, ratio = prat, rdf = rdf, p = pval)
 }
+
+# bivariate plotting
+bivariate_mapping <- function(cityname, quantiles_CRI) {
+  data <- airbnb_neighbourhoods %>%  
+    filter(city == cityname) %>% 
+    st_as_sf() 
+  
+  data <- data %>% 
+    mutate(CRI = CRI/max(CRI))
+  
+  # Define number of classes for CRI and extract the quantiles
+  no_classes <- 3
+  
+  #quantiles_CRI <- data %>%
+  # pull(CRI) %>%
+  # quantile(probs = seq(0, 1, length.out = no_classes + 1)) %>%
+  #  as.vector()
+  
+  # Generate quantile labels
+  labels <- imap_chr(quantiles_CRI, function(., idx){
+    return(paste0(quantiles_CRI[idx],
+                  " – ",
+                  quantiles_CRI[idx + 1]))
+  })
+  labels <- labels[1:length(labels) - 1]
+  
+  # Create a new variable to plot within the dataset
+  data <- data %>% 
+    mutate(CRI_quantiles = cut(CRI,
+                               breaks = quantiles_CRI,
+                               labels = labels,
+                               include.lowest = T))
+  
+  # Plot the CRI quantiles
+  ggplot(data = data) +
+    geom_sf(mapping = aes (
+      fill = CRI_quantiles),
+      colour = "white", 
+      size = 0.1) + 
+    scale_fill_viridis_d(
+      option = "magma",
+      name = "Community Resistance Index", 
+      alpha = 0.8, 
+      begin = 0.9, 
+      end = 0.1, 
+      direction = 1,
+      guide = guide_legend (
+        keyheight = unit(5, units = "mm"), 
+        title.position = "top", 
+        reverse = T)) +
+    labs (x = NULL, 
+          y = NULL, 
+          title = "Community Resistance against Airbnb") +
+    theme_map()
+  
+  # Create quantiles for housing_need_z
+  quantiles_housing_need <- data %>% 
+    pull(housing_need_z) %>% 
+    quantile(probs = seq(0, 1, length.out = 4))
+  
+  # Create a colour scale to encompass two variables
+  # red for CRI and blue for housing_need
+  bivariate_color_scale <- tibble(
+    "3 - 3" = "#3F2949", # high CRI, high housing_need
+    "2 - 3" = "#435786",
+    "1 - 3" = "#4885C1", # low CRI, high housing_need
+    "3 - 2" = "#77324C",
+    "2 - 2" = "#806A8A", # medium CRI, medium housing_need
+    "1 - 2" = "#89A1C8",
+    "3 - 1" = "#AE3A4E", # high CRI, low housing_need
+    "2 - 1" = "#BC7C8F",
+    "1 - 1" = "#CABED0" # low CRI, low housing_need
+  ) %>%
+    gather("group", "fill")
+  
+  # Cut into groups defined above and join with fill
+  data <- data %>% 
+    mutate(
+      housing_need_quantiles = cut(
+        housing_need_z,
+        breaks = quantiles_housing_need,
+        include.lowest = TRUE
+      ),
+      CRI_quantiles = cut(
+        CRI,
+        breaks = quantiles_CRI,
+        include.lowest = TRUE
+      ),
+      group = paste(
+        as.numeric(CRI_quantiles), "-",
+        as.numeric(housing_need_quantiles)
+      )
+    ) %>%
+    left_join(bivariate_color_scale, by = "group")
+  
+  # Generate map
+  map <- ggplot(data = data) +
+    geom_sf(aes (
+      fill = fill),
+      colour = "white", 
+      size = 0.1) + 
+    scale_fill_identity() + 
+    labs (x = NULL, 
+          y = NULL, 
+          title = "Housing Need and Community Resistance against Airbnb") +
+    theme_map()
+  
+  # Separate the groups
+  bivariate_color_scale <- bivariate_color_scale %>% 
+    separate(group, into = c("CRI", "housing_need"), sep = " - ") %>%
+    mutate(CRI = as.integer(CRI),
+           housing_need_z = as.integer(housing_need))
+  
+  # Generate legend
+  legend <- ggplot() +
+    geom_tile(
+      data = bivariate_color_scale,
+      mapping = aes(
+        x = CRI,
+        y = housing_need_z,
+        fill = fill)
+    ) +
+    scale_fill_identity() +
+    labs(x = "Higher CRI  -->",
+         y = "Higher housing need -->") +
+    theme_map() +
+    theme(
+      axis.title = element_text(size = 6)
+    ) +
+    coord_fixed()
+  
+  # Plot
+  ggdraw() +
+    draw_plot(map, 0, 0, 1, 1) +
+    draw_plot(legend, 0.05, 0.075, 0.2, 0.2)
+}
+
