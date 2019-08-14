@@ -985,95 +985,88 @@ overdisp_fun <- function(model) {
 }
 
 # bivariate plotting
-bivariate_mapping <- function(cityname, quantiles_CRI) {
-  data <- airbnb_neighbourhoods %>%  
-    filter(city == cityname) %>% 
-    st_as_sf() 
+bivariate_mapping <- function(data, var1, var2, quantiles_var1, quantiles_var2, 
+                              title, xlab, ylab) {
   
-  data <- data %>% 
-    mutate(CRI = CRI/max(CRI))
-  
-  # Define number of classes for CRI and extract the quantiles
-  no_classes <- 3
-  
-  #quantiles_CRI <- data %>%
-  # pull(CRI) %>%
-  # quantile(probs = seq(0, 1, length.out = no_classes + 1)) %>%
-  #  as.vector()
-  
-  # Generate quantile labels
-  labels <- imap_chr(quantiles_CRI, function(., idx){
-    return(paste0(quantiles_CRI[idx],
-                  " – ",
-                  quantiles_CRI[idx + 1]))
-  })
-  labels <- labels[1:length(labels) - 1]
-  
-  # Create a new variable to plot within the dataset
-  data <- data %>% 
-    mutate(CRI_quantiles = cut(CRI,
-                               breaks = quantiles_CRI,
-                               labels = labels,
-                               include.lowest = T))
-  
-  # Plot the CRI quantiles
-  ggplot(data = data) +
-    geom_sf(mapping = aes (
-      fill = CRI_quantiles),
-      colour = "white", 
-      size = 0.1) + 
-    scale_fill_viridis_d(
-      option = "magma",
-      name = "Community Resistance Index", 
-      alpha = 0.8, 
-      begin = 0.9, 
-      end = 0.1, 
-      direction = 1,
-      guide = guide_legend (
-        keyheight = unit(5, units = "mm"), 
-        title.position = "top", 
-        reverse = T)) +
-    labs (x = NULL, 
-          y = NULL, 
-          title = "Community Resistance against Airbnb") +
-    theme_map()
-  
-  # Create quantiles for housing_need_z
-  quantiles_housing_need <- data %>% 
-    pull(housing_need_z) %>% 
-    quantile(probs = seq(0, 1, length.out = 4))
+  # Set up mapping theme
+  theme_map <- function(...) {
+    theme_minimal() +
+      theme(
+        text = element_text(family = "sans",
+                            color = "black"),
+        # remove all axes
+        axis.line = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        # add a subtle grid
+        panel.grid.major = element_line(color = "#dbdbd9", size = 0.2),
+        panel.grid.minor = element_blank(),
+        # background colors
+        plot.background = element_rect(fill = "white",
+                                       color = NA),
+        panel.background = element_rect(fill = "white",
+                                        color = NA),
+        legend.background = element_rect(fill = "white",
+                                         color = NA),
+        # borders and margins
+        plot.margin = unit(c(.5, .5, .2, .5), "cm"),
+        panel.border = element_blank(),
+        panel.spacing = unit(c(-.1, 0.2, .2, 0.2), "cm"),
+        # titles
+        legend.title = element_text(size = 11),
+        legend.text = element_text(size = 9, hjust = 0,
+                                   color = "black"),
+        plot.title = element_text(size = 15, hjust = 0.5,
+                                  color = "black"),
+        plot.subtitle = element_text(size = 10, hjust = 0.5,
+                                     color = "black",
+                                     margin = margin(b = -0.1,
+                                                     t = -0.1,
+                                                     l = 2,
+                                                     unit = "cm"),
+                                     debug = F),
+        # captions
+        plot.caption = element_text(size = 7,
+                                    hjust = .5,
+                                    margin = margin(t = 0.2,
+                                                    b = 0,
+                                                    unit = "cm"),
+                                    color = "#939184"),
+        ...
+      )
+  }
   
   # Create a colour scale to encompass two variables
-  # red for CRI and blue for housing_need
   bivariate_color_scale <- tibble(
-    "3 - 3" = "#3F2949", # high CRI, high housing_need
+    "3 - 3" = "#3F2949", # high var1, high var2
     "2 - 3" = "#435786",
-    "1 - 3" = "#4885C1", # low CRI, high housing_need
+    "1 - 3" = "#4885C1", # low var1, high var2
     "3 - 2" = "#77324C",
-    "2 - 2" = "#806A8A", # medium CRI, medium housing_need
+    "2 - 2" = "#806A8A", # medium var1, medium var2
     "1 - 2" = "#89A1C8",
-    "3 - 1" = "#AE3A4E", # high CRI, low housing_need
+    "3 - 1" = "#AE3A4E", # high var1, low var2
     "2 - 1" = "#BC7C8F",
-    "1 - 1" = "#CABED0" # low CRI, low housing_need
+    "1 - 1" = "#CABED0" # low var1, low var2
   ) %>%
     gather("group", "fill")
   
   # Cut into groups defined above and join with fill
   data <- data %>% 
     mutate(
-      housing_need_quantiles = cut(
-        housing_need_z,
-        breaks = quantiles_housing_need,
+      var1_quantiles = cut(
+        var1,
+        breaks = quantiles_var1,
         include.lowest = TRUE
       ),
-      CRI_quantiles = cut(
-        CRI,
-        breaks = quantiles_CRI,
+      var2_quantiles = cut(
+        var2,
+        breaks = quantiles_var2,
         include.lowest = TRUE
       ),
       group = paste(
-        as.numeric(CRI_quantiles), "-",
-        as.numeric(housing_need_quantiles)
+        as.numeric(var1_quantiles), "-",
+        as.numeric(var2_quantiles)
       )
     ) %>%
     left_join(bivariate_color_scale, by = "group")
@@ -1087,27 +1080,27 @@ bivariate_mapping <- function(cityname, quantiles_CRI) {
     scale_fill_identity() + 
     labs (x = NULL, 
           y = NULL, 
-          title = "Housing Need and Community Resistance against Airbnb") +
+          title = title) +
     theme_map()
   
   # Separate the groups
   bivariate_color_scale <- bivariate_color_scale %>% 
-    separate(group, into = c("CRI", "housing_need"), sep = " - ") %>%
-    mutate(CRI = as.integer(CRI),
-           housing_need_z = as.integer(housing_need))
+    separate(group, into = c("variable1", "variable2"), sep = " - ") %>%
+    mutate(variable1 = as.integer(variable1),
+           variable2 = as.integer(variable2))
   
   # Generate legend
   legend <- ggplot() +
     geom_tile(
       data = bivariate_color_scale,
       mapping = aes(
-        x = CRI,
-        y = housing_need_z,
+        x = variable1,
+        y = variable2,
         fill = fill)
     ) +
     scale_fill_identity() +
-    labs(x = "Higher CRI  -->",
-         y = "Higher housing need -->") +
+    labs(x = xlab,
+         y = ylab) +
     theme_map() +
     theme(
       axis.title = element_text(size = 6)
