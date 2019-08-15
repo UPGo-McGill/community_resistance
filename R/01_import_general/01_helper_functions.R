@@ -985,8 +985,9 @@ overdisp_fun <- function(model) {
 }
 
 # bivariate plotting
-bivariate_mapping <- function(data, var1, var2, quantiles_var1, quantiles_var2, 
+bivariate_mapping <- function(data, cityname, var1, var2, quantiles_var1 = NULL, quantiles_var2 = NULL,  
                               title, xlab, ylab) {
+ 
   
   # Set up mapping theme
   theme_map <- function(...) {
@@ -1051,7 +1052,14 @@ bivariate_mapping <- function(data, var1, var2, quantiles_var1, quantiles_var2,
   ) %>%
     gather("group", "fill")
   
-  # Cut into groups defined above and join with fill
+  # Calculate quantiles if not specified
+ quantiles_var1 <- if(is.null(quantiles_var1)) {
+   quantile(var1, probs = seq(0, 1, length.out = 4))} else {quantiles_var1}
+ 
+ quantiles_var2 <- if(is.null(quantiles_var2)) {
+   quantile(var2, probs = seq(0, 1, length.out = 4))} else {quantiles_var2}
+
+    # Cut into groups defined above and join with fill
   data <- data %>% 
     mutate(
       var1_quantiles = cut(
@@ -1085,17 +1093,17 @@ bivariate_mapping <- function(data, var1, var2, quantiles_var1, quantiles_var2,
   
   # Separate the groups
   bivariate_color_scale <- bivariate_color_scale %>% 
-    separate(group, into = c("variable1", "variable2"), sep = " - ") %>%
-    mutate(variable1 = as.integer(variable1),
-           variable2 = as.integer(variable2))
+    separate(group, into = c("var1", "var2"), sep = " - ") %>%
+    mutate(var1 = as.integer(var1),
+           var2 = as.integer(var2))
   
   # Generate legend
   legend <- ggplot() +
     geom_tile(
       data = bivariate_color_scale,
       mapping = aes(
-        x = variable1,
-        y = variable2,
+        x = var1,
+        y = var2,
         fill = fill)
     ) +
     scale_fill_identity() +

@@ -1,4 +1,4 @@
-######################################### MAPPING ##############################################
+################################################# MAPPING ##############################################################################
 
 source("R/01_import_general/01_helper_functions.R")
 
@@ -7,23 +7,22 @@ airbnb_neighbourhoods <- airbnb_neighbourhoods %>%
   mutate(CRI = CRI / max(CRI)) %>% 
   mutate(CRI_scale = scale(CRI))
 
-################################### BIVARIATE MAPPING #####################################
-  # visualizing two variables at the same time using a bivariate colour scale
-cityname <- "Montreal"
+############################################# BIVARIATE MAPPING ################################################################
+  # Visualizing two variables at the same time using a bivariate colour scale
 data <- airbnb_neighbourhoods %>%  
-  filter(city == cityname) %>% 
+  filter(city == "New York City") %>% 
   mutate(CRI = CRI/max(CRI)) %>% 
   st_as_sf() 
 
 quantiles_CRI <- c(0, 0.02, 0.2, 1)
-quantiles_med_income <- airbnb_neighbourhoods %>% 
-  filter(city == cityname) %>% 
-  pull(med_income_z) %>% 
-  quantile(probs = seq(0, 1, length.out = 4))
 
-bivariate_mapping(data, data$CRI, data$med_income_z, 
-                  quantiles_CRI, 
-                  quantiles_med_income, "Income and Community Resistance",
-                  "Increasing CRI", "Increasing Income") %>% 
+# Specify data, variables, title, labels, and quantiles (optional)
+bivariate_mapping(data = data,
+                  var1 = data$CRI, 
+                  var2 = data$housing_loss_pct, 
+                  quantiles_var1 = quantiles_CRI, 
+                  title = "Housing Loss and Community Resistance",
+                  xlab = "Increasing CRI", 
+                  ylab = "Increasing Housing Loss") %>% 
   plot()
 

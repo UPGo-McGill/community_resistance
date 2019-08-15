@@ -517,14 +517,14 @@ anova(ghq, ghq_null)
 ghq_null <- airbnb_neighbourhoods %>% 
   filter(active_listings > 0) %>% 
   glmer((CRI) ~
-          scale(active_listings) +
+          #scale(active_listings) +
           scale(revenue) + 
           scale(housing_loss_pct) + 
           scale(med_income_z) +
           scale(population)+ 
           scale(housing_need_z) + 
           scale(non_mover_z) + 
-         # scale(owner_occupied_z)+
+          scale(owner_occupied_z)+
           (1 | city), 
         family = Gamma(link = "log"),
         data = ., 
@@ -599,7 +599,7 @@ ghq_interaction <- airbnb_neighbourhoods %>%
 ghq_interaction %>% 
   summary()
 
-anova(ghq, ghq_interaction)
+anova(ghq_interaction, ghq_interaction)
 
   # population and non_mover
     # insignificant interaction
@@ -633,7 +633,8 @@ ghq_interaction <- airbnb_neighbourhoods %>%
           scale(med_income_z) + 
           scale(non_mover_z) +
           scale(population) + 
-          scale(owner_occupied_z)+
+          scale(owner_occupied_z) +
+         scale(active_listings) +
           (1 | city), 
         family = Gamma(link = "log"),
         data = ., 
@@ -663,13 +664,13 @@ r.squaredGLMM(ghq_interaction)
 # pql - 0.567
 # laplace - 0.680
 # ghq - 0.730
-# ghq_interaction - 0.735
+# ghq_interaction - 0.734
 
 # Evidently ghq_interaction is the best model, both theoretically and statistically.
-  # Though a high R squred of 0.735, must report the lognormal and trigamma results as well
+  # Though a high R squred of 0.734, must report the lognormal and trigamma results as well
 
 # Explore the model
-plot(fitted(ghq), residuals(ghq), xlab = "Fitted Values", ylab = "Residuals")
+plot(fitted(ghq_interaction), residuals(ghq_interaction), xlab = "Fitted Values", ylab = "Residuals")
 abline(h = 0, lty = 2)
 lines(smooth.spline(fitted(ghq), residuals(ghq)))
 
