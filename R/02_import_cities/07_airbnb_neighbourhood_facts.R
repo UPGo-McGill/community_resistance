@@ -49,13 +49,15 @@ for (n in c(1:nrow(neighbourhoods))) {
                       Status == "R" ) %>%
                       summarise(sum_revenue = sum(Price, na.rm = TRUE))
   
-  airbnb[n, 7] <-  neighbourhood_property %>% 
-                      filter(GH == TRUE) %>% 
-                      nrow()
+  airbnb[n, 7] <-                     nrow(neighbourhood_daily %>% 
+                                             filter(Date == end_date) %>% 
+                                             inner_join(neighbourhood_property, .) %>% 
+                                             filter(GH == TRUE))
   
-  airbnb[n, 8] <- neighbourhood_property %>% 
-                      filter(FREH == TRUE) %>% 
-                      nrow()
+  airbnb[n, 8] <-                   nrow(neighbourhood_daily %>% 
+                                           filter(Date == end_date) %>% 
+                                           inner_join(neighbourhood_property, .) %>% 
+                                           filter(FREH == TRUE))
   
   temp <- strr_ghost(neighbourhood_property, Property_ID, Airbnb_HID, Created, Scraped, start_date,
                                       end_date, listing_type = Listing_Type) %>% 

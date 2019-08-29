@@ -10,7 +10,7 @@ airbnb_neighbourhoods <- airbnb_neighbourhoods %>%
 ############################################# BIVARIATE MAPPING ################################################################
   # Visualizing two variables at the same time using a bivariate colour scale
 data <- airbnb_neighbourhoods %>%  
-  filter(city == "New York City") %>% 
+  filter(city == "New Orleans") %>% 
   mutate(CRI = CRI/max(CRI)) %>% 
   st_as_sf() 
 
@@ -19,10 +19,10 @@ quantiles_CRI <- c(0, 0.02, 0.2, 1)
 # Specify data, variables, title, labels, and quantiles (optional)
 bivariate_mapping(data = data,
                   var1 = data$CRI, 
-                  var2 = data$housing_loss_pct, 
+                  var2 = data$white_z, 
                   quantiles_var1 = quantiles_CRI, 
                   title = "Housing Loss and Community Resistance",
                   xlab = "Increasing CRI", 
-                  ylab = "Increasing Housing Loss") %>% 
+                  ylab = "Increasing White") %>% 
   plot()
 
