@@ -8,12 +8,12 @@ source("R/01_import_general/01_helper_functions.R")
 ############################# 1 - IMPORT NECESSARY FILES FROM THE NYT ############################################################################################################################
 ## 1.1 COMPLETE THIS SECTION IF LEXISNEXIS, OTHERWISE SKIP.
 # Import LexisNexis txt file(s) with airbnb + city name from the New York Times
-media_LN_NYT <- lnt_read("")
+media_LN_NYT <- lnt_read("data/test.DOCX")
 
 # If there is only one LexisNexis file, run the following.
 media_LN_NYT <- media_LN_NYT@meta %>% 
   right_join(media_LN_NYT@articles, by = "ID") %>% 
-  select(-c("Source_File", "Graphic", "ID"))
+  dplyr::select(-c("Source_File", "Graphic", "ID"))
 
 # If there is more than one file, repeat the following until all are imported
 media2_LN_NYT <- lnt_read("") 
@@ -23,14 +23,14 @@ media_LN_NYT <- rbind(media_LN_NYT@meta %>%
                         right_join(media_LN_NYT@articles, by = "ID"), 
                       media2_LN_NYT@meta %>% 
                         right_join(media2_LN_NYT@articles, by = "ID")) %>% 
-  select(-c("Source_File", "Graphic", "ID"))
+  dplyr::select(-c("Source_File", "Graphic", "ID"))
 
 rm()
 
 # Reformat the table
 media_LN_NYT <- media_LN_NYT %>% 
   mutate(Source_ID = paste("LN", 1:nrow(media_LN_NYT))) %>% 
-  select(9, 1:8) %>% 
+  dplyr::select(9, 1:8) %>% 
   separate(Length, c("Word_Count", NA))
 
 media_LN_NYT$Date <- as.character(media_LN_NYT$Date)
