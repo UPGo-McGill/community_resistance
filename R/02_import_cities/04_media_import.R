@@ -7,7 +7,7 @@ source("R/01_import_general/01_helper_functions.R")
 
 ############################# 1 - IMPORT NECESSARY FILES FROM THE NYT ############################################################################################################################
 ## 1.1 COMPLETE THIS SECTION IF LEXISNEXIS, OTHERWISE SKIP.
-# Import LexisNexis txt file(s) with airbnb + city name from the New York Times
+# Import LexisNexis DOCX file(s) with airbnb + city name from the New York Times
 media_LN_NYT <- lnt_read("data/test.DOCX")
 
 # If there is only one LexisNexis file, run the following.
@@ -73,13 +73,13 @@ rm()
 
 ############################# 2 - IMPORT NECESSARY FILES FROM THE LOCAL PAPER ############################################################################################################################
 ## 2.1 COMPLETE THIS SECTION IF LEXISNEXIS, OTHERWISE SKIP.
-# Import LexisNexis txt file(s) with airbnb + city name from the local newspaper
+# Import LexisNexis DOCX file(s) with airbnb + city name from the local newspaper
 media1_LN_local <- lnt_read("")
 
 # If there is only one LexisNexis file, run the following
 media_LN_local <- media_LN_local@meta %>% 
   right_join(media_LN_local@articles, by = "ID") %>% 
-  select(-c("Source_File", "Graphic", "ID"))
+  dplyr::select(-c("Source_File", "Graphic", "ID"))
 
 # If there is more than one file, repeat the following until all imported
 media2_LN_local <- lnt_read("") 
@@ -89,14 +89,14 @@ media_LN_local <- rbind(media1_LN_local@meta %>%
                           right_join(media1_LN_local@articles, by = "ID"), 
                         media2_LN_local@meta %>% 
                           right_join(media2_LN_local@articles, by = "ID")) %>% 
-  select(-c("Source_File", "Graphic", "ID"))
+  dplyr::select(-c("Source_File", "Graphic", "ID"))
 
 rm()
 
 # Reformat table
 media_LN_local <- media_LN_local %>% 
   mutate(Source_ID = paste("LN", 1:nrow(media_LN_local))) %>% 
-  select(9, 1:8) %>% 
+  dplyr::select(9, 1:8) %>% 
   separate(Length, c("Word_Count", NA))
 
 media_LN_local$Date <- as.character(media_LN_local$Date)
