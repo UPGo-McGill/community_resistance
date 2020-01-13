@@ -97,7 +97,7 @@ save(locations_NYT, file = ".Rdata")
 locations_local <- locations_local %>%
   st_as_sf() %>% 
   st_transform(transform) %>% 
-  st_join( neighbourhoods,join = st_intersects) %>% 
+  st_join(neighbourhoods, join = st_intersects) %>% 
   filter(!is.na(neighbourhood))
 
 locations_local$doc_id <- as.numeric(gsub("text", "",locations_local$doc_id))

@@ -58,16 +58,17 @@ mutate_at(
     .vars = c("housing_need_pct_household", "owner_occupied_pct_household"),
     .funs = list(`total` = ~{. * households}))
 
-airbnb_neighbourhoods_test <- airbnb_neighbourhoods_test %>% 
+airbnb_neighbourhoods <- airbnb_neighbourhoods %>% 
   rename(university_education = university_education_pct_pop_total,
          non_mover = non_mover_pct_pop_total,
          official_language = official_language_pct_pop_total,
          citizen = citizen_pct_pop_total,
          white = white_pct_pop_total,
-         housing_need = housing_need_pct_household_total
+         housing_need = housing_need_pct_household_total,
          owner_occupied = owner_occupied_pct_household_total)
 
 # Create the dummy variables for spatial effects
+  # this may not need to be run since I added a city field to the airbnb table, but double check
 airbnb_neighbourhoods <- airbnb_neighbourhoods %>% 
   mutate(vancouver = ifelse(city == "Vancouver", TRUE, FALSE),
          toronto = ifelse(city == "Toronto", TRUE, FALSE), 

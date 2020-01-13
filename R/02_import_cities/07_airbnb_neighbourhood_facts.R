@@ -24,6 +24,7 @@ for (n in c(1:nrow(neighbourhoods))) {
   
   airbnb[n, 2] <- neighbourhoods$neighbourhood[n]
   
+  # change this to the daily method? or use the property method? check with Davids recent scripts. Update all.
   airbnb[n, 3] <- neighbourhood_property %>% 
     filter(Created <= end_date,
            Scraped >= end_date) %>% 
@@ -58,7 +59,8 @@ for (n in c(1:nrow(neighbourhoods))) {
                                            filter(Date == end_date) %>% 
                                            inner_join(neighbourhood_property, .) %>% 
                                            filter(FREH == TRUE))
-  
+
+  # rework this from GH list... cant ijust take the ones that are in neighbourhood_property
   temp <- strr_ghost(neighbourhood_property, Property_ID, Airbnb_HID, Created, Scraped, start_date,
                                       end_date, listing_type = Listing_Type) %>% 
                              filter(date == end_date) %>% 

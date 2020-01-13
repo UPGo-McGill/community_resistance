@@ -9,7 +9,8 @@ source("R/01_import_general/01_helper_functions.R")
 # households. it also allows for comparison between neighbourhoods in different cities, though i still 
 # don't think this is the best measure. in NYC for example, it is likely more common that there are less 
 # white people and less owner-occupied households on average than in Vancouver due to general city make=up. 
-# Shouldn't this be taken into account?
+# Shouldn't this be taken into account? I suppose, however, this would be accounted for in the spatial effects
+# so this could definitely be ana verage.
 # z scored with city-wide average - i think this is best as it allows for consistent relativity. CRI is 
 # currently being measured in relation to the city-wide media coverage. Therefore i think it makes 
 # logical sense that z scores be used to capture intra-city variations, especially as we will be 
