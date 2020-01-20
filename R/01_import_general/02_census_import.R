@@ -15,7 +15,7 @@ variables_canada <- list_census_vectors("CA16")
 canada <-
   get_census(
     dataset = "CA16", regions = list(C = "Canada"),
-    vectors = c("v_CA16_2398", "v_CA16_5078", "v_CA16_4888", "v_CA16_6695",
+    vectors = c("v_CA16_404", "v_CA16_2398", "v_CA16_5078", "v_CA16_4888", "v_CA16_6695",
                 "v_CA16_4837", "v_CA16_4838", "v_CA16_512", 
                 "v_CA16_3393", "v_CA16_3996"),
     geo_format = "sf") %>% 
@@ -105,7 +105,7 @@ CTs_canada <- CTs_canada%>%
 datalist = list()
 
 for (n in c(1:nrow(CMAs_canada))) {
-
+  
   CTs_canada_temp <- CTs_canada %>% 
     filter(CMA_UID == as.numeric(st_drop_geometry(CMAs_canada[n, 1]))) %>% 
     mutate_at(
@@ -115,8 +115,8 @@ for (n in c(1:nrow(CMAs_canada))) {
       .funs = list(`z` = ~{(.- mean(., na.rm = TRUE))/sd(., na.rm = TRUE)})) 
   
   datalist[[n]] <- CTs_canada_temp
-    
-  }
+  
+}
 
 CTs_canada = do.call(rbind, datalist)
 
@@ -130,7 +130,6 @@ variables_us <- load_variables(2017, "acs5", cache = TRUE)
 
 # 2.2 IMPORT CENSUS VARIABLES FOR COUNTRY-WIDE AVERAGE
 us <- get_acs(geography = "us", variables = c("B01003_001", 
-                                              "B25001_001", 
                                               "B06011_001",
                                               "B15003_022",
                                               "B25070_007",
@@ -158,16 +157,17 @@ us <- us %>%
 us <- us %>% 
   mutate(official_language = B06007_002 + B06007_003 + B06007_007,
          housing_need = B25070_007 + B25070_008 + B25070_009 + B25070_010 +
-           B25091_008 + B25091_009 + B25091_010 + B25091_011) %>% 
+           B25091_008 + B25091_009 + B25091_010 + B25091_011,
+         households = B25012_002 + B25011_026) %>% 
   select(-c("B06007_002", "B06007_003", "B06007_007", "B25070_007", "B25070_008", 
             "B25070_009", "B25070_010", "B25091_008", "B25091_009", "B25091_010",
             "B25091_011"))
 
 names(us) <- 
   c("Geo_UID", "Country_name", "white", "population", "non_citizen", "med_income",
-    "non_mover", "university_education", "households", 
+    "non_mover", "university_education", 
     "rental", "owner_occupied", "official_language", 
-    "housing_need")
+    "housing_need", "households")
 
 us <- us %>% 
   mutate(citizen = population - non_citizen) %>% 
@@ -187,7 +187,6 @@ us <- us %>%
 # 2.3 IMPORT CENSUS VARIABLES FOR ALL CMAs
 MSAs_us <- get_acs(geography = "metropolitan statistical area/micropolitan statistical area", 
                    variables = c("B01003_001", 
-                                 "B25001_001", 
                                  "B06011_001",
                                  "B15003_022",
                                  "B25070_007",
@@ -216,16 +215,16 @@ MSAs_us <- MSAs_us %>%
 MSAs_us <- MSAs_us %>% 
   mutate(official_language = B06007_002 + B06007_003 + B06007_007,
          housing_need = B25070_007 + B25070_008 + B25070_009 + B25070_010 +
-           B25091_008 + B25091_009 + B25091_010 + B25091_011) %>% 
+           B25091_008 + B25091_009 + B25091_010 + B25091_011,
+         households = B25012_002 + B25011_026) %>% 
   select(-c("B06007_002", "B06007_003", "B06007_007", "B25070_007", "B25070_008", 
             "B25070_009", "B25070_010", "B25091_008", "B25091_009", "B25091_010",
             "B25091_011"))
 
 names(MSAs_us) <- 
   c("CMA_UID", "CMA_name", "State", "Type", "white", "population", "non_citizen", "med_income",
-    "non_mover", "university_education", "households", 
-    "rental", "owner_occupied", "official_language", 
-    "housing_need")
+    "non_mover", "university_education", "rental", "owner_occupied", "official_language", 
+    "housing_need", "households")
 
 MSAs_us <- MSAs_us %>% 
   mutate(citizen = population - non_citizen) %>% 
@@ -251,28 +250,27 @@ MSAs_us <- core_based_statistical_areas(cb = TRUE, class = "sf", refresh = TRUE)
 # 2.4 IMPORT CENSUS VARIABLES FOR ALL CENSUS TRACTS (include geometries)
 CTs_us <- reduce(
   map(states, function(x) {
-  get_acs(geography = "tract", variables = c("B01003_001", 
-                                             "B25001_001", 
-                                             "B06011_001",
-                                             "B15003_022",
-                                             "B25070_007",
-                                             "B25070_008",
-                                             "B25070_009",
-                                             "B25070_010",
-                                             "B25091_008",
-                                             "B25091_009",
-                                             "B25091_010",
-                                             "B25091_011",
-                                             "B07001_017", 
-                                             "B25012_002", 
-                                             "B25011_026",
-                                             "B06007_002", 
-                                             "B06007_003",
-                                             "B06007_007",
-                                             "B05001_006", 
-                                             "B01001H_001"),
-          state = x, geometry = TRUE)
-}),
+    get_acs(geography = "tract", variables = c("B01003_001", 
+                                               "B06011_001",
+                                               "B15003_022",
+                                               "B25070_007",
+                                               "B25070_008",
+                                               "B25070_009",
+                                               "B25070_010",
+                                               "B25091_008",
+                                               "B25091_009",
+                                               "B25091_010",
+                                               "B25091_011",
+                                               "B07001_017", 
+                                               "B25012_002", 
+                                               "B25011_026",
+                                               "B06007_002", 
+                                               "B06007_003",
+                                               "B06007_007",
+                                               "B05001_006", 
+                                               "B01001H_001"),
+            state = x, geometry = TRUE)
+  }),
   rbind
 )
 
@@ -294,23 +292,23 @@ CTs_us <- CTs_us %>%
 CTs_us <- CTs_us %>% 
   mutate(official_language = B06007_002 + B06007_003 + B06007_007,
          housing_need = B25070_007 + B25070_008 + B25070_009 + B25070_010 +
-           B25091_008 + B25091_009 + B25091_010 + B25091_011) %>% 
+           B25091_008 + B25091_009 + B25091_010 + B25091_011,
+         households = B25012_002 + B25011_026) %>% 
   select(-c("B06007_002", "B06007_003", "B06007_007", "B25070_007", "B25070_008", 
             "B25070_009", "B25070_010", "B25091_008", "B25091_009", "B25091_010",
             "B25091_011"))
 
 names(CTs_us) <- 
   c("Geo_UID", "County_name", "white", "population", "non_citizen", "med_income",
-    "non_mover", "university_education", "households", 
-    "rental", "owner_occupied", "ST_UID", "CT_UID", "official_language", 
-    "housing_need", "geometry")
+    "non_mover", "university_education", "rental", "owner_occupied", "ST_UID", "CT_UID", 
+    "official_language", "housing_need", "households", "geometry")
 
 CTs_us <- CTs_us %>% 
   mutate(citizen = population - non_citizen) %>% 
   select(c("Geo_UID", "ST_UID", "CT_UID", "County_name", "population", "households", "med_income",
            "university_education", "housing_need", "non_mover", "owner_occupied", 
            "rental", "official_language", "citizen", "white", "geometry"))
-  
+
 CTs_us <- CTs_us%>% 
   mutate_at(
     .vars = c("university_education", "non_mover", 
