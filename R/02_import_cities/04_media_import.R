@@ -2,9 +2,10 @@
 
 source("R/01_import_general/01_helper_functions.R")
 
-# Import factiva and lexisnexis files
-
 cityname <- c("montreal", "toronto")
+
+
+# Import factiva and lexisnexis files
 
 media <- 
   
@@ -20,14 +21,17 @@ media <-
   })
 
 
-
 # Tidy text 
 
-  # how to save with unique names 
+tidy_text <- map(media, ~{
+  
+  str_tidytext(.x)
+  
+})
 
-list <- str_tidytext(media[[1]])
-media <- list [[1]]
-lemmatized_articles <- list [[2]]
 
+media <- tidy_text[[1]][[1]]
+
+lemmatized_articles <- tidy_text[[1]][[2]]
 
 
