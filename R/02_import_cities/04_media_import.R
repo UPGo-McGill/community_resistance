@@ -23,7 +23,6 @@ media <- rbind(media_FTV, media_LN) %>%
 # Tidy text 
 
 list <- str_tidytext(media)
-
 media <- list [[1]]
 lemmatized_articles <- list [[2]]
 
