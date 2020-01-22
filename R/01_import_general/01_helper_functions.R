@@ -61,6 +61,130 @@ loadRdata <- function(fileName){
   get(ls()[ls() != "fileName"])
 }
 
+# Factiva import function
+
+import_factiva <- function(cityname) {
+  
+  path = paste("data", paste("media", cityname, sep = "_"), sep = "/")
+  
+  files <- list.files(path = paste(path, "FTV", sep = "/"))
+  
+  corpus <- 
+    map(files, ~{
+      tm:::c.VCorpus(Corpus(FactivaSource(paste(path, "FTV", .x, sep = "/")), list(language = NA)))
+    }) %>% do.call(c, .)
+  
+  media_FTV <- tibble(Source_ID = numeric(0), Newspaper = character(0), Date = character(0), 
+                      Word_Count = numeric(0), Section = character(0), Author = character(0), 
+                      Edition = character(0), Headline = character(0), Article = character(0))
+  
+  for (n in c(1:length(corpus))) {
+    
+    media_FTV[n,1] = paste("FTV", n)
+    media_FTV[n,2] = paste(corpus[[n]]$meta$origin, collapse="")
+    media_FTV[n,3] = paste(as.character(corpus[[n]]$meta$datetimestamp), collapse = "")
+    media_FTV[n,4] = paste(corpus[[n]]$meta$wordcount, collapse = "")
+    media_FTV[n,5] = paste(corpus[[n]]$meta$section, collapse = "")
+    media_FTV[n,6] = paste(corpus[[n]]$meta$author,collapse = "") 
+    media_FTV[n,7] = paste(corpus[[n]]$meta$edition,collapse = "") 
+    media_FTV[n,8] = paste(corpus[[n]]$meta$heading, collapse = "")
+    media_FTV[n,9] = paste(corpus[[n]]$content, collapse = "")
+    
+  }
+  
+return(media_FTV)
+  
+}
+
+# Lexisnexis import
+
+import_lexisnexis <- function(cityname) {
+  
+path = paste("data", paste("media", cityname, sep = "_"), sep = "/")
+  
+files <- list.files(path = paste(path, "LN", sep = "/"))
+
+media_LN <- map_dfr(files, ~{
+  rbind(lnt_read(paste(path, "LN", .x, sep = "/"))@meta %>% 
+          right_join(lnt_read(paste(path, "LN", .x, sep = "/"))@articles, by = "ID"), 
+        lnt_read(paste(path, "LN", .x, sep = "/"))@meta %>% 
+          right_join(lnt_read(paste(path, "LN", .x, sep = "/"))@articles, by = "ID")) %>% 
+    dplyr::select(-c("Source_File", "Graphic", "ID"))
+})
+
+media_LN <- media_LN %>% 
+  mutate(Source_ID = paste("LN", 1:nrow(media_LN))) %>% 
+  dplyr::select(9, 1:8) %>% 
+  separate(Length, c("Word_Count", NA))
+
+media_LN$Date <- as.character(media_LN$Date)
+
+return(media_LN)
+
+}
+
+
+## STR tidy text function 
+
+str_tidytext <- function (media) {
+
+# Initialize spaCy
+spacy_initialize()
+  
+# Assign an ID
+ media <- media %>% 
+    mutate(ID = 1:nrow(media))
+
+# Prepare articles for word search by removing stop words and lemmatizing
+spacy_articles <- spacy_parse(as.character(media$Article),
+                              pos = FALSE, entity = FALSE, tag = FALSE)
+
+lemmatized_articles <- spacy_articles%>%
+  group_by(doc_id) %>%
+  filter(lemma != "-PRON-") %>%
+  mutate(lemma = str_replace_all(lemma, "[^a-zA-Z0-9 ]", " ")) %>%
+  filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
+  mutate(lemma = strsplit(as.character(lemma), " ")) %>%
+  unnest(lemma) %>%
+  filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
+  dplyr::summarise(lemmas = paste(as.character(lemma), collapse = " ")) %>%
+  mutate(doc_id = as.numeric(paste(flatten(str_extract_all(doc_id,"[[:digit:]]+"))))) %>%
+  arrange(doc_id) %>%
+  mutate_each(list(tolower)) %>%
+  mutate(lemmas = str_squish(str_replace_all(lemmas, "[^a-zA-Z0-9 ]", " "))) %>%
+  mutate(lemmas = gsub('\\b\\w{1,2}\\b','', lemmas))
+
+# Search for Airbnb mentions in the cleaned text
+airbnb <- c("airbnb", "homeshar", "home shar", "shortterm", "short term", "str ", "strs", "guest",
+            "shortstay", "short stay", "home stay", "homestay", "hotel", "home share", "airbnb host",
+            "host", "home sharing", "homeshare", "homesharing", "timeshare", "letting", "shortterm rental",
+            "longterm", "rental", "legislation", "short term rental", "hotelization", "legalization")
+
+lemmatized_articles <- lemmatized_articles %>% 
+  mutate(mentions = 
+           str_count(lemmatized_articles$lemmas, paste(airbnb, collapse="|"))) %>% 
+  filter(mentions > 1) %>%
+  dplyr::select(-c(mentions)) 
+
+
+# Trim the original media files to include only those that mention Airbnb more than once
+media <- media %>% 
+  mutate(relevant = media$ID %in% lemmatized_articles$doc_id) %>% 
+  filter(relevant == TRUE) %>% 
+  dplyr::select(-relevant)
+
+
+# Reassign an ID to allow for future text processing
+media <- media %>% 
+  mutate(ID = 1:nrow(media))
+
+lemmatized_articles <- lemmatized_articles %>% 
+  mutate(doc_id = 1:nrow(lemmatized_articles))
+
+return (list(media, lemmatized_articles)) 
+
+}
+
 ## st_intersect_summarize helper function
 st_intersect_summarize <- function(data, poly, group_vars, population, sum_vars,
                                    mean_vars) {
