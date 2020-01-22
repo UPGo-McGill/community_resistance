@@ -29,9 +29,8 @@ tidy_text <- map(media, ~{
   
 })
 
+media <- tidy_text[[1]]
 
-media <- tidy_text[[1]][[1]]
-
-lemmatized_articles <- tidy_text[[1]][[2]]
+lemmatized_articles <- tidy_text[[2]]
 
 
