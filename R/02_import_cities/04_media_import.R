@@ -29,8 +29,16 @@ tidy_text <- map(media, ~{
   
 })
 
-media <- tidy_text[[1]]
+seq_along(cityname)
 
-lemmatized_articles <- tidy_text[[2]]
+# Create media and lemmatized_articles list to allow for further text analysis
 
+media <- 
+  map(seq_along(cityname), ~{
+    rbind(tidy_text[[.x]][[1]])
+  })
 
+lemmatized_articles <- 
+  map(seq_along(cityname), ~{
+    rbind(tidy_text[[.x]][[2]])
+  })
