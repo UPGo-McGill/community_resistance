@@ -49,7 +49,7 @@ library(tidyr)
 # census_api_key("dab993e99dc7faf74295fc559dc2e1764b60e6b9", install = TRUE, overwrite = TRUE)
 
 # Run Google Maps API Key
-# register_google(key = "personal_key", write = TRUE)
+#register_google(key = "", write = TRUE)
 
 # Function to replace NaN with 0
 is.nan.data.frame <- function(x)
