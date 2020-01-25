@@ -29,7 +29,6 @@ tidy_text <- map(media, ~{
   
 })
 
-seq_along(cityname)
 
 # Create media and lemmatized_articles list to allow for further text analysis
 

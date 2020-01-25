@@ -2,6 +2,19 @@
 
 source("R/01_import_general/01_helper_functions.R")
 
+# LIST OF CITY NAMES
+# cityname <- c("")
+
+# LIST CONTAINING ALL NEIGHBOURHOODS
+
+# city
+# country
+# neighbourhood
+# geometry
+
+# FIND TRANSFORMATION GOOD FOR ALL OF NORTH AMERICA
+102009
+
 # Enter city and country name.
 # Assign the appropriate census tracts data 
 cityname <- ""
@@ -15,15 +28,26 @@ transform <- ifelse(country == "Canada", 32618, 26918)
 
 # Upload required geometries. Ensure that there is a field titled neighbourhood in the geometries file
 # US - PUMAS
-neighbourhoods <- pumas("NY", class = "sf") %>% 
+neighbourhoods <- list("miami" = pumas("FL", class = "sf") %>% 
   st_transform(transform) %>%
   as_tibble() %>% 
   st_as_sf() %>%
+    st_transform(102009) %>% 
   mutate(neighbourhood = NAMELSAD10) %>% 
-  select(-GEOID10, -NAMELSAD10, -STATEFP10, -MTFCC10, -FUNCSTAT10, -ALAND10,
+  dplyr::select(-GEOID10, -NAMELSAD10, -STATEFP10, -MTFCC10, -FUNCSTAT10, -ALAND10,
          -AWATER10, -INTPTLAT10, -INTPTLON10) %>% 
-  select(CODE_ID = PUMACE10, neighbourhood, geometry)%>%
-  filter(str_detect(neighbourhood, "NYC-"))
+  dplyr::select(CODE_ID = PUMACE10, neighbourhood, geometry)%>%
+  filter(str_detect(neighbourhood, "Miami-")), 
+  "miami_b" = pumas("FL", class = "sf") %>% 
+    st_transform(transform) %>%
+    as_tibble() %>% 
+    st_as_sf() %>%
+    st_transform(102009) %>% 
+    mutate(neighbourhood = NAMELSAD10) %>% 
+    dplyr::select(-GEOID10, -NAMELSAD10, -STATEFP10, -MTFCC10, -FUNCSTAT10, -ALAND10,
+                  -AWATER10, -INTPTLAT10, -INTPTLON10) %>% 
+    dplyr::select(CODE_ID = PUMACE10, neighbourhood, geometry)%>%
+    filter(str_detect(neighbourhood, "Miami-")))
 
 # Otherwise import from downloaded shapefiles
 neighbourhoods <-

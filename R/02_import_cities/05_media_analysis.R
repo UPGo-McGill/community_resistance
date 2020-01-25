@@ -51,28 +51,34 @@ save(locations, file = "locations.Rdata")
 locations <- locations %>% 
   filter(!is.na(lon)) %>% 
   st_as_sf(coords = c ("lon", "lat"), crs = 4326) %>% 
-  st_transform(transform)
+  st_transform(102009)
 
 # Perform a join to associate each entity with each document id
-
-ner_locations <- map(cityname, ~{
-  ner[[.x]]
+ner_locations <- map(seq_along(cityname), ~{
+  inner_join(ner[[.x]], locations)
 })
 
 
- ner_local[] %>% 
-  inner_join(locations_local)
-
-
-
 # Perform a spatial join to determine what locations fall into which neighbourhoods
-locations_local <- locations_local %>%
+ner_locations <- ner_locations %>%
   st_as_sf() %>% 
-  st_transform(transform) %>% 
+  st_transform(102009) %>% 
   st_join(neighbourhoods, join = st_intersects) %>% 
   filter(!is.na(neighbourhood))
 
-locations_local$doc_id <- as.numeric(gsub("text", "",locations_local$doc_id))
+
+ner_locations <- map(seq_along(cityname), ~{
+  ner_locations[[.x]] %>%
+    st_as_sf() %>% 
+    st_transform(102009) %>% 
+    st_join(neighbourhoods[[.x]], join = st_intersects) %>% 
+    filter(!is.na(neighbourhood))
+    })
+
+for (n in seq_along(cityname)){
+
+ner_locations[[n]]$doc_id <- as.numeric(gsub("text", "",ner_locations[[n]]$doc_id)) }
+
 
 
 
