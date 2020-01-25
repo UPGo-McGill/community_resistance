@@ -1,6 +1,6 @@
 ######################################### COMPILE ###############################
 
-source("R/01_import_general/01_helper_functions.R")
+source("R/01_helper_functions.R")
 
 # Import a table for each city
 montreal <- left_join(loadRdata("neighbourhood_resistance/montreal.Rdata"), 

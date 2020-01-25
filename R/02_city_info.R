@@ -1,6 +1,6 @@
 ######################################### CITY INFORMATION INPUT ########################################################
 
-source("R/01_import_general/01_helper_functions.R")
+source("R/01_helper_functions.R")
 
 # LIST OF CITY NAMES
 # cityname <- c("")

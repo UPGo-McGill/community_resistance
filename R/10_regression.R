@@ -1,6 +1,6 @@
 ######################################### REGRESSION MODELLING ###############################
 
-source("R/01_import_general/01_helper_functions.R")
+source("R/01_helper_functions.R")
 
 ## Census variable choices
 # absolute values - need to account for population and number of households - i do not think this is a 

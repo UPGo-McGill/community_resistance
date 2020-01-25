@@ -1,6 +1,6 @@
 ######################################### MEDIA ANALYSIS ########################################################
 
-source("R/01_import_general/01_helper_functions.R")
+source("R/01_helper_functions.R")
 
 ############################### 1 - NAMED ENTITY RECOGNITION AND GEOCODING ################################################################## 
 
@@ -80,6 +80,7 @@ for (n in seq_along(cityname)){
 ner_locations[[n]]$doc_id <- as.numeric(gsub("text", "",ner_locations[[n]]$doc_id)) }
 
 
+############################################ 2 - SENTIMENT ANALYSIS ##############################################################
 
-
-
+# ANALYSIS
+# ADD TO THE NEIGHBOURHOODS LIST INSTEAD OF CREATING A NEW DATAFRAME

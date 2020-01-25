@@ -1,6 +1,6 @@
 ################################################# MAPPING ##############################################################################
 
-source("R/01_import_general/01_helper_functions.R")
+source("R/01_helper_functions.R")
 
 # Ensure that the CRI is scaled accordingly
 airbnb_neighbourhoods <- airbnb_neighbourhoods %>% 

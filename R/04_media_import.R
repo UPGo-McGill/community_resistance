@@ -1,6 +1,6 @@
 ######################################### MEDIA IMPORT ###############################
 
-source("R/01_import_general/01_helper_functions.R")
+source("R/01_helper_functions.R")
 
 # will be specified in the city_info script (along with geometries)
 cityname <- c("montreal", "toronto")

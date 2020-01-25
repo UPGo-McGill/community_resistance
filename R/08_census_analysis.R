@@ -1,6 +1,6 @@
 ######################################### SOCIAL CAPITAL INDEX ###############################
 
-source("R/01_import_general/01_helper_functions.R")
+source("R/01_helper_functions.R")
 
 # Determine the census tracts within the city, and perform st_intersect_summarize
 CTs_city <- st_intersect_summarize(

@@ -1,6 +1,6 @@
 ######################################### CENSUS IMPORT  ###############################
 
-source("R/01_import_general/01_helper_functions.R")
+source("R/01_helper_functions.R")
 
 # Census import for all census tracts in Canada and the census tracts in the US in the following states
 states <- unique(fips_codes$state)[1:51] 

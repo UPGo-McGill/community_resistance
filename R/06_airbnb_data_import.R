@@ -1,6 +1,6 @@
 ######################################### AIRBNB DATA IMPORT ###############################
 
-source("R/01_import_general/01_helper_functions.R")
+source("R/01_helper_functions.R")
 
 # Set up date range
 start_date <- "2018-05-01"
