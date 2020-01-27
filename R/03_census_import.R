@@ -18,7 +18,7 @@ canada <-
                 "v_CA16_4837", "v_CA16_4838", "v_CA16_524", 
                 "v_CA16_3393", "v_CA16_3996", "v_CA16_2540", "v_CA16_497", "v_CA16_484"),
     geo_format = "sf") %>% 
-  st_transform(32618) %>% 
+  st_transform(102009) %>% 
   dplyr::select(GeoUID, Population, Households, contains("v_CA"))
 
 names(canada) <- 
@@ -53,7 +53,7 @@ CMAs_canada <-
                 "v_CA16_4837", "v_CA16_4838", "v_CA16_524", 
                 "v_CA16_3393", "v_CA16_3996", "v_CA16_2540", "v_CA16_497", "v_CA16_484"),
     geo_format = "sf") %>% 
-  st_transform(32618) %>% 
+  st_transform(102009) %>% 
   filter(Type == "CMA") %>% 
   dplyr::select(GeoUID, CMA_name = name, Population, Households, contains("v_CA")) 
 
@@ -93,7 +93,7 @@ CTs_canada <-
                 "v_CA16_4837", "v_CA16_4838", "v_CA16_524", 
                 "v_CA16_3393", "v_CA16_3996", "v_CA16_2540", "v_CA16_497", "v_CA16_484"),
     geo_format = "sf") %>% 
-  st_transform(32618) %>% 
+  st_transform(102009) %>% 
   filter(Type == "CT") %>% 
   dplyr::select(GeoUID, PR_UID, CMA_UID, Population, Households, contains("v_CA"))
 
@@ -119,7 +119,8 @@ CTs_canada <- CTs_canada%>%
     .funs = list(`pct_pop` = ~{. / population})) %>% 
   mutate_at(
     .vars = c("housing_need", "owner_occupied", "rental"),
-    .funs = list(`pct_household` = ~{. / households}))
+    .funs = list(`pct_household` = ~{. / households})) %>% 
+  dplyr::select(-c("no_language"))
 
 
 # 1.5 Z SCORES
@@ -287,7 +288,7 @@ MSAs_us <- MSAs_us%>%
          low_income = low_income_pct_pop *population) 
 
 MSAs_us <- core_based_statistical_areas(cb = TRUE, class = "sf", refresh = TRUE) %>% 
-  st_transform(26918) %>% 
+  st_transform(102009) %>% 
   dplyr::select(c("GEOID", "geometry")) %>% 
   left_join(MSAs_us, ., by = c("CMA_UID" = "GEOID")) %>% 
   st_as_sf(sf_column_name = "geometry")
@@ -333,7 +334,7 @@ CTs_us <- rbind(
 
 # Tidy the naming and coding of census tracts
 CTs_us <- CTs_us %>% 
-  st_transform(26918) %>% 
+  st_transform(102009) %>% 
   dplyr::select(-c("moe")) %>% 
   spread(variable, estimate) %>% 
   separate(NAME, into = c("CT", "County_name", "State_name"), sep = ",") 
@@ -383,7 +384,7 @@ CTs_us <- CTs_us%>%
 
 CTs_us <- CTs_us %>% 
   st_join(MSAs_us, left = FALSE, suffix = c("",".y")) %>% 
-  dplyr::select(c(1, 28, 29, 2, 5:27, 54))
+  dplyr::select(c(1, 29, 30, 2, 5:28, 56))
            
 # 2.5 Z SCORES
 datalist = list()
@@ -410,5 +411,14 @@ rm(CTs_us_temp, datalist)
 
 CTs_us$geometry <- st_cast(CTs_us$geometry, "MULTIPOLYGON")
 
+########################################### 3 - COMBINE CENSUS TRACTS #####################################
 
-
+CTs <- 
+rbind(CTs_canada %>% 
+        mutate(ST_UID = PR_UID,
+               country = "Canada") %>%
+        dplyr::select(-"PR_UID") %>% 
+        st_transform(102009), 
+      CTs_us %>% 
+        mutate(country = "US") %>% 
+        st_transform(102009))
