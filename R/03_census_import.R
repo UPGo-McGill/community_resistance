@@ -24,24 +24,25 @@ canada <-
 names(canada) <- 
   c("Geo_UID", "population", "households", "med_income",
     "university_education", "housing_need", "non_mover", "owner_occupied", 
-    "rental", "no_official_language", "citizen", "white", "low_income", "lone_parent", 
+    "rental", "no_language", "citizen", "white", "low_income_pct_pop", "lone_parent", 
     "families", "geometry")
 
 canada <- canada %>% 
-  mutate(official_language = population - no_official_language)
+  mutate(language = population - no_language)
 
 canada <- canada %>% 
+  mutate(
+    lone_parent_pct_families = lone_parent / families,
+    low_income = low_income_pct_pop/100*population,
+    low_income_pct_pop = low_income_pct_pop/100,
+    language = population - no_language) %>% 
   mutate_at(
     .vars = c("university_education", "non_mover", 
-              "official_language", "citizen", "white"),
+              "language", "citizen", "white"),
     .funs = list(`pct_pop` = ~{. / population})) %>% 
   mutate_at(
     .vars = c("housing_need", "owner_occupied", "rental"),
-    .funs = list(`pct_household` = ~{. / households})) %>% 
-  mutate(
-    lone_parent_pct_families = lone_parent / families) %>% 
-  mutate(
-    low_income = low_income/100)
+    .funs = list(`pct_household` = ~{. / households}))
 
 
 # 1.3 IMPORT CENSUS VARIABLES FOR ALL CMAs
@@ -64,25 +65,23 @@ CMAs_canada$CMA_name <- CMAs_canada$CMA_name %>%
 names(CMAs_canada) <- 
   c("CMA_UID", "CMA_name", "population", "households", "med_income",
     "university_education", "housing_need", "non_mover", "owner_occupied", 
-    "rental", "no_official_language", "citizen", "white", "low_income", "lone_parent",
+    "rental", "no_language", "citizen", "white", "low_income_pct_pop", "lone_parent",
     "families", "geometry")
-
-CMAs_canada <- CMAs_canada %>% 
-  mutate(official_language = population - no_official_language)
 
 CMAs_canada <- CMAs_canada%>% 
   separate(CMA_name, into = c("CMA_name", NA), sep = "[(]") %>% 
+  mutate(
+    lone_parent_pct_families = lone_parent / families,
+    low_income = low_income_pct_pop/100*population,
+    low_income_pct_pop = low_income_pct_pop/100,
+    language = population - no_language) %>% 
   mutate_at(
     .vars = c("university_education", "non_mover", 
-              "official_language", "citizen", "white"),
+              "language", "citizen", "white"),
     .funs = list(`pct_pop` = ~{. / population})) %>% 
   mutate_at(
     .vars = c("housing_need", "owner_occupied", "rental"),
-    .funs = list(`pct_household` = ~{. / households})) %>% 
-  mutate(
-    lone_parent_pct_families = lone_parent / families) %>% 
-  mutate(
-    low_income = low_income/100)
+    .funs = list(`pct_household` = ~{. / households}))
 
 CMAs_canada$CMA_name <- substr(CMAs_canada$CMA_name, 1, nchar(CMAs_canada$CMA_name) - 1)
 
@@ -105,24 +104,22 @@ CTs_canada <- CTs_canada %>%
 names(CTs_canada) <- 
   c("Geo_UID", "CMA_UID", "CMA_name", "PR_UID", "population", "households", "med_income",
     "university_education", "housing_need", "non_mover", "owner_occupied", 
-    "rental", "no_official_language", "citizen", "white", "low_income",
+    "rental", "no_language", "citizen", "white", "low_income_pct_pop",
     "lone_parent", "families", "geometry")
 
-CTs_canada <- CTs_canada %>% 
-  mutate(official_language = population - no_official_language)
-
 CTs_canada <- CTs_canada%>% 
+  mutate(
+    lone_parent_pct_families = lone_parent / families,
+    low_income = low_income_pct_pop/100*population,
+    low_income_pct_pop = low_income_pct_pop/100,
+    language = population - no_language) %>% 
   mutate_at(
     .vars = c("university_education", "non_mover", 
-              "official_language", "citizen", "white"),
+              "language", "citizen", "white"),
     .funs = list(`pct_pop` = ~{. / population})) %>% 
   mutate_at(
     .vars = c("housing_need", "owner_occupied", "rental"),
-    .funs = list(`pct_household` = ~{. / households})) %>% 
-  mutate(
-    lone_parent_pct_families = lone_parent / families) %>% 
-  mutate(
-    low_income = low_income/100)
+    .funs = list(`pct_household` = ~{. / households}))
 
 
 # 1.5 Z SCORES
@@ -135,7 +132,10 @@ for (n in c(1:nrow(CMAs_canada))) {
     mutate_at(
       .vars = c("population", "households", "med_income",
                 "university_education", "housing_need", "non_mover", "owner_occupied", 
-                "rental", "official_language", "citizen", "white", "low_income", "lone_parent"),
+                "rental", "language", "citizen", "white", "low_income", "lone_parent", 
+                "university_education_pct_pop", "housing_need_pct_household", "non_mover_pct_pop", 
+                "owner_occupied_pct_household", "rental_pct_household", "language_pct_pop", 
+                "citizen_pct_pop", "white_pct_pop", "low_income_pct_pop", "lone_parent_pct_families"),
       .funs = list(`z` = ~{(.- mean(., na.rm = TRUE))/sd(., na.rm = TRUE)})) 
   
   datalist[[n]] <- CTs_canada_temp
@@ -168,7 +168,7 @@ us <- rbind(get_acs(geography = "us", variables = c("B01003_001",
                                               "B25012_002", 
                                               "B25011_026",
                                               "B06007_002", 
-                                              "B06007_003",
+                                              "B06007_004",
                                               "B06007_007",
                                               "B05001_006", 
                                               "B01001H_001",
@@ -183,37 +183,38 @@ us <- us %>%
 
 # tidy the variables
 us <- us %>% 
-  mutate(official_language = B06007_002 + B06007_003 + B06007_007,
+  mutate(language = B06007_002 + B06007_004 + B06007_007,
          housing_need = B25070_007 + B25070_008 + B25070_009 + B25070_010 +
            B25091_008 + B25091_009 + B25091_010 + B25091_011,
          households = B25012_002 + B25011_026,
-         low_income = 1 - C17002_008/C17002_001, 
+         low_income_pct_pop = 1 - C17002_008/C17002_001, 
          lone_parent = B11001_005 + B11001_006) %>% 
-  dplyr::select(-c("B06007_002", "B06007_003", "B06007_007", "B25070_007", "B25070_008", 
+  dplyr::select(-c("B06007_002", "B06007_004", "B06007_007", "B25070_007", "B25070_008", 
             "B25070_009", "B25070_010", "B25091_008", "B25091_009", "B25091_010",
             "B25091_011", "C17002_008", "C17002_001", "B11001_005", "B11001_006"))
 
 names(us) <- 
   c("Geo_UID", "Country_name", "white", "population", "non_citizen", "non_mover",
     "families", "university_education", "med_income", "rental", "owner_occupied",
-    "official_language",  "housing_need", "households", "low_income", "lone_parent")
+    "language",  "housing_need", "households", "low_income_pct_pop", "lone_parent")
 
 us <- us %>% 
   mutate(citizen = population - non_citizen) %>% 
   dplyr::select(c("Geo_UID", "Country_name", "population", "households", "med_income",
            "university_education", "housing_need", "non_mover", "owner_occupied", 
-           "rental", "official_language", "citizen", "white", "low_income", 
+           "rental", "language", "citizen", "white", "low_income_pct_pop", 
            "lone_parent", "families"))
 
 us <- us %>% 
   mutate_at(
     .vars = c("university_education", "non_mover", 
-              "official_language", "citizen", "white"),
+              "language", "citizen", "white"),
     .funs = list(`pct_pop` = ~{. / population})) %>% 
   mutate_at(
     .vars = c("housing_need", "owner_occupied", "rental"),
     .funs = list(`pct_household` = ~{. / households})) %>% 
-  mutate(lone_parent_pct_families = lone_parent/families)
+  mutate(lone_parent_pct_families = lone_parent/families,
+         low_income = low_income_pct_pop * population)
 
 # 2.3 IMPORT CENSUS VARIABLES FOR ALL CMAs
 MSAs_us <- rbind(get_acs(geography = "metropolitan statistical area/micropolitan statistical area", 
@@ -232,7 +233,7 @@ MSAs_us <- rbind(get_acs(geography = "metropolitan statistical area/micropolitan
                                                          "B25012_002", 
                                                          "B25011_026",
                                                          "B06007_002", 
-                                                         "B06007_003",
+                                                         "B06007_004",
                                                          "B06007_007",
                                                          "B05001_006", 
                                                          "B01001H_001",
@@ -252,37 +253,38 @@ MSAs_us <- MSAs_us %>%
 
 
 MSAs_us <- MSAs_us %>% 
-  mutate(official_language = B06007_002 + B06007_003 + B06007_007,
+  mutate(language = B06007_002 + B06007_004 + B06007_007,
          housing_need = B25070_007 + B25070_008 + B25070_009 + B25070_010 +
            B25091_008 + B25091_009 + B25091_010 + B25091_011,
          households = B25012_002 + B25011_026, 
-         low_income = 1 - C17002_008/C17002_001, 
+         low_income_pct_pop = 1 - C17002_008/C17002_001, 
          lone_parent = B11001_005 + B11001_006) %>% 
-  dplyr::select(-c("B06007_002", "B06007_003", "B06007_007", "B25070_007", "B25070_008", 
+  dplyr::select(-c("B06007_002", "B06007_004", "B06007_007", "B25070_007", "B25070_008", 
                    "B25070_009", "B25070_010", "B25091_008", "B25091_009", "B25091_010",
                    "B25091_011", "C17002_008", "C17002_001", "B11001_005", "B11001_006"))
 
 names(MSAs_us) <- 
   c("CMA_UID", "CMA_name", "State", "Type", "white", "population", "non_citizen", "non_mover",
     "families", "university_education", "med_income", "rental", "owner_occupied",
-    "official_language",  "housing_need", "households", "low_income", "lone_parent")
+    "language",  "housing_need", "households", "low_income_pct_pop", "lone_parent")
 
 MSAs_us <- MSAs_us %>% 
   mutate(citizen = population - non_citizen) %>% 
   dplyr::select(c("CMA_UID", "CMA_name", "State", "population", "households", "med_income",
            "university_education", "housing_need", "non_mover", "owner_occupied", 
-           "rental", "official_language", "citizen", "white", "low_income", "lone_parent",
+           "rental", "language", "citizen", "white", "low_income_pct_pop", "lone_parent",
            "families"))
 
 MSAs_us <- MSAs_us%>% 
   mutate_at(
     .vars = c("university_education", "non_mover", 
-              "official_language", "citizen", "white"),
+              "language", "citizen", "white"),
     .funs = list(`pct_pop` = ~{. / population})) %>% 
   mutate_at(
     .vars = c("housing_need", "owner_occupied", "rental"),
     .funs = list(`pct_household` = ~{. / households})) %>% 
-  mutate(lone_parent_pct_families = lone_parent/families) 
+  mutate(lone_parent_pct_families = lone_parent/families,
+         low_income = low_income_pct_pop *population) 
 
 MSAs_us <- core_based_statistical_areas(cb = TRUE, class = "sf", refresh = TRUE) %>% 
   st_transform(26918) %>% 
@@ -309,7 +311,7 @@ CTs_us <- rbind(
                                                "B25012_002", 
                                                "B25011_026",
                                                "B06007_002", 
-                                               "B06007_003",
+                                               "B06007_004",
                                                "B06007_007",
                                                "B05001_006", 
                                                "B01001H_001",
@@ -343,20 +345,20 @@ CTs_us <- CTs_us %>%
 
 # Tidy the variables
 CTs_us <- CTs_us %>% 
-  mutate(official_language = B06007_002 + B06007_003 + B06007_007,
+  mutate(language = B06007_002 + B06007_004 + B06007_007,
          housing_need = B25070_007 + B25070_008 + B25070_009 + B25070_010 +
            B25091_008 + B25091_009 + B25091_010 + B25091_011,
          households = B25012_002 + B25011_026,
-         low_income = 1 - C17002_008/C17002_001, 
+         low_income_pct_pop = 1 - C17002_008/C17002_001, 
          lone_parent = B11001_005 + B11001_006) %>% 
-  dplyr::select(-c("B06007_002", "B06007_003", "B06007_007", "B25070_007", "B25070_008", 
+  dplyr::select(-c("B06007_002", "B06007_004", "B06007_007", "B25070_007", "B25070_008", 
                    "B25070_009", "B25070_010", "B25091_008", "B25091_009", "B25091_010",
                    "B25091_011", "C17002_008", "C17002_001", "B11001_005", "B11001_006"))
 
 names(CTs_us) <- 
   c("Geo_UID", "County_name", "white", "population", "non_citizen", "non_mover",
     "families", "university_education", "med_income", "rental", "owner_occupied", 
-    "ST_UID", "CT_UID", "official_language", "housing_need", "households", "low_income",
+    "ST_UID", "CT_UID", "language", "housing_need", "households", "low_income_pct_pop",
     "lone_parent", "geometry")
 
 
@@ -364,20 +366,20 @@ CTs_us <- CTs_us %>%
   mutate(citizen = population - non_citizen) %>% 
   dplyr::select(c("Geo_UID", "ST_UID", "CT_UID", "County_name", "population", "households", "med_income",
            "university_education", "housing_need", "non_mover", "owner_occupied", 
-           "rental", "official_language", "citizen", "white", "low_income",
+           "rental", "language", "citizen", "white", "low_income_pct_pop",
             "lone_parent", "families", "geometry"))
-
 
 CTs_us <- CTs_us%>% 
   mutate_at(
     .vars = c("university_education", "non_mover", 
-              "official_language", "citizen", "white"),
+              "language", "citizen", "white"),
     .funs = list(`pct_pop` = ~{. / population})) %>% 
   mutate_at(
     .vars = c("housing_need", "owner_occupied", "rental"),
     .funs = list(`pct_household` = ~{. / households})) %>% 
   mutate(
-    lone_parent_pct_families = lone_parent/families)
+    lone_parent_pct_families = lone_parent/families, 
+    low_income = low_income_pct_pop * population)
 
 CTs_us <- CTs_us %>% 
   st_join(MSAs_us, left = FALSE, suffix = c("",".y")) %>% 
@@ -393,8 +395,10 @@ for (n in c(1:nrow(MSAs_us))) {
     mutate_at(
       .vars = c("population", "households", "med_income",
                 "university_education", "housing_need", "non_mover", "owner_occupied", 
-                "rental", "official_language", "citizen", "white", "low_income", 
-                "lone_parent"),
+                "rental", "language", "citizen", "white", "low_income", "lone_parent", 
+                "university_education_pct_pop", "housing_need_pct_household", "non_mover_pct_pop", 
+                "owner_occupied_pct_household", "rental_pct_household", "language_pct_pop", 
+                "citizen_pct_pop", "white_pct_pop", "low_income_pct_pop", "lone_parent_pct_families"),
       .funs = list(`z` = ~{(.- mean(., na.rm = TRUE))/sd(., na.rm = TRUE)})) 
   
   datalist[[n]] <- CTs_us_temp
@@ -405,5 +409,6 @@ CTs_us = do.call(rbind, datalist)
 rm(CTs_us_temp, datalist)
 
 CTs_us$geometry <- st_cast(CTs_us$geometry, "MULTIPOLYGON")
+
 
 
