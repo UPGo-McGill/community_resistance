@@ -12,6 +12,7 @@ media <-
           import_lexisnexis(.x)) %>% 
       dplyr::select(1:9) %>% 
       group_by(Author) %>% 
+      filter(as.numeric(Word_Count) > 100) %>% 
       distinct(Headline, .keep_all = TRUE) %>% 
       ungroup()
     

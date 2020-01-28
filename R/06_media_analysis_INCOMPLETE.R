@@ -2,7 +2,45 @@
 
 source("R/01_helper_functions.R")
 
-############################### 1 - NAMED ENTITY RECOGNITION AND GEOCODING ################################################################## 
+
+############################################ 1 - SENTIMENT ANALYSIS ##############################################################
+
+# Create dictionary using the QDAP dictionary as a starting point
+
+dictionary <- c(SentimentDictionaryBinary(qdapDictionaries::positive.words,
+                                          qdapDictionaries::negative.words))
+
+machine_learning_synonyms = c("protest", "anti", "affordability", "mobilize", "mobilise",
+                              "mobilization", "mobilisation", "oppose",  "resist", 
+                              "opposition", "gentrification", "threaten", "rent", 
+                              "expensive", "unaffordable", "eviction", "landlord",
+                              "threat", "manifestation", "complaint", "disapprove",
+                              "evict", "overtourism", "detriment", "ghost", "nuisance",
+                              "consultation", "opponent",  "discrimination", "critic", 
+                              "crisis", "shortage", "blame", "garbage", "noise", "complain", 
+                              "concern", "coalition", "hostile", "hostility", "fairbnb", 
+                              "activist", "activism", "displace", "illegal", "housing",
+                              "market", "multiple", "listings", "disturbance", "damage", 
+                              "threat", "residence", "hotel", "gap", "investment", "poor", 
+                              "need", "rent hike", "community led", "housing stock", "nuisance",
+                              "garbage", "noise", "party", "disrespect", "lockbox", "regulation",
+                              "unregulate", "scarce", "fines", "fined", "shut")
+
+dictionary[["negativeWords"]] = c(dictionary[["negativeWords"]], machine_learning_synonyms)
+
+# Assign a score to each article
+
+media <- map(seq_along(media), ~{
+  
+  media[[.x]] %>% 
+    mutate(
+      sentiment = (str_count(lemmatized_articles[[.x]]$lemmas, paste(dictionary[["positiveWords"]], collapse = '|'))*1 +
+                     str_count(lemmatized_articles[[.x]]$lemmas, paste(dictionary[["negativeWords"]], collapse = '|'))*-1) /
+        as.numeric(media[[.x]]$Word_Count))
+})
+
+
+############################### 2 - NAMED ENTITY RECOGNITION AND GEOCODING ################################################################## 
 
 ner <- 
   map(seq_along(cityname), ~{
@@ -75,12 +113,11 @@ ner_locations <- map(seq_along(cityname), ~{
     filter(!is.na(neighbourhood))
     })
 
-for (n in seq_along(cityname)){
+for (n in seq_along(cityname)) {
 
 ner_locations[[n]]$doc_id <- as.numeric(gsub("text", "",ner_locations[[n]]$doc_id)) }
 
 
-############################################ 2 - SENTIMENT ANALYSIS ##############################################################
 
-# ANALYSIS
+
 # ADD TO THE NEIGHBOURHOODS LIST INSTEAD OF CREATING A NEW DATAFRAME
