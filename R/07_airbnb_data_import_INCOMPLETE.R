@@ -2,20 +2,24 @@
 
 source("R/01_helper_functions.R")
 
+# ADD EXCHANGE RATES IF CANADIAN
+# ADD PRINCIPAL RESIDENCE FUNCTION
+
 # Set up date range
-start_date <- "2018-05-01"
-end_date <- "2019-04-30"
+start_date <- "2019-01-01"
+end_date <- "2019-12-31"
 
-# Set up database connection. This requires a VPN.
-con <- RPostgres::dbConnect(RPostgres::Postgres(), dbname = "airdna")
-
-property_db <- tbl(con, "property")
-daily_db <- tbl(con, "daily")
+# Set up database connection.
+upgo_connect()
 
 # Import property and daily files from the database
 property <-
-  property_db %>%
-  filter(city == cityname, created <= end_date,
+  property_all %>%
+  filter(city == "Charlottetown") %>% 
+  collect()
+
+
+  filter(city == paste(cityname, sep = "|") , created <= end_date,
         scraped >= start_date) %>%
  collect()
 
@@ -119,6 +123,3 @@ property <-
 
 rm(GH_list)
 
-# Save files
-save(property, file = ".Rdata")
-save(daily, file = ".Rdata")
