@@ -10,7 +10,7 @@ map(neighbourhoods, ~{
     .x,
     group_vars = vars(neighbourhood),
     population = population,
-    sum_vars = vars(households, university_education, housing_need, non_mover, owner_occupied,
+    count_vars = vars(households, university_education, housing_need, non_mover, owner_occupied,
                     rental, language, citizen, white, low_income, lone_parent, families),
     mean_vars = vars(med_income, population_z, households_z, med_income_z, university_education_z,
                      housing_need_z, non_mover_z, owner_occupied_z, rental_z, language_z,
