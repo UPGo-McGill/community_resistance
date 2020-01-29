@@ -131,8 +131,8 @@ for (n in seq_along(cityname)) {
                           group_by(neighbourhood) %>% 
                           tally(), by = c("Group.1" = "neighbourhood")), by = c("neighbourhood" = "Group.1")) %>% 
     mutate(sentiment = x,
-           count = n, 
-           CRI = -1*sentiment*count) %>% 
+           media_count = n, 
+           CRI = -1*sentiment*media_count) %>% 
     dplyr::select(-c("x", "n"))
   
   rm(temp)
