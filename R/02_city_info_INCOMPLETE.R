@@ -3,7 +3,7 @@
 source("R/01_helper_functions.R")
 
 # LIST OF CITY NAMES
-# cityname <- c("")
+cityname <- c("montreal", "toronto")
 
 # LIST CONTAINING ALL NEIGHBOURHOODS
 
@@ -26,7 +26,7 @@ CTs <- CTs_us
 
 # Upload required geometries. Ensure that there is a field titled neighbourhood in the geometries file
 # US - PUMAS
-neighbourhoods <- list("miami" = pumas("FL", class = "sf") %>% 
+neighbourhoods <- list("miami_a" = pumas("FL", class = "sf") %>% 
   st_transform(102009) %>%
   mutate(neighbourhood = NAMELSAD10) %>% 
   dplyr::select(-GEOID10, -NAMELSAD10, -STATEFP10, -MTFCC10, -FUNCSTAT10, -ALAND10,

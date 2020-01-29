@@ -96,14 +96,7 @@ ner_locations <- map(seq_along(cityname), ~{
   inner_join(ner[[.x]], locations)
 })
 
-
 # Perform a spatial join to determine what locations fall into which neighbourhoods
-ner_locations <- ner_locations %>%
-  st_as_sf() %>% 
-  st_transform(102009) %>% 
-  st_join(neighbourhoods, join = st_intersects) %>% 
-  filter(!is.na(neighbourhood))
-
 
 ner_locations <- map(seq_along(cityname), ~{
   ner_locations[[.x]] %>%
@@ -118,6 +111,33 @@ for (n in seq_along(cityname)) {
 ner_locations[[n]]$doc_id <- as.numeric(gsub("text", "",ner_locations[[n]]$doc_id)) }
 
 
+############################################## 3 - NEIGHBOURHOOD SENTIMENT #################################################
+
+# Determine a community resistance index per neighbourhood
+  # Dependent on the number of mentions per neighbhourhood and the average sentiment of the articles
+
+for (n in seq_along(cityname)) {
+  
+  temp <- ner_locations[[n]] %>% 
+    left_join(media[[n]] %>% dplyr::select(c("ID", "sentiment")), by = c("doc_id" = "ID")) %>% 
+    dplyr::select(c("doc_id", "neighbourhood", "sentiment")) %>% 
+    st_drop_geometry() %>% 
+    distinct()
+  
+  neighbourhoods[[n]] <- 
+    neighbourhoods[[n]] %>% 
+    left_join(left_join(aggregate(temp$sentiment, list(temp$neighbourhood), mean),
+                        temp %>% 
+                          group_by(neighbourhood) %>% 
+                          tally(), by = c("Group.1" = "neighbourhood")), by = c("neighbourhood" = "Group.1")) %>% 
+    mutate(sentiment = x,
+           count = n, 
+           CRI = -1*sentiment*count) %>% 
+    dplyr::select(-c("x", "n"))
+  
+  rm(temp)
+  
+}
 
 
-# ADD TO THE NEIGHBOURHOODS LIST INSTEAD OF CREATING A NEW DATAFRAME
+
