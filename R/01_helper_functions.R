@@ -38,10 +38,13 @@ library(tibble)
 library(devtools)
 devtools::install_github("UPGo-McGill/strr")
 library(strr)
+devtools::install_github("UPGo-McGill/upgo")
+library(upgo)
 library(tidyr)
 library(SentimentAnalysis)
 library(glmnet)
 library(SnowballC)
+library(lubridate)
 # Note: spaCy requires the user to download a version of miniconda and follow a set of instructions to set up
 
 # Run Canadian census API key
