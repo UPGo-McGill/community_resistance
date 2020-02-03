@@ -3,8 +3,8 @@
 source("R/01_helper_functions.R")
 
 # Set up date range
-start_date <- "2019-01-01"
-end_date <- "2019-12-31"
+start_date <- as.Date("2019-01-01")
+end_date <- as.Date("2019-12-31")
 
 # Set up database connection
 upgo_connect()
@@ -13,8 +13,7 @@ upgo_connect()
 property <- 
   map(cityname, ~{
   property_all %>% 
-      filter(city == .x, created <= end_date,
-             scraped >= start_date) %>% 
+      filter(city == .x) %>% 
       collect() %>% 
       filter(!is.na(listing_type)) %>% 
       dplyr::select(property_ID:longitude, ab_property:ha_host, bedrooms) %>% 
@@ -56,7 +55,6 @@ property <-
   })
 
 # Add last twelve months revenue
-
 property <-
   map(seq_along(property), ~{
     daily[[.x]] %>% 
@@ -77,7 +75,6 @@ LTM_property <-
 
 
 # Process multilistings
-
 EH_ML <- 
   map(ML_daily, ~{
     .x %>% 
@@ -120,7 +117,6 @@ daily <-
 rm(EH_ML, PR_ML)
 
 # Calculate FREH and GH listings
-
 FREH <- 
   map(daily, ~{
     .x %>% 
@@ -136,11 +132,11 @@ GH <- map(property, ~{
 
 # Calculate principal residence fields
   # WAITING FOR FUNCTION TO BE COMPLETE
-property_subset <- 
-  map(seq_along(property_subset), ~{
+property <- 
+  map(seq_along(property), ~{
     property[[.x]] %>% 
       strr_principal_res(daily[[.x]], FREH[[.x]], GH[[.x]], 
-                               start_date, end_date)
+                               start_date = start_date, end_date = end_date)
   })
 
 
