@@ -26,20 +26,20 @@ CTs <- CTs_us
 
 # Upload required geometries. Ensure that there is a field titled neighbourhood in the geometries file
 # US - PUMAS
-neighbourhoods <- list("miami_a" = pumas("FL", class = "sf") %>% 
+neighbourhoods <- list("scottsdale" = pumas("AZ", class = "sf") %>% 
   st_transform(102009) %>%
   mutate(neighbourhood = NAMELSAD10) %>% 
   dplyr::select(-GEOID10, -NAMELSAD10, -STATEFP10, -MTFCC10, -FUNCSTAT10, -ALAND10,
          -AWATER10, -INTPTLAT10, -INTPTLON10) %>% 
   dplyr::select(CODE_ID = PUMACE10, neighbourhood, geometry)%>%
-  filter(str_detect(neighbourhood, "Miami-")), 
-  "miami_b" = pumas("FL", class = "sf") %>% 
+  filter(str_detect(neighbourhood, "Scottsdale")), 
+  "reno" = pumas("FL", class = "sf") %>% 
     st_transform(102009) %>%
     mutate(neighbourhood = NAMELSAD10) %>% 
     dplyr::select(-GEOID10, -NAMELSAD10, -STATEFP10, -MTFCC10, -FUNCSTAT10, -ALAND10,
                   -AWATER10, -INTPTLAT10, -INTPTLON10) %>% 
     dplyr::select(CODE_ID = PUMACE10, neighbourhood, geometry)%>%
-    filter(str_detect(neighbourhood, "Miami-")))
+    filter(str_detect(neighbourhood, "Orlando")))
 
 # Otherwise import from downloaded shapefiles
 neighbourhoods <-
