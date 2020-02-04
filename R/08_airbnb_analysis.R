@@ -2,8 +2,6 @@
 
 source("R/01_helper_functions.R")
 
-end_date <- as.Date("2019-06-15")
-
 # active_listings on end date
 neighbourhoods <- map(seq_along(neighbourhoods), ~{
   property[[.x]] %>% 
@@ -92,7 +90,7 @@ neighbourhoods <- map(seq_along(neighbourhoods), ~{
 
 
 # FREH status on the end date, but taken as a percentage in terms of active listings
-  # over the past year since the calculation invovles the past year as a time frame
+  # over the past year since the calculation involves the past year as a time frame
 neighbourhoods <- map(seq_along(neighbourhoods), ~{ 
   property[[.x]] %>% 
   dplyr::select(c("property_ID", "neighbourhood")) %>% 
