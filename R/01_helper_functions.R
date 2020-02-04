@@ -386,25 +386,3 @@ bivariate_mapping <- function(data, cityname, var1, var2, quantiles_var1 = NULL,
     draw_plot(map, 0, 0, 1, 1) +
     draw_plot(legend, 0.05, 0.075, 0.2, 0.2)
 }
-
-# Connect to UPGo server
-upgo_connect <- function(property = TRUE, daily = TRUE, daily_inactive = FALSE,
-                         host = TRUE, host_inactive = FALSE, reviews = FALSE) {
-  
-  con <- property_all <- daily_all <- daily_inactive_all <- host_all <-
-    host_inactive_all <- reviews_all <- NULL
-  
-  con <<- RPostgres::dbConnect(
-    RPostgres::Postgres(),
-    host = "025wpgs.campus.mcgill.ca",
-    dbname = "airdna",
-    check_interrupts = TRUE)
-  
-  if (property) property_all <<- dplyr::tbl(con, "property")
-  if (daily) daily_all <<- dplyr::tbl(con, "daily")
-  if (daily_inactive) daily_inactive_all <<- dplyr::tbl(con, "daily_inactive")
-  if (host) host_all <<- dplyr::tbl(con, "host")
-  if (host_inactive) host_inactive_all <<- dplyr::tbl(con, "host_inactive")
-  if (reviews) reviews_all <<- dplyr::tbl(con, "reviews")
-  
-}
