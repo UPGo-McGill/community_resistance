@@ -15,12 +15,20 @@ neighbourhoods <- map(seq_along(neighbourhoods), ~{
 neighbourhoods_table <- rbindlist(neighbourhoods) 
 
 # Add country field
- 
+ # update us_boundary
 neighbourhoods_table <- 
   st_join(neighbourhoods_table %>% 
             st_as_sf() %>% 
-            st_transform(102009), us_boundary %>% dplyr::select(NAME), 
+            st_transform(102009), nation() %>% 
+                                  st_as_sf() %>% 
+                                  st_transform(102009) %>% 
+                                  dplyr::select(NAME), 
          left = TRUE) %>% 
   mutate(country = ifelse(is.na(NAME), "Canada", "United States")) %>% 
   dplyr::select(-NAME)
  
+?tigris
+
+?nation
+
+nation()
