@@ -80,6 +80,7 @@ ner_compressed <-
 ner_compressed$entity <- ner_compressed$entity %>% 
   gsub("[[:punct:]]", " ", .)
 
+# How many do we already have? Subtract. 
 locations <- mutate_geocode(ner_compressed, entity)
 
 # Save the locations so that this does not need to be rerun
