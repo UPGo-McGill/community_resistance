@@ -27,8 +27,3 @@ neighbourhoods_table <-
   mutate(country = ifelse(is.na(NAME), "Canada", "United States")) %>% 
   dplyr::select(-NAME)
  
-?tigris
-
-?nation
-
-nation()
