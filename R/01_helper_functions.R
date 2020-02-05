@@ -115,10 +115,8 @@ path = paste("data", paste("media", cityname, sep = "_"), sep = "/")
 files <- list.files(path = paste(path, "LN", sep = "/"))
 
 media_LN <- map_dfr(files, ~{
-  rbind(lnt_read(paste(path, "LN", .x, sep = "/"))@meta %>% 
-          right_join(lnt_read(paste(path, "LN", .x, sep = "/"))@articles, by = "ID"), 
-        lnt_read(paste(path, "LN", .x, sep = "/"))@meta %>% 
-          right_join(lnt_read(paste(path, "LN", .x, sep = "/"))@articles, by = "ID")) %>% 
+  lnt_read(paste(path, "LN", .x, sep = "/"))@meta %>% 
+          right_join(lnt_read(paste(path, "LN", .x, sep = "/"))@articles, by = "ID") %>% 
     dplyr::select(-c("Source_File", "Graphic", "ID"))
 })
 
