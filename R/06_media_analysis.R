@@ -43,9 +43,9 @@ media <- map(seq_along(media), ~{
 ############################### 2 - NAMED ENTITY RECOGNITION AND GEOCODING ################################################################## 
 
 ner <- 
-  map(seq_along(cityname), ~{
+  map(media, ~{
     rbind(
-      spacy_parse(media[[.x]]$Article) %>% 
+      spacy_parse(.x$Article) %>% 
         entity_extract(type = "named", concatenator = " ") %>% 
         filter(entity_type == "GPE" |
                  entity_type == "FAC" |
@@ -55,7 +55,7 @@ ner <-
         filter(entity != cityname[.x]) %>% 
         filter(nchar(entity) > 2) %>% 
         dplyr::select(doc_id, entity),
-      spacy_parse(media[[.x]]$Headline) %>% 
+      spacy_parse(.x$Headline) %>% 
         entity_extract(type = "named", concatenator = " ") %>% 
         filter(entity_type == "GPE" |
                  entity_type == "FAC" |
@@ -70,18 +70,28 @@ ner <-
 
 # Collapse the named entity recognition to reduce processing times and number of api queries
 ner_compressed <- 
-  map_df(seq_along(cityname), ~{
-    ner[[.x]] %>% 
+  map_df(ner, ~{
+    .x %>% 
       dplyr::select(entity)
     }) %>% 
   distinct()
 
-# Query Google to geocode the locations for their latitude and longitude
 ner_compressed$entity <- ner_compressed$entity %>% 
   gsub("[[:punct:]]", " ", .)
 
-# How many do we already have? Subtract. 
-locations <- mutate_geocode(ner_compressed, entity)
+# Load locations that have already been queried.
+load("data/locations.Rdata")
+
+# Find only the locations that have yet to be queried.
+ner_compressed <- ner_compressed %>% 
+  anti_join(locations)
+
+# Query Google to geocode the locations for their latitude and longitude
+locations_new <- mutate_geocode(ner_compressed, entity)
+
+# Join with the existing locations
+locations <- locations_new %>% 
+  rbind(locations)
 
 # Save the locations so that this does not need to be rerun
 save(locations, file = "locations.Rdata")
