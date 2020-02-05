@@ -438,10 +438,10 @@ strr_principal_residence <-
              LFRML = if_else(
                sum(LFRML) > 1 & prob != max(prob), FALSE, LFRML)) %>%
       ungroup() %>% 
-      select(property_ID, LFRML2 = LFRML) %>% 
+      dplyr::select(property_ID, LFRML2 = LFRML) %>% 
       left_join(pr_table, ., by = "property_ID") %>% 
       mutate(LFRML = if_else(!is.na(LFRML2), LFRML2, LFRML)) %>% 
-      select(-LFRML2)
+      dplyr::select(-LFRML2)
     
     GH_list <-
       GH %>% 
@@ -475,7 +475,7 @@ strr_principal_residence <-
         LFRML == TRUE                  ~ TRUE,
         ML == TRUE                     ~ FALSE,
         TRUE                           ~ TRUE)) %>% 
-      select(property_ID, {{ field_name }})
+      dplyr::select(property_ID, {{ field_name }})
     
     left_join(property, pr_table, by = "property_ID")
     
