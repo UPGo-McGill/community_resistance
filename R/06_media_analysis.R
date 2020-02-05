@@ -103,8 +103,8 @@ locations <- locations %>%
   st_transform(102009)
 
 # Perform a join to associate each entity with each document id
-ner_locations <- map(seq_along(cityname), ~{
-  inner_join(ner[[.x]], locations)
+ner_locations <- map(ner), ~{
+  inner_join(.x, locations)
 })
 
 # Perform a spatial join to determine what locations fall into which neighbourhoods
