@@ -131,11 +131,11 @@ GH <- map(property, ~{
 })
 
 # Calculate principal residence fields
-property <- 
+property2 <- 
   map(seq_along(property), ~{
     property[[.x]] %>% 
       strr_principal_residence(daily[[.x]], FREH[[.x]], GH[[.x]], 
-                               start_date = start_date, end_date = end_date)
+                               start_date = end_date, end_date = end_date)
   })
 
 

@@ -156,4 +156,22 @@ neighbourhoods <- map(seq_along(neighbourhoods), ~{
 })
 
 
-# principal_res?
+# principal_res on the end date
+neighbourhoods <- map(seq_along(neighbourhoods), ~{
+  property[[.x]] %>% 
+    filter(principal_residence == TRUE) %>% 
+    group_by(neighbourhood) %>% 
+    count() %>% 
+    st_drop_geometry() %>% 
+    left_join(neighbourhoods[[.x]], .) %>% 
+    mutate(principal_res = n, 
+           principal_res_pct = principal_res/active_listings) %>% 
+    dplyr::select(-n)
+})
+
+  
+
+
+
+
+
