@@ -31,11 +31,11 @@ tidy_text <- map(media, ~{
 # Create media and lemmatized_articles list to allow for further text analysis
 
 media <- 
-  map(seq_along(cityname), ~{
-    rbind(tidy_text[[.x]][[1]])
+  map(tidy_text, ~{
+    rbind(.x[[1]])
   })
 
 lemmatized_articles <- 
-  map(seq_along(cityname), ~{
-    rbind(tidy_text[[.x]][[2]])
+  map(tidy_text, ~{
+    rbind(.x[[2]])
   })
