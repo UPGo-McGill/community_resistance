@@ -71,6 +71,16 @@ loadRdata <- function(fileName){
   get(ls()[ls() != "fileName"])
 }
 
+# PUMA import 
+import_puma <- function(state) {
+  pumas(state, class = "sf") %>% 
+    st_transform(102009) %>%
+    mutate(neighbourhood = NAMELSAD10) %>% 
+    dplyr::select(-GEOID10, -NAMELSAD10, -STATEFP10, -MTFCC10, -FUNCSTAT10, -ALAND10,
+                  -AWATER10, -INTPTLAT10, -INTPTLON10) %>% 
+    dplyr::select(CODE_ID = PUMACE10, neighbourhood, geometry)
+}
+
 # Factiva import function
 
 import_factiva <- function(cityname) {
