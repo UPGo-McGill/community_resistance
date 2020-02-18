@@ -30,13 +30,13 @@ dictionary[["negativeWords"]] = c(dictionary[["negativeWords"]], machine_learnin
 
 # Assign a score to each article
 
-media <- map(seq_along(media), ~{
+media <- map(media, ~{
   
-  media[[.x]] %>% 
+ .x %>% 
     mutate(
       sentiment = (str_count(lemmatized_articles[[.x]]$lemmas, paste(dictionary[["positiveWords"]], collapse = '|'))*1 +
                      str_count(lemmatized_articles[[.x]]$lemmas, paste(dictionary[["negativeWords"]], collapse = '|'))*-1) /
-        as.numeric(media[[.x]]$Word_Count))
+        as.numeric(.x$Word_Count))
 })
 
 
