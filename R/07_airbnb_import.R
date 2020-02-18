@@ -62,27 +62,24 @@ daily <-
     daily_all %>%
         filter(property_ID %in% !!.x$property_ID) %>%
         collect() %>% 
-      strr_expand() %>% 
-      filter(date >=created, date - 30 <= scraped, status != "U")
-  })
+      strr_expand() 
+    })
 
-ML_property <- 
+host <- 
   map(property, ~{
-    property_all %>% 
-      filter(host_ID %in% !! .x$host_ID) %>% 
-      collect()
-  })
-
-ML_daily <- 
-  map(ML_property, ~{
-    daily_all %>%
-      filter(property_ID %in% !!.x$property_ID) %>%
+    host_all %>% 
+      filter(host_ID %in% !!.x$host_ID) %>% 
       collect() %>% 
-      strr_expand() %>% 
-      filter(date >=created, date - 30 <= scraped, status != "U")
+      strr_expand()
   })
 
 upgo_disconnect()
+
+# Process multilistings
+daily <-
+  map(seq_along(daily), ~{
+    strr_multi(daily[[.x]], host[[.x]])
+  })
 
 # Run the raffle to assign a neighbourhood to each listing
 property <-
@@ -110,49 +107,6 @@ LTM_property <-
       filter(created <= end_date, scraped > (ymd(end_date) - lubridate::years(1)))
   })
 
-
-# Process multilistings
-EH_ML <- 
-  map(ML_daily, ~{
-    .x %>% 
-      filter(listing_type == "Entire home/apt") %>% 
-      group_by(listing_type, host_ID, date) %>% 
-      count() %>% 
-      ungroup() %>% 
-      filter(n >= 2) %>% 
-      mutate(ML = TRUE)
-  })
- 
-PR_ML <- 
-  map(ML_daily, ~{
-    .x %>% 
-      filter(listing_type == "Private room") %>% 
-      group_by(listing_type, host_ID, date) %>% 
-      count() %>% 
-      ungroup() %>% 
-      filter(n >= 3) %>% 
-      mutate(PR_ML = TRUE)
-  })
-
-daily <- 
-  map(seq_along(EH_ML), ~{
-    EH_ML[[.x]] %>% 
-      dplyr::select(-n) %>% 
-      left_join(daily[[.x]], .)
-  })
-
-daily <- 
-  map(seq_along(PR_ML), ~{
-    PR_ML[[.x]] %>% 
-      dplyr::select(-n) %>% 
-      left_join(daily[[.x]], .) %>% 
-      mutate(ML = if_else(is.na(ML), PR_ML, ML)) %>% 
-      mutate(ML = if_else(is.na(ML), FALSE, ML)) %>% 
-      dplyr::select(-PR_ML)
-  })
-
-rm(EH_ML, PR_ML)
-
 # Calculate FREH and GH listings
 FREH <- 
   map(daily, ~{
@@ -174,5 +128,7 @@ property <-
       strr_principal_residence(daily[[.x]], FREH[[.x]], GH[[.x]], 
                                start_date = end_date, end_date = end_date)
   })
+
+
 
 

@@ -111,7 +111,7 @@ neighbourhoods <- map(seq_along(neighbourhoods), ~{
 neighbourhoods <- map(seq_along(neighbourhoods), ~{ 
     daily[[.x]] %>% 
   filter(date == end_date) %>% 
-  filter(ML == TRUE) %>% 
+  filter(multi == TRUE) %>% 
   left_join(property[[.x]] %>% 
               dplyr::select(c("property_ID", "neighbourhood"))) %>% 
   group_by(neighbourhood) %>% 

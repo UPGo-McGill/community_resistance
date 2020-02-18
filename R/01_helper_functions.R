@@ -45,9 +45,9 @@ library(SentimentAnalysis)
 library(glmnet)
 library(SnowballC)
 library(lubridate)
-# library(future)
+library(future)
 # plan(upgo)
-# plan(multiprocess)
+plan(multiprocess)
 
 # Note: spaCy requires the user to download a version of miniconda and follow a set of instructions to set up
 
