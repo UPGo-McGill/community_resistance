@@ -30,13 +30,13 @@ dictionary[["negativeWords"]] = c(dictionary[["negativeWords"]], machine_learnin
 
 # Assign a score to each article
 
-media <- map(media, ~{
+media <- map(seq_along(media), ~{
   
- .x %>% 
+ media[[.x]] %>% 
     mutate(
       sentiment = (str_count(lemmatized_articles[[.x]]$lemmas, paste(dictionary[["positiveWords"]], collapse = '|'))*1 +
                      str_count(lemmatized_articles[[.x]]$lemmas, paste(dictionary[["negativeWords"]], collapse = '|'))*-1) /
-        as.numeric(.x$Word_Count))
+        as.numeric(media[[.x]]$Word_Count))
 })
 
 
@@ -103,7 +103,7 @@ locations <- locations %>%
   st_transform(102009)
 
 # Perform a join to associate each entity with each document id
-ner_locations <- map(ner), ~{
+ner_locations <- map(ner, ~{
   inner_join(.x, locations)
 })
 
