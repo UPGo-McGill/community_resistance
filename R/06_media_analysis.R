@@ -43,9 +43,9 @@ media <- map(seq_along(media), ~{
 ############################### 2 - NAMED ENTITY RECOGNITION AND GEOCODING ################################################################## 
 
 ner <- 
-  map(media, ~{
+  map(seq_along(media), ~{
     rbind(
-      spacy_parse(.x$Article) %>% 
+      spacy_parse(media[[.x]]$Article) %>% 
         entity_extract(type = "named", concatenator = " ") %>% 
         filter(entity_type == "GPE" |
                  entity_type == "FAC" |
@@ -55,7 +55,7 @@ ner <-
         filter(entity != cityname[.x]) %>% 
         filter(nchar(entity) > 2) %>% 
         dplyr::select(doc_id, entity),
-      spacy_parse(.x$Headline) %>% 
+      spacy_parse(media[[.x]]$Headline) %>% 
         entity_extract(type = "named", concatenator = " ") %>% 
         filter(entity_type == "GPE" |
                  entity_type == "FAC" |
