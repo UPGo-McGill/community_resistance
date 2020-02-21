@@ -400,26 +400,30 @@ bivariate_mapping <- function(data, cityname, var1, var2, quantiles_var1 = NULL,
 }
 
 # Principal residence function
+
 strr_principal_residence <- 
   function(property, daily, FREH, GH, start_date, end_date, 
-           field_name = principal_residence) {
+           field_name = principal_residence, sensitivity = 0.1) {
     
     start_date <- as.Date(start_date, origin = "1970-01-01")
+    
     end_date <- as.Date(end_date, origin = "1970-01-01")
+    
+    sens_n <- 
+      round(sensitivity * as.integer((end_date - start_date + 1)))
     
     pr_table <- tibble(property_ID = property$property_ID,
                        listing_type = property$listing_type,
                        host_ID = property$host_ID,
                        housing = property$housing)
-    
     pr_ML <- 
       daily %>% 
       group_by(property_ID) %>% 
       summarize(ML = if_else(
-        sum(ML * (date >= start_date)) + sum(ML * (date <= end_date)) > 0, 
+        sum(multi * (date >= start_date)) + sum(multi * (date <= end_date)) >= sens_n, 
         TRUE, FALSE))
-    
-    pr_n <-
+   
+     pr_n <-
       daily %>%  
       filter(status %in% c("R", "A"), date >= start_date, date <= end_date) %>% 
       count(property_ID, status) %>% 
@@ -427,7 +431,7 @@ strr_principal_residence <-
       summarize(n_available = sum(n),
                 n_reserved = sum(n[status == "R"]))
     
-    pr_table <- 
+     pr_table <- 
       pr_table %>% 
       left_join(pr_ML, by = "property_ID") %>% 
       mutate(ML = if_else(is.na(ML), FALSE, ML)) %>% 
@@ -440,7 +444,7 @@ strr_principal_residence <-
         TRUE                              ~ FALSE)) %>% 
       ungroup()
     
-    pr_table <- 
+     pr_table <- 
       pr_table %>%
       filter(LFRML == TRUE) %>%
       group_by(host_ID) %>%
@@ -453,13 +457,18 @@ strr_principal_residence <-
       mutate(LFRML = if_else(!is.na(LFRML2), LFRML2, LFRML)) %>% 
       dplyr::select(-LFRML2)
     
-    GH_list <-
+     GH_list <-
       GH %>% 
       filter(date >= start_date, date <= end_date) %>% 
       pull(property_IDs) %>%
       unlist() %>%
+      tibble(property_ID = .) %>% 
+      group_by(property_ID) %>% 
+      filter(n() >= sens_n) %>% 
+      ungroup() %>% 
+      pull(property_ID) %>% 
       unique()
-    
+   
     pr_table <-
       pr_table %>% 
       mutate(GH = if_else(property_ID %in% GH_list, TRUE, FALSE))
@@ -468,12 +477,11 @@ strr_principal_residence <-
       FREH %>% 
       filter(date >= start_date, date <= end_date) %>% 
       group_by(property_ID) %>% 
-      summarize(FREH = TRUE) %>% 
+      summarize(FREH = if_else(n() >= sens_n, TRUE, FALSE)) %>% 
       left_join(pr_table, ., by = "property_ID") %>% 
       mutate(FREH = if_else(is.na(FREH), FALSE, FREH))
-    
-    # Add principal_res field
-    
+   
+     # Add principal_res field
     pr_table <- 
       pr_table %>% 
       mutate({{ field_name }} := case_when(
@@ -486,7 +494,6 @@ strr_principal_residence <-
         ML == TRUE                     ~ FALSE,
         TRUE                           ~ TRUE)) %>% 
       dplyr::select(property_ID, {{ field_name }})
-    
     left_join(property, pr_table, by = "property_ID")
-    
   }
+
