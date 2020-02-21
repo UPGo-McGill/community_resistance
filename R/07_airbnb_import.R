@@ -111,14 +111,14 @@ LTM_property <-
 FREH <- 
   map(daily, ~{
     .x %>% 
-      strr_FREH("2017-01-01", end_date) %>% 
+      strr_FREH("2015-01-01", end_date) %>% 
       filter(FREH == TRUE) %>% 
       dplyr::select(-FREH)
   })
 
 GH <- map(property, ~{
   .x %>% 
-    strr_ghost(start_date = "2017-01-01", end_date = end_date)
+    strr_ghost(start_date = "2015-01-01", end_date = end_date)
 })
 
 # Calculate principal residence fields
@@ -126,6 +126,6 @@ property <-
   map(seq_along(property), ~{
     property[[.x]] %>% 
       strr_principal_residence(daily[[.x]], FREH[[.x]], GH[[.x]], 
-                               start_date = end_date, end_date = end_date)
+                               start_date = end_date, end_date = end_date, 
+                               sensitivity = 0.5)
   })
-
