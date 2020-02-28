@@ -4,18 +4,16 @@ source("R/01_helper_functions.R")
 
 # Cast geometries as polygons and add city naem as a variable
 
-neighbourhoods <- map(seq_along(neighbourhoods), ~{
+neighbourhoods_cast <- map(seq_along(neighbourhoods), ~{
   neighbourhoods[[.x]] %>% 
-    st_cast("POLYGON") %>% 
+    st_cast("MULTIPOLYGON") %>% 
     mutate(city = cityname[[.x]])
 })
 
 # Create a datatable from the neighbourhood list
-
-neighbourhoods_table <- rbindlist(neighbourhoods) 
+neighbourhoods_table <- rbindlist(neighbourhoods_cast) 
 
 # Add country field
- # update us_boundary
 neighbourhoods_table <- 
   st_join(neighbourhoods_table %>% 
             st_as_sf() %>% 
