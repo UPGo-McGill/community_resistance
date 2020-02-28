@@ -4,13 +4,13 @@ source("R/01_helper_functions.R")
 
 # List of city names
   # These names correspond to folder titles
-cityname_canada <- c("Calgary", "Edmonton", "Gatineau", "Halifax", 
-                     "Hamilton", "Kitchener", "London", "Montreal", 
-                     "Oshawa", "Ottawa", "Quebec", "Regina", 
-                     "Saskatoon", "St. Catharines", "Toronto", 
-                     "Vancouver", "Victoria", "Windsor", "Winnipeg")
+# cityname_canada <- c("Calgary", "Edmonton", "Gatineau", "Halifax", 
+#                      "Hamilton", "Kitchener", "London", "Montreal", 
+#                      "Oshawa", "Ottawa", "Quebec", "Regina", 
+#                      "Saskatoon", "St. Catharines", "Toronto", 
+#                      "Vancouver", "Victoria", "Windsor", "Winnipeg")
 
-cityname_us <- c("Albuquerque", "Anaheim", "Anchorage", "Arlington", "Atlanta", 
+cityname  <- c("Albuquerque", "Anaheim", "Anchorage", "Arlington", "Atlanta", 
                  "Aurora", "Austin", "Bakersfield", "Baltimore",
                  "Baton Rouge", "Birmingham", "Boise", "Boston",
                  "Buffalo", "Cincinnati", "Chandler", "Charlotte", "Chesapeake",
@@ -34,10 +34,10 @@ cityname_us <- c("Albuquerque", "Anaheim", "Anchorage", "Arlington", "Atlanta",
                  "Tacoma", "Tampa", "Toledo", "Tucson", "Tulsa", "Virginia Beach", "Washington", 
                  "Wichita", "Winston Salem")
 
-cityname = c(cityname_canada, cityname_us)
+# cityname = c(cityname_canada, cityname_us)
 
 # Neighbourhood geometries
-neighbourhoods_us <- list("Albuquerque" = import_puma("NM") %>% 
+neighbourhoods  <- list("Albuquerque" = import_puma("NM") %>% 
                             filter(str_detect(neighbourhood, "Albuquerque")),
                           "Anaheim" = import_puma("CA") %>% 
                             filter(str_detect(neighbourhood, "Anaheim")), 
