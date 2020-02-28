@@ -177,7 +177,7 @@ airbnb <- c("airbnb", "homeshar", "home shar", "shortterm", "short term", "str "
             "shortstay", "short stay", "home stay", "homestay", "hotel", "home share", "airbnb host",
             "host", "home sharing", "homeshare", "homesharing", "timeshare", "letting", "shortterm rental",
             "longterm", "rental", "legislation", "short term rental", "hotelization", "legalization", 
-            "homeaway", "vrbo")
+            "homeaway", "vrbo", "rent", "market", "tenant", "home", "house", "apartment", "condo")
 
 lemmatized_articles <- lemmatized_articles %>% 
   mutate(mentions = 
