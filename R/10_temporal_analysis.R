@@ -5,6 +5,8 @@ source("R/01_helper_functions.R")
 # Get sentiment for each article (done previously in script 06_media_analysis.R)
   # and group by year to calculate average sentiment by city per year
 
+# Remove articles that do not have a neighbourhood associated with them.
+
 media <- 
   map(media, ~{
   .x %>% 
