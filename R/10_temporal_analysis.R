@@ -2,10 +2,18 @@
 
 source("R/01_helper_functions.R")
 
+# Remove articles that do not have a neighbourhood associated with them.
+media_compressed <- 
+  map(seq_along(media), ~{  
+    ner_locations[[.x]] %>% 
+      dplyr::select("doc_id") %>% 
+      st_drop_geometry() %>% 
+      distinct() %>% 
+      inner_join(media[[.x]], by = c("ID" = "doc_id"), .)
+  })
+
 # Get sentiment for each article (done previously in script 06_media_analysis.R)
   # and group by year to calculate average sentiment by city per year
-
-# Remove articles that do not have a neighbourhood associated with them.
 
 media <- 
   map(media, ~{
