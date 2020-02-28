@@ -182,7 +182,7 @@ airbnb <- c("airbnb", "homeshar", "home shar", "shortterm", "short term", "str "
 lemmatized_articles <- lemmatized_articles %>% 
   mutate(mentions = 
            str_count(lemmatized_articles$lemmas, paste(airbnb, collapse="|"))) %>% 
-  filter(mentions > 1) %>%
+  filter(mentions > 2) %>%
   dplyr::select(-c(mentions)) 
 
 
