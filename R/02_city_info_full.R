@@ -10,6 +10,7 @@ source("R/01_helper_functions.R")
 #                      "Saskatoon", "St. Catharines", "Toronto", 
 #                      "Vancouver", "Victoria", "Windsor", "Winnipeg")
 
+# note that there are two Glendales
 cityname  <- c("Albuquerque", "Anaheim", "Anchorage", "Arlington", "Atlanta", 
                  "Aurora", "Austin", "Bakersfield", "Baltimore",
                  "Baton Rouge", "Birmingham", "Boise", "Boston",
@@ -18,7 +19,7 @@ cityname  <- c("Albuquerque", "Anaheim", "Anchorage", "Arlington", "Atlanta",
                  "Columbus", "Corpus Christi",  "Dallas", "Denver", "Des Moines", 
                  "Detroit", "Durham", "El Paso", "Fayetteville", "Fontana", 
                  "Fort Wayne", "Fort Worth", "Fremont", "Fresno", "Garland", 
-                 "Gilbert", "Glendale AZ", "Glendale CA", "Grand Rapids", 
+                 "Gilbert", "Glendale", "Grand Rapids", 
                  "Greensboro", "Henderson", "Hialeah", "Honolulu", "Houston", 
                  "Huntington Beach", "Indianapolis", "Irvine", "Irving", "Jacksonville", 
                  "Jersey City", "Kansas City", "Laredo", "Las Vegas", "Lexington", 
