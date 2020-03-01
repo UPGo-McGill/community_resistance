@@ -11,9 +11,8 @@ source("R/01_helper_functions.R")
 # white people and less owner-occupied households on average than in Vancouver due to general city make=up. 
 # Shouldn't this be taken into account? I suppose, however, this would be accounted for in the spatial effects
 # so this could definitely be ana verage.
-# z scored with city-wide average - i think this is best as it allows for consistent relativity. CRI is 
-# currently being measured in relation to the city-wide media coverage. Therefore i think it makes 
-# logical sense that z scores be used to capture intra-city variations, especially as we will be 
+# z scored with city-wide average - i think this is best as it allows for consistent relativity. 
+# I think it makes logical sense that z scores be used to capture intra-city variations, especially as we will be 
 # accounting for inter-city differences when using city as either dummy or grouping variable.
 
 # Scaling
@@ -25,25 +24,27 @@ source("R/01_helper_functions.R")
 # this makes most sense?
 
 # Examine the probability density function
-ggplot(data = airbnb_neighbourhoods, aes((CRI))) +
+ggplot(data = neighbourhoods_table, aes((CRI))) +
   stat_function(fun = dnorm, n = 580, args = list(mean = 0, sd = 1)) + ylab("") +
   scale_y_continuous(breaks = NULL)
 
 # Explore the data
-airbnb_neighbourhoods %>% 
+neighbourhoods_table %>% 
   ggplot() +
-  geom_point(aes(x = CRI, y = housing_loss_pct)) 
+  geom_point(aes(x = CRI, y = housing_loss_pct_households)) 
 
 # Determine which probability density function best fits the data
 # Manipulate CRI such that it is scaled and there are no 0s.
-airbnb_neighbourhoods$CRI <- (airbnb_neighbourhoods$CRI/max(airbnb_neighbourhoods$CRI)) + 0.0000001
+neighbourhoods_table[is.na(neighbourhoods_table)] <- 0
+neighbourhoods_table$CRI <- ifelse(neighbourhoods_table$CRI < 0, 0.0000001, neighbourhoods_table$CRI)
+neighbourhoods_table$CRI <- (neighbourhoods_table$CRI/max(neighbourhoods_table$CRI)) + 0.0000001
 
 # Normal distribution
-qqp(airbnb_neighbourhoods$CRI, "norm")
+qqp(neighbourhoods_table$CRI, "norm")
   # not a good fit
 
 # Lognormal distribution
-qqp(airbnb_neighbourhoods$CRI, "lnorm")
+qqp(neighbourhoods_table$CRI, "lnorm")
   # not a good fit
 
 # Negative binomial distribution
@@ -53,27 +54,354 @@ qqp(airbnb_neighbourhoods$CRI, "lnorm")
   # only works for discrete values - does not apply
 
 # Gamma distribution
-gamma <- fitdistr(airbnb_neighbourhoods$CRI, "gamma")
-qqp(airbnb_neighbourhoods$CRI, "gamma", shape = gamma$estimate[[1]], rate = gamma$estimate[[2]])
+gamma <- fitdistr(neighbourhoods_table$CRI, "gamma", lower=0.00001)
+qqp(neighbourhoods_table$CRI, "gamma", shape = gamma$estimate[[1]], rate = gamma$estimate[[2]])
   # clearly the best fit but has trouble capturing the larger CRIs
 
 # NOTE: As the residuals are not normally distributed, we should not use linear modelling.
 
-############################################ LINEAR MODELLING #########################################
-linear_model <- airbnb_neighbourhoods %>% 
+#################################### GUASS-HERMITE QUADRATURE ####################################
+# GHQ is more accurate than laplace due to repeated iterations, but only works when there are
+  # maximum 2-3 random effect (true in this case)
+
+# Start with all variables
+ghq <- neighbourhoods_table %>% 
+  filter(active_listings > 0) %>% 
+  #filter(country == "United States") %>% 
+  glmer((CRI) ~
+            scale(active_listings) +
+            scale(EH_pct) +
+            scale(revenue_LTM_per_listing) + 
+            scale(GH_pct) +
+            scale(FREH_pct) +
+           scale(ML_pct) +
+           scale(PR_50_ct) +
+           scale(revenue_10pct) +
+           scale(active_listings_yoy) +
+           scale(housing_loss_pct_listings) + 
+           scale(population)+ 
+           scale(med_income_z)+ 
+           scale(low_income_z)+
+           scale(university_education_z)+
+           scale(housing_need_z) + 
+           scale(non_mover_z) + 
+           scale(owner_occupied_z) +
+           scale(white_z) +
+           scale(citizen_z) +
+           scale(lone_parent_z) +
+           scale(language_z)+
+          (1 | city), 
+        family = Gamma(link = "log"),
+        data = ., 
+        nAGQ = 100)
+
+ghq %>% 
+  summary()
+
+ghq %>% 
+  overdisp_fun()
+
+# the data is overdispersed
+  # more variability in the data than would be expected based on the model
+# in the case of overdispersion, model it as a random effect with one random effect for each 
+  # observation (ie. neighbourhood_name).
+# OVERDISPERSION IS IRRELEVANT FOR MODELS THAT ESTIMATE A SCALE PARAMETER.
+
+# Ultimately, GHQ is the model best suited for the data given its gamma distribution, 
+  # continuous nature of CRI, minimum random effects, and increased iterations. 
+
+# Examine the significance
+ghq_null <- neighbourhoods_table %>% 
+  filter(active_listings > 0) %>% 
+  glmer((CRI) ~
+         (1 | city), 
+        family = Gamma(link = "log"),
+        data = ., 
+        nAGQ = 100)
+
+anova(ghq, ghq_null)
+# fail to accept the null hypothesis
+
+# Test individual variables to see the affect on the r squared value
+ghq_null <- neighbourhoods_table %>% 
+  filter(active_listings > 0) %>% 
+  glmer((CRI) ~
+          scale(active_listings) +
+          scale(EH_pct) +
+          scale(revenue_LTM_per_listing) + 
+          scale(GH_pct) +
+          scale(FREH_pct) +
+          scale(ML_pct) +
+          scale(PR_50_ct) +
+          scale(revenue_10pct) +
+          scale(active_listings_yoy) +
+          scale(housing_loss_pct_listings) + 
+          scale(population)+ 
+          scale(med_income_z)+ 
+          scale(low_income_z)+
+          scale(university_education_z)+
+          scale(housing_need_z) + 
+          scale(non_mover_z) + 
+          scale(owner_occupied_z) +
+          scale(white_z) +
+          scale(citizen_z) +
+          scale(lone_parent_z) +
+          #scale(language_z)+
+          (1 | city), 
+        family = Gamma(link = "log"),
+        data = ., 
+        nAGQ = 100)
+
+# What variables lower the r squared when they are taken out?
+  # should remain in the model
+r.squaredGLMM(ghq_null)
+
+# The variables that worsened the model have been taken out. 
+  # However, active_listings, active_listings_yoy, and population
+  # were supposed to be taken out but I think should remain in?
+
+ghq <- neighbourhoods_table %>% 
+  filter(active_listings > 0) %>% 
+  glmer((CRI) ~
+          # scale(active_listings) +
+          scale(EH_pct) +
+          scale(ML_pct) +
+          scale(PR_50_ct) +
+          scale(revenue_10pct) +
+          # scale(active_listings_yoy) +
+          # scale(population) + 
+          scale(med_income_z)+ 
+          scale(university_education_z)+
+          scale(housing_need_z) + 
+          scale(non_mover_z) + 
+          scale(white_z) +
+          (1 | city), 
+        family = Gamma(link = "log"),
+        data = ., 
+        nAGQ = 100)
+
+r.squaredGLMM(ghq)
+
+# Now use ANOVA to compare the variables 
+ghq <- neighbourhoods_table %>% 
+  filter(active_listings > 0) %>% 
+  glmer((CRI) ~
+          scale(active_listings) +
+          scale(EH_pct) +
+          scale(revenue_LTM_per_listing) + 
+          scale(GH_pct) +
+          scale(FREH_pct) +
+          scale(ML_pct) +
+          scale(PR_50_ct) +
+          scale(revenue_10pct) +
+          scale(active_listings_yoy) +
+          scale(housing_loss_pct_listings) + 
+          scale(population)+ 
+          scale(med_income_z)+ 
+          scale(low_income_z)+
+          scale(university_education_z)+
+          scale(housing_need_z) + 
+          scale(non_mover_z) + 
+          scale(owner_occupied_z) +
+          scale(white_z) +
+          scale(citizen_z) +
+          scale(lone_parent_z) +
+          scale(language_z)+
+          (1 | city), 
+        family = Gamma(link = "log"),
+        data = ., 
+        nAGQ = 100)
+
+ghq_null <- neighbourhoods_table %>% 
+  filter(active_listings > 0) %>% 
+  glmer((CRI) ~
+          scale(active_listings) +
+          scale(EH_pct) +
+          scale(revenue_LTM_per_listing) + 
+          scale(GH_pct) +
+          scale(FREH_pct) +
+          scale(ML_pct) +
+          scale(PR_50_ct) +
+          scale(revenue_10pct) +
+          scale(active_listings_yoy) +
+          scale(housing_loss_pct_listings) + 
+          scale(population)+ 
+          scale(med_income_z)+ 
+          scale(low_income_z)+
+          scale(university_education_z)+
+          scale(housing_need_z) + 
+          scale(non_mover_z) + 
+          scale(owner_occupied_z) +
+          scale(white_z) +
+          scale(citizen_z) +
+          scale(lone_parent_z) +
+          #scale(language_z)+
+          (1 | city), 
+        family = Gamma(link = "log"),
+        data = ., 
+        nAGQ = 100)
+
+anova(ghq, ghq_null)
+
+# Updated model that takes out the variables that worsened the model
+ghq <- neighbourhoods_table %>% 
+  filter(active_listings > 0) %>% 
+  glmer((CRI) ~
+          scale(active_listings) +
+          scale(EH_pct) +
+          scale(GH_pct) +
+          scale(PR_50_ct) +
+          scale(population)+ 
+          scale(housing_need_z) + 
+          scale(non_mover_z) + 
+          scale(white_z) +
+          scale(citizen_z) +
+          scale(lone_parent_z) +
+          (1 | city), 
+        family = Gamma(link = "log"),
+        data = ., 
+        nAGQ = 100)
+ghq %>% 
+  summary()
+
+# note: PR_50 likely overlaps with ML_pct, revenue_10pct, and housing_loss variables
+# either include the PR comprehensive variable, or FREH/GH/ML/housing_loss
+ghq <- neighbourhoods_table %>% 
+  filter(active_listings > 0) %>% 
+  glmer((CRI) ~
+          scale(active_listings) +
+          scale(EH_pct) +
+          scale(PR_50_ct) +
+          scale(active_listings_yoy)+
+          scale(population)+ 
+          scale(housing_need_z) + 
+          scale(non_mover_z) + 
+          scale(white_z) +
+          scale(citizen_z) +
+          scale(lone_parent_z) +
+          (1 | city), 
+        family = Gamma(link = "log"),
+        data = ., 
+        nAGQ = 100)
+ghq %>% 
+  summary()
+
+r.squaredGLMM(ghq)
+
+ghq <- neighbourhoods_table %>% 
+  filter(active_listings > 0) %>% 
+  #filter(country == "United States") %>% 
+  glmer((CRI) ~
+         #scale(population) +
+          scale(active_listings) +
+          scale(housing_loss_pct_listings) +
+          #scale(EH_pct) +
+          scale(active_listings_yoy) +
+          scale(housing_need_z) + 
+          scale(non_mover_z) + 
+          scale(white_z) +
+          scale(citizen_z) +
+          scale(lone_parent_z) +
+          (1 | city), 
+        family = Gamma(link = "log"),
+        data = ., 
+        nAGQ = 100)
+
+ghq %>% 
+  summary()
+
+r.squaredGLMM(ghq)
+
+# Interaction between variables -- UNSURE ABOUT THIS
+ghq_interaction <- neighbourhoods_table %>% 
+  filter(active_listings > 0) %>% 
+  glmer((CRI) ~
+          scale(revenue_LTM_per_listing) + 
+          scale(ML_pct) +
+          scale(PR_50_ct) +
+          scale(housing_loss_pct_households) +  
+          scale(revenue_10pct) +
+          scale(active_listings_yoy) +
+          scale(university_education_pct_pop_z)+
+          scale(housing_need_pct_household_z) + 
+          (1 | city), 
+        family = Gamma(link = "log"),
+        data = ., 
+        nAGQ = 100)
+
+ghq_interaction %>% 
+  summary()
+
+anova(ghq_interaction, ghq)
+
+# ML_pct and PR_50_ct
+  # significant interaction
+  # increased AIC -- worsens the model
+
+# Playing around with more interactions seems to either
+  # worsen the model or cause it not to converge.
+
+# CALCULATING R SQUARED
+  # R2m referes to the marginal variance explained by fixed effects
+  # R2c refers to the conditional variance explained by the entire model
+  # delta works for all models - the only one that allows for comparison across model types
+      # first order Taylor series expansion 
+      # most flexible as it works for all kinds of distributions and link functions 
+  # lognormal is limited to distributions with logarithmic link (such as this case)
+  # trigamma is limited to distributions with logarithmic link (such as this case)
+      # most accurate estimate of the observation level variance
+
+r.squaredGLMM(ghq)
+
+# Reported values using delta estimation - the only one that allows for direct comparison
+  # ghq has the highest r squared 
+
+# Evidently ghq_interaction is the best model, both theoretically and statistically.
+  # Though a high R squred of 0.734, must report the lognormal and trigamma results as well
+
+# Explore the model
+plot(fitted(ghq), residuals(ghq), xlab = "Fitted Values", ylab = "Residuals")
+abline(h = 0, lty = 2)
+lines(smooth.spline(fitted(ghq), residuals(ghq)))
+
+# Residual plot using the ghq model
+neighbourhoods_table_error <- neighbourhoods_table %>% 
+  filter(active_listings>0) %>% 
+  mutate(error = resid(ghq_interaction), 
+         variance = error^2, 
+         predicted = CRI - error)
+
+ggplot(neighbourhoods_table_error , aes(x = CRI, y = error)) +
+  geom_point() 
+
+# Plot error 
+neighbourhoods_table_error %>% 
+  filter(city == "Toronto") %>% 
+  dplyr::select(c("geometry", "error")) %>% 
+  st_as_sf() %>% 
+  mapview()
+
+
+
+
+
+######################################### ARCHIVE/ROUGH WORK ################################################
+
+########################################### 1 - LINEAR MODELLING #########################################
+linear_model <- neighbourhoods_table %>% 
   filter(active_listings > 0) %>% 
   lm(scale(CRI) ~ 
-      scale(active_listings) + 
-      scale(revenue) + 
-      scale(housing_loss_pct) + 
-      scale(med_income_z)+ 
-      log(population)+ 
-      scale(housing_need_z) + 
-      scale(white_z) +  
-      scale(official_language_z) + 
-      scale(university_education_z) + 
-      scale(non_mover_z) + 
-      scale(owner_occupied_z) +
+       scale(active_listings) + 
+       scale(revenue_LTM) + 
+       scale(housing_loss_pct) + 
+       scale(med_income_z)+ 
+       log(population)+ 
+       scale(housing_need_z) + 
+       scale(white_z) +  
+       scale(official_language_z) + 
+       scale(university_education_z) + 
+       scale(non_mover_z) + 
+       scale(owner_occupied_z) +
        toronto + 
        vancouver + 
        nyc + 
@@ -83,7 +411,7 @@ linear_model <- airbnb_neighbourhoods %>%
        los_angeles +
        san_francisco +
        usa, 
-       data = .) 
+     data = .) 
 
 class(linear_model)
 names(linear_model)
@@ -91,31 +419,31 @@ confint(linear_model)
 
 # Plot a histogram of the residuals to see if the deviation is normally distributed
 hist(residuals(linear_model))
-  # As the distribution is normal, the normality assumption is likely to be true.
-  # Underlying assumptions are valid.
+# As the distribution is normal, the normality assumption is likely to be true.
+# Underlying assumptions are valid.
 
 # Residual error
-airbnb_neighbourhoods_error <- airbnb_neighbourhoods %>% 
+neighbourhoods_table_error <- neighbourhoods_table %>% 
   filter(active_listings> 0) %>% 
   mutate(error = residuals(linear_model))
- 
-ggplot(airbnb_neighbourhoods_error , aes(x = (CRI), y = (CRI-error))) +
+
+ggplot(neighbourhoods_table_error , aes(x = (CRI), y = (CRI-error))) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE)
 
 # Plot residuals versus indepedent variables to see if a higher order term must be introduced.
-  # If linear, the model is fine.
-ggplot(airbnb_neighbourhoods_error , aes(x = (scale(university_education_z)), y = (error))) +
+# If linear, the model is fine.
+ggplot(neighbourhoods_table_error , aes(x = (scale(university_education_z)), y = (error))) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE)
-  # Higher order terms are not necessary for any indepedent variable.
+# Higher order terms are not necessary for any indepedent variable.
 
 # Remove insignificant terms
-linear_model_reduced <- airbnb_neighbourhoods %>% 
+linear_model_reduced <- neighbourhoods_table %>% 
   filter(active_listings > 0) %>% 
   lm(scale(CRI) ~ 
        scale(active_listings) + 
-       scale(revenue) + 
+       scale(revenue_LTM) + 
        scale(housing_loss_pct) + 
        scale(housing_need_z) + 
        scale(non_mover_z) + 
@@ -133,20 +461,20 @@ linear_model_reduced <- airbnb_neighbourhoods %>%
 anova(linear_model, linear_model_reduced)
 
 # There is weak evidence of a statistically significant effect when reducing the model. 
-airbnb_neighbourhoods_error <- airbnb_neighbourhoods %>% 
+neighbourhoods_table_error <- neighbourhoods_table %>% 
   filter(active_listings> 0) %>% 
   mutate(error = residuals(linear_model_reduced))
 
-ggplot(airbnb_neighbourhoods_error , aes(x = (CRI), y = (CRI-error))) +
+ggplot(neighbourhoods_table_error , aes(x = (CRI), y = (CRI-error))) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE)
 
 # Test the significance of the dummy variables
-linear_model_reduced_2 <-  airbnb_neighbourhoods %>% 
+linear_model_reduced_2 <-  neighbourhoods_table %>% 
   filter(active_listings > 0) %>% 
   lm(scale(CRI) ~ 
        scale(active_listings) + 
-       scale(revenue) + 
+       scale(revenue_LTM) + 
        scale(housing_loss_pct) + 
        scale(housing_need_z) + 
        scale(non_mover_z),
@@ -158,15 +486,15 @@ anova(linear_model_reduced_2, linear_model_reduced)
 # with city as the grouping variable.
 
 # Modeling Interactions
-airbnb_neighbourhoods %>% 
+neighbourhoods_table %>% 
   filter(active_listings > 0) %>% 
   lm(scale(CRI) ~ 
        scale(active_listings) *
-       scale(revenue) +
+       scale(revenue_LTM) +
        scale(housing_loss_pct) +
        scale(housing_need_z) +
        scale(non_mover_z) +
-       scale(revenue) * scale(housing_loss_pct) + 
+       scale(revenue_LTM) * scale(housing_loss_pct) + 
        toronto + 
        vancouver + 
        nyc + 
@@ -178,59 +506,77 @@ airbnb_neighbourhoods %>%
        usa,
      data = .) %>% 
   summary()
-  # revenue and active_listings,
-  # active_listings and housing_loss, (inverse relationship)
-  # revenue and housing_loss,
-  # revenue and non-mover, (inverse relationship)
-  # housing_loss and non-mover,
-  # housing_need and non_mover,
-      # are interactive variables when individually added to the model. 
-      # when all are added, only the interaction between active_listings and revenue, and
-      # revenue and housing_loss_pct are significant.
-  # this increases the r squared value, but also reduces the significance of
-  # housing_loss as a stand-alone variable
-
+# revenue_LTM and active_listings,
+# active_listings and housing_loss, (inverse relationship)
+# revenue_LTM and housing_loss,
+# revenue_LTM and non-mover, (inverse relationship)
+# housing_loss and non-mover,
+# housing_need and non_mover,
+# are interactive variables when individually added to the model. 
+# when all are added, only the interaction between active_listings and revenue_LTM, and
+# revenue_LTM and housing_loss_pct are significant.
+# this increases the r squared value, but also reduces the significance of
+# housing_loss as a stand-alone variable
 
 ######################################## MIXED EFFECTS INTRO ######################################
-null <- airbnb_neighbourhoods %>% 
+null <- neighbourhoods_table %>% 
   filter(active_listings > 0) %>% 
   lmer(scale(CRI) ~ 1 + 
          (1 |city),
        data = ., 
        REML = FALSE) 
-# 8.1% of variance is at the city level
+# 32% of variance is at the city level
+# calculated by city variance / (city variance + residual variance)
 # now, add fixed-effects predictors
 
 ######################################### RANDOM INTERCEPT MODEL #############################################
-random_intercept <- airbnb_neighbourhoods %>% 
+## QUESTION - Should I be using z values of the percent or absolute values?
+# Z VALUES OF PCT 
+random_intercept <- neighbourhoods_table %>% 
   filter(active_listings > 0) %>% 
   lmer (scale(CRI) ~ 
           scale(active_listings) +
-          scale(revenue) + 
-          scale(housing_loss_pct) + 
+          scale(revenue_LTM_per_listing) + 
+          scale(ML_pct) +
+          scale(PR_25_ct) +
+          scale(revenue_10pct) +
+          scale(active_listings_yoy) +
+          scale(housing_loss_pct_households) + 
           scale(med_income_z)+ 
+          scale(low_income_pct_pop_z)+
+          scale(university_education_pct_pop_z)+
           scale(population)+ 
-          scale(housing_need_z) + 
-          scale(non_mover_z) + 
-          scale(owner_occupied_z) +
+          scale(housing_need_pct_household_z) + 
+          scale(non_mover_pct_pop_z) + 
+          scale(owner_occupied_pct_household_z) +
+          scale(white_pct_pop_z) +
+          scale(lone_parent_pct_families_z) +
           (1 | city),
         data = .,
         REML = FALSE)
 
 # The null model
-random_intercept_null <-  airbnb_neighbourhoods %>% 
+random_intercept_null <-  neighbourhoods_table %>% 
   filter(active_listings > 0) %>% 
   lmer (scale(CRI) ~ 
           scale(active_listings) +
-          scale(revenue) + 
-          scale(housing_loss_pct) + 
+          scale(revenue_LTM_per_listing) + 
+          scale(ML_pct) +
+          scale(PR_25_ct) +
+          scale(revenue_10pct) +
+          scale(active_listings_yoy) +
+          scale(housing_loss_pct_households) + 
           scale(med_income_z)+ 
+          scale(low_income_pct_pop_z)+
+          scale(university_education_pct_pop_z)+
           scale(population)+ 
-          scale(housing_need_z) + 
-          scale(non_mover_z) + 
-          # scale(owner_occupied_z) +
+          scale(housing_need_pct_household_z) + 
+          scale(non_mover_pct_pop_z) + 
+          scale(owner_occupied_pct_household_z) +
+          scale(white_pct_pop_z) +
+          # scale(lone_parent_pct_families_z) +
           (1 | city),
-        data = ., 
+        data = .,
         REML = FALSE)
 
 anova(random_intercept, random_intercept_null)
@@ -240,51 +586,220 @@ anova(random_intercept, random_intercept_null)
 # active_listings
 # we cannot accept the null hypothesis
 
-# revenue
+# revenue_LTM_per_listing
 # we cannot accept the null hypothesis
 
-# housing_loss_pct
+# ML_pct
+# we can accept the null hypothesis
+
+# PR25_ct
+# we can accept the null hypothesis
+
+# revenue_10pct
+# we can accept the null hypothesis
+
+# active_listings_yoy
+# we can accept the null hypothesis
+
+# housing_loss_pct_households
 # we cannot accept the null hypothesis
 
 # med_income_z
-# we CAN accept the null hypothesis 
+# we can accept the null hypothesis 
+
+# low_income_pct_pop_z
+# we can accept the null hypothesis
+
+# university_education_pct_pop_z
+# we can accept the null hypothesis
 
 # population  
-# we cannot accept the null hypothesis
+# we can accept the null hypothesis
 
-# housing_need_z
-# we cannot accept the null hypothesis
+# housing_need_pct_households_z
+# we can accept the null hypothesis
 
-# non_mover_z 
-# we cannot accept the null hypothesis
+# non_mover_pct_pop_z 
+# we can accept the null hypothesis
 
-# owner_occupier_z
-# we CAN accept the null hypothesis
+# owner_occupier_pct_household_z
+# we can accept the null hypothesis
 
-# Final model - STATISTICALLY SIGNIFICANT
-random_intercept <- airbnb_neighbourhoods %>% 
+# white_pct_pop_z
+# we can accept the null hypothesis
+
+# lone_parent_pct_families_z
+# we can accept the null hypothesis
+
+# Final model 
+random_intercept <- neighbourhoods_table %>% 
   filter(active_listings > 0) %>% 
   lmer (scale(CRI) ~ 
           scale(active_listings) +
-          scale(revenue) + 
-          scale(housing_loss_pct) + 
-          #  scale(med_income_z) +
-          scale(population)+ 
-          scale(housing_need_z) + 
-          scale(non_mover_z) + 
-          #  scale(owner_occupied_z)+
+          scale(revenue_LTM_per_listing) + 
+          # scale(ML_pct) +
+          # scale(PR_25_ct) +
+          # scale(revenue_10pct) +
+          # scale(active_listings_yoy) +
+          scale(housing_loss_pct_households) + 
+          # scale(med_income_z)+ 
+          # scale(low_income_pct_pop_z)+
+          # scale(university_education_pct_pop_z)+
+          # scale(population)+ 
+          # scale(housing_need_pct_household_z) + 
+          # scale(non_mover_pct_pop_z) + 
+          # scale(owner_occupied_pct_household_z) +
+          # scale(white_pct_pop_z) +
+          # # scale(lone_parent_pct_families_z) +
           (1 | city),
         data = .,
         REML = FALSE)
-# city explains 6.9% of variance.
+# city explains 22.4% of variance.
 # adding the other variables further explains the variance between cities.
 
 # Residual plot using the random intercept model
-airbnb_neighbourhoods_error <- airbnb_neighbourhoods %>% 
+neighbourhoods_table_error <- neighbourhoods_table %>% 
   filter(active_listings>0) %>% 
   mutate(error = resid(random_intercept))
 
-ggplot(airbnb_neighbourhoods_error , aes(x = CRI, y = CRI - error), colour = city) +
+ggplot(neighbourhoods_table_error , aes(x = CRI, y = CRI - error), colour = city) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+# Note high error. Neighbourhoods with the highest CRI are also prone to the highest error. 
+
+# Z VALUES OF ABSOLUTE 
+random_intercept <- neighbourhoods_table %>% 
+  filter(active_listings > 0) %>% 
+  lmer (scale(CRI) ~ 
+          scale(active_listings) +
+          scale(revenue_LTM_per_listing) + 
+          scale(ML_pct) +
+          scale(PR_25_ct) +
+          scale(revenue_10pct) +
+          scale(active_listings_yoy) +
+          scale(housing_loss_pct_households) + 
+          scale(med_income_z)+ 
+          scale(low_income_z)+
+          scale(university_education_z)+
+          scale(population)+ 
+          scale(housing_need_z) + 
+          scale(non_mover_z) + 
+          scale(owner_occupied_z) +
+          scale(white_z) +
+          scale(lone_parent_z) +
+          (1 | city),
+        data = .,
+        REML = FALSE)
+
+# The null model
+random_intercept_null <-  neighbourhoods_table %>% 
+  filter(active_listings > 0) %>% 
+  lmer (scale(CRI) ~ 
+          scale(active_listings) +
+          scale(revenue_LTM_per_listing) + 
+          scale(ML_pct) +
+          scale(PR_25_ct) +
+          scale(revenue_10pct) +
+          scale(active_listings_yoy) +
+          scale(housing_loss_pct_households) + 
+          scale(med_income_z)+ 
+          scale(low_income_z)+
+          scale(university_education_z)+
+          scale(population)+ 
+          scale(housing_need_z) + 
+          scale(non_mover_z) + 
+          scale(owner_occupied_z) +
+          scale(white_z) +
+          # scale(lone_parent_z) +
+          (1 | city),
+        data = .,
+        REML = FALSE)
+
+anova(random_intercept, random_intercept_null)
+
+# Lets take an alpha value of 0.05 
+
+# active_listings
+# we cannot accept the null hypothesis
+
+# revenue_LTM_per_listing
+# we cannot accept the null hypothesis
+
+# ML_pct
+# we can accept the null hypothesis
+
+# PR25_ct
+# we cannot accept the null hypothesis
+
+# revenue_10pct
+# we can accept the null hypothesis
+
+# active_listings_yoy
+# we can accept the null hypothesis
+
+# housing_loss_pct_households
+# we cannot accept the null hypothesis
+
+# med_income_z
+# we can accept the null hypothesis 
+
+# low_income_pct_pop_z
+# we can accept the null hypothesis
+
+# university_education_pct_pop_z
+# we can accept the null hypothesis
+
+# population  
+# we can accept the null hypothesis
+
+# housing_need_pct_households_z
+# we can accept the null hypothesis
+
+# non_mover_pct_pop_z 
+# we can accept the null hypothesis
+
+# owner_occupier_pct_household_z
+# we can accept the null hypothesis
+
+# white_pct_pop_z
+# we can accept the null hypothesis
+
+# lone_parent_pct_families_z
+# we can accept the null hypothesis
+
+# Final model 
+random_intercept <- neighbourhoods_table %>% 
+  filter(active_listings > 0) %>% 
+  lmer (scale(CRI) ~ 
+          scale(active_listings) +
+          scale(revenue_LTM_per_listing) +
+          # scale(ML_pct) +
+          scale(PR_50_ct) +
+          # scale(revenue_10pct) +
+          # scale(active_listings_yoy) +
+          scale(housing_loss_pct_households) + 
+          # scale(med_income_z)+ 
+          # scale(low_income_z)+
+          # scale(university_education_z)+
+          # scale(population)+ 
+          # scale(housing_need_z) + 
+          # scale(non_mover_z) + 
+          # scale(owner_occupied_z) +
+          # scale(white_z) +
+          # scale(lone_parent_z) +
+          (1 | city),
+        data = .,
+        REML = FALSE)
+# city explains 25.1% of variance.
+# adding the other variables further explains the variance between cities.
+
+# Residual plot using the random intercept model
+neighbourhoods_table_error <- neighbourhoods_table %>% 
+  filter(active_listings>0) %>% 
+  mutate(error = resid(random_intercept))
+
+ggplot(neighbourhoods_table_error , aes(x = CRI, y = CRI - error), colour = city) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE)
 
@@ -292,159 +807,177 @@ ggplot(airbnb_neighbourhoods_error , aes(x = CRI, y = CRI - error), colour = cit
 
 ######################################### RANDOM SLOPE AND INTERCEPT MODEL ########################################
 
-random_slope <- airbnb_neighbourhoods %>% 
+random_slope <- neighbourhoods_table %>% 
   filter(active_listings > 0) %>% 
   lmer (scale(CRI) ~ 
           scale(active_listings) +
-          scale(revenue) + 
-          scale(housing_loss_pct) + 
+          scale(revenue_LTM_per_listing) + 
+          scale(ML_pct) +
+          scale(PR_25_ct) +
+          scale(revenue_10pct) +
+          scale(active_listings_yoy) +
+          scale(housing_loss_pct_households) + 
           scale(med_income_z)+ 
+          scale(low_income_pct_pop_z)+
+          scale(university_education_pct_pop_z)+
           scale(population)+ 
-          scale(housing_need_z) + 
-          scale(non_mover_z) + 
-          scale(owner_occupied_z) +
-          (scale(non_mover_z) | city),
+          scale(housing_need_pct_household_z) + 
+          scale(non_mover_pct_pop_z) + 
+          scale(owner_occupied_pct_household_z) +
+          scale(white_pct_pop_z) +
+          scale(lone_parent_pct_families_z)  +
+          (1 + scale(housing_need_pct_household_z)| city),
         data = .,
         REML = FALSE)
 
 isSingular(random_slope)
 
-# All random slopes are singular except for revenue, housing_loss_pct, med_income_z, 
-    # population, and non_mover_z.
+# All random slopes are singular except for ML_pct, med_income_z, low_income_pct_pop_z,
+# and housing_need_pct_household_z.
 # Though the singular models are well defined, they may correspond to overfitting.
 
 # Test the significance of the random slopes
-random_slope_null <- airbnb_neighbourhoods %>% 
+random_slope_null <- neighbourhoods_table %>% 
   filter(active_listings > 0) %>% 
   lmer (scale(CRI) ~ 
           scale(active_listings) +
-          scale(revenue) + 
-          scale(housing_loss_pct) + 
-          scale(med_income_z) +
-          scale(population) + 
-          scale(housing_need_z) + 
-          scale(non_mover_z) + 
-          scale(owner_occupied_z) +
+          scale(revenue_LTM_per_listing) + 
+          scale(ML_pct) +
+          scale(PR_25_ct) +
+          scale(revenue_10pct) +
+          scale(active_listings_yoy) +
+          scale(housing_loss_pct_households) + 
+          scale(med_income_z)+ 
+          scale(low_income_pct_pop_z)+
+          scale(university_education_pct_pop_z)+
+          scale(population)+ 
+          scale(housing_need_pct_household_z) + 
+          scale(non_mover_pct_pop_z) + 
+          scale(owner_occupied_pct_household_z) +
+          scale(white_pct_pop_z) +
+          scale(lone_parent_pct_families_z)  +
           (1 | city),
         data = .,
         REML = FALSE)
-anova(random_slope_null, random_slope)
-  # revenue - cannot accept the null hypothesis
-  # housing_loss_pct - can accept the null hypothesis
-  # med_income_z - can accept the null hypothesis
-  # population - cannot accept the null hypothesis
-  # non_mover_z - can accept the null hypothesis
 
-# Can take revenue and population as random slopes.
-random_slope <- airbnb_neighbourhoods %>% 
+anova(random_slope_null, random_slope)
+# ML_pct - cannot accept the null hypothesis
+# med_income_z - cannot accept the null hypothesis
+# low_income_pct_pop_z - cannot accept the null hypothesis
+# housing_need_pct_household_z - cannot accept the null hypothesis
+
+# Can take ML_pct, med_income_z, low_income_pct_pop_z, and housing_need_pct_household_z as random slopes
+random_slope <- neighbourhoods_table %>% 
   filter(active_listings > 0) %>% 
   lmer (scale(CRI) ~ 
           scale(active_listings) +
-          scale(revenue) + 
-          scale(housing_loss_pct) + 
+          scale(revenue_LTM_per_listing) + 
+          scale(ML_pct) +
+          scale(PR_25_ct) +
+          scale(revenue_10pct) +
+          scale(active_listings_yoy) +
+          scale(housing_loss_pct_households) + 
           scale(med_income_z)+ 
+          scale(low_income_pct_pop_z)+
+          scale(university_education_pct_pop_z)+
           scale(population)+ 
-          scale(housing_need_z) + 
-          scale(non_mover_z) + 
-          scale(owner_occupied_z) +
-          (scale(population)| city),
+          scale(housing_need_pct_household_z) + 
+          scale(non_mover_pct_pop_z) + 
+          scale(owner_occupied_pct_household_z) +
+          scale(white_pct_pop_z) +
+          scale(lone_parent_pct_families_z)  +
+          (1 + scale(housing_need_pct_household_z)| city),
         data = .,
         REML = FALSE)
 
 coef(random_slope)
-  # population has a positive affect across all cities, though much more influential in vancouver.
-      # this explains some of the variation in the linear model, where vancouver was consistently seen
-      # as an outlier
-  # revenue has a positive effect cross all cities, though more influential in vancouver, washington,
-      # new york city, and san fransisco.
-  # however, when we take both population and revenue as random slopes, the fit is singular. 
-  # this implies that the random effects structure is too complex to be supported by the data.
-  # general advice indicates to remove the most complex part of the random effects structure, usually a 
-  # random slope.
 
-# Run an anova analysis between the random slope model and the null model to test for statistical 
-# significance for revenue and population.
+# ML_pct has a positive affect across all cities, though significantly more influential in Washington.
+# med_income_z has a positive affect across all cities, though slightly more influential in Washington.
+# low_income_pct_pop_z has both positive and negative effects...influences each city differently.
+# housing_need_pct_household_z has both positive and negative effects
 
-  # revenue - we fail to accept the null hypothesis - 1.587x10^-9
-  # population  - we fail to accept the null hypothesis - 0.01547
-
-  # revenue random slope is much more significant than population.
-  # NOTE: apparently you cannot treat continuous variables as random effects, therefore is this model invalid?
-
-random_slope <- airbnb_neighbourhoods %>% 
-  filter(active_listings > 0) %>% 
-  lmer (scale(CRI) ~ 
-          scale(active_listings) +
-          scale(revenue) + 
-          scale(housing_loss_pct) + 
-          scale(med_income_z)+ 
-          scale(population)+ 
-          scale(housing_need_z) + 
-          scale(non_mover_z) + 
-          scale(owner_occupied_z) +
-          (1 + scale(revenue)| city),
-        data = .,
-        REML = FALSE)
-# city explains 4.8% of variance and revenue 38.2%.
-
-random_slope %>% 
-  confint()
+# NOTE: apparently you cannot treat continuous variables as random effects, therefore is this model invalid?
 
 ####################################### PENALIZED QUASILIKELIHOOD #####################################
 # biased estimates for small means, binary responses, or if the response variable fits a discrete count distribution
-  # not the case
-airbnb_neighbourhoods$CRI <- (airbnb_neighbourhoods$CRI/max(airbnb_neighbourhoods$CRI)) + 0.0000001
+# not the case
 
 # find appropriate starting values
-airbnb_neighbourhoods %>% 
+neighbourhoods_table %>% 
   filter(active_listings > 0) %>% 
   lmer ((CRI) ~ 
           scale(active_listings) +
-          scale(revenue) + 
-          scale(housing_loss_pct) + 
+          scale(revenue_LTM_per_listing) + 
+          scale(ML_pct) +
+          scale(PR_25_ct) +
+          scale(revenue_10pct) +
+          scale(active_listings_yoy) +
+          scale(housing_loss_pct_households) + 
           scale(med_income_z)+ 
+          scale(low_income_pct_pop_z)+
+          scale(university_education_pct_pop_z)+
           scale(population)+ 
-          scale(housing_need_z) + 
-          scale(non_mover_z) + 
-          scale(owner_occupied_z) +
+          scale(housing_need_pct_household_z) + 
+          scale(non_mover_pct_pop_z) + 
+          scale(owner_occupied_pct_household_z) +
+          scale(white_pct_pop_z) +
+          scale(lone_parent_pct_families_z)+
           (1 | city),
         data = .,
         REML = FALSE) %>% 
   coef()
 
-pql <- airbnb_neighbourhoods %>% 
+pql <- neighbourhoods_table %>% 
   filter(active_listings > 0) %>% 
   glmmPQL((CRI) ~
             scale(active_listings) +
-            scale(revenue) + 
-            scale(housing_loss_pct) + 
-            scale(med_income_z) +
+            scale(revenue_LTM_per_listing) + 
+            scale(ML_pct) +
+            scale(PR_25_ct) +
+            scale(revenue_10pct) +
+            scale(active_listings_yoy) +
+            scale(housing_loss_pct_households) + 
+            scale(med_income_z)+ 
+            scale(low_income_pct_pop_z)+
+            scale(university_education_pct_pop_z)+
             scale(population)+ 
-            scale(housing_need_z) + 
-            scale(non_mover_z) + 
-            scale(owner_occupied_z),
+            scale(housing_need_pct_household_z) + 
+            scale(non_mover_pct_pop_z) + 
+            scale(owner_occupied_pct_household_z) +
+            scale(white_pct_pop_z) +
+            scale(lone_parent_pct_families_z),
           ~ 1 | city, 
           family = Gamma(link = "log"),
           data = ., 
           verbose = FALSE,
-          start = c(0,0,0,0,0,0,0,0,0))
+          start = rep(0, 17))
 
 pql %>% 
   summary()
+
 ####################################### LA PLACE APPROXIMATION #####################################
 # less flexible than PQL, but is not biased in cases with small means 
 
-laplace <- airbnb_neighbourhoods %>% 
+laplace <- neighbourhoods_table %>% 
   filter(active_listings > 0) %>% 
   glmer((CRI) ~
           scale(active_listings) +
-          scale(revenue) + 
-          scale(housing_loss_pct) + 
-          scale(med_income_z) +
+          scale(revenue_LTM_per_listing) + 
+          scale(ML_pct) +
+          scale(PR_25_ct) +
+          scale(revenue_10pct) +
+          scale(active_listings_yoy) +
+          scale(housing_loss_pct_households) + 
+          scale(med_income_z)+ 
+          scale(low_income_pct_pop_z)+
+          scale(university_education_pct_pop_z)+
           scale(population)+ 
-          scale(housing_need_z) + 
-          scale(non_mover_z) + 
-          scale(owner_occupied_z)+
+          scale(housing_need_pct_household_z) + 
+          scale(non_mover_pct_pop_z) + 
+          scale(owner_occupied_pct_household_z) +
+          scale(white_pct_pop_z) +
+          scale(lone_parent_pct_families_z) +
           (1 | city), 
         family = Gamma(link = "log"),
         data = .)
@@ -458,237 +991,8 @@ laplace %>%
 
 laplace %>% 
   overdisp_fun()
+
 # the data is overdispersed 
-  # more variability in the data than would be expected based on the model - as there is less than three
-  # random effects, we should use GHQ anyways.
+# more variability in the data than would be expected based on the model - as there is less than three
+# random effects, we should use GHQ anyways.
 # OVERDISPERSION IS IRRELEVANT FOR MODELS THAT ESTIMATE A SCALE PARAMETER.
-
-#################################### GUASS-HERMITE QUADRATURE ####################################
-# GHQ is more accurate than laplace due to repeated iterations, but only works when there are
-  # maximum 2-3 random effect (true in this case)
-
-# must manipulate CRI such that there are only positive values.
-airbnb_neighbourhoods <- airbnb_neighbourhoods %>% 
-  mutate(CRI = CRI / max(CRI) + 0.000001)
-
-ghq <- airbnb_neighbourhoods %>% 
-  filter(active_listings > 0) %>% 
-  glmer((CRI) ~
-          scale(active_listings) +
-          scale(revenue) + 
-          scale(housing_loss_pct) + 
-          scale(med_income_z) +
-          scale(population)+ 
-          scale(housing_need_z) + 
-          scale(non_mover_z) + 
-          scale(owner_occupied_z)+
-          (1 | city), 
-        family = Gamma(link = "log"),
-        data = ., 
-        nAGQ = 100)
-
-ghq %>% 
-  summary()
-# city is responsible for 60.9% of variance
-
-ghq %>% 
-  overdisp_fun()
-# the data is overdispersed
-  # more variability in the data than would be expected based on the model
-# in the case of overdispersion, model it as a random effect with one random effect for each 
-  # observation (ie. neighbourhood_name).
-# OVERDISPERSION IS IRRELEVANT FOR MODELS THAT ESTIMATE A SCALE PARAMETER.
-
-# Ultimately, GHQ is the model best suited for the data given its gamma distribution, 
-  # continuous nature of CRI, minimum random effects, and increased iterations. 
-
-# Examine the significance
-ghq_null <- airbnb_neighbourhoods %>% 
-  filter(active_listings > 0) %>% 
-  glmer((CRI) ~
-         (1 | city), 
-        family = Gamma(link = "log"),
-        data = ., 
-        nAGQ = 100)
-
-anova(ghq, ghq_null)
-# fail to accept the null hypothesis
-
-# test individual variables
-ghq_null <- airbnb_neighbourhoods %>% 
-  filter(active_listings > 0) %>% 
-  glmer((CRI) ~
-          #scale(active_listings) +
-          scale(revenue) + 
-          scale(housing_loss_pct) + 
-          scale(med_income_z) +
-          scale(population)+ 
-          scale(housing_need_z) + 
-          scale(non_mover_z) + 
-          scale(owner_occupied_z)+
-          (1 | city), 
-        family = Gamma(link = "log"),
-        data = ., 
-        nAGQ = 100)
-anova(ghq, ghq_null)
-
-# active listings
-  # accept the null hypothesis
-  # higher AIC - including worsens the model
-
-# revenue
-  # accept the null hypothesis
-  # higher AIC - including worsens the model
-
-# housing_loss_pct
-  # fail to accept the null hypothesis
-  # lower AIC - including betters the model
-
-# med_income_z
-  # fail to accept the null hypothesis
-  # lower AIC - including betters the model
-
-# population
-  # fail to accept the null hypothesis
-  # lower AIC - including betters the model
-
-# housing_need_z
-  # fail to accept the null hypothesis
-  # lower AIC - including betters the model
-
-# non_mover_z
-  # fail to accept the null hypothesis
-  # lower AIC - including betters the model
-
-# owner_occupied_z
-  # fail to accept the null hypothesis (though weak relationship)
-  # lower AIC - including betters the model
-
-# updated model
-ghq <- airbnb_neighbourhoods %>% 
-  filter(active_listings > 0) %>% 
-  glmer((CRI) ~
-          scale(housing_loss_pct) + 
-          scale(med_income_z) +
-          scale(population)+ 
-          scale(housing_need_z) + 
-          scale(non_mover_z) + 
-          scale(owner_occupied_z)+
-          (1 | city), 
-        family = Gamma(link = "log"),
-        data = ., 
-        nAGQ = 100)
-
-ghq %>% 
-  summary()
-
-# interaction between variables
-ghq_interaction <- airbnb_neighbourhoods %>% 
-  filter(active_listings > 0) %>% 
-  glmer((CRI) ~
-          scale(housing_loss_pct) +  
-          scale(med_income_z) *
-          scale(housing_need_z) + 
-          scale(non_mover_z) +
-          scale(population) + 
-          scale(owner_occupied_z)+
-          (1 | city), 
-        family = Gamma(link = "log"),
-        data = ., 
-        nAGQ = 100)
-
-ghq_interaction %>% 
-  summary()
-
-anova(ghq_interaction, ghq_interaction)
-
-  # population and non_mover
-    # insignificant interaction
-    # increased AIC
-
-  # population and owner_occupied
-    # weak interaction
-    # slightly increased AIC 
-
-  # med_income_z and housing_loss_pct
-    # significant interaction
-    # lower AIC
-    # inverse relationship
-      # as one increases by one, the slope of the other decreases
-      # as median income increases, housing_loss becomes less significant (though still significant)
-
-  # med_income_z and housing_need_z
-    # significant interaction
-    # lower AIC 
-    # proportional relationship
-      # as one increases by one, the slope of the other increases
-      # as median income icnreases, housing need becomes MORE significant
-
-# updated model
-ghq_interaction <- airbnb_neighbourhoods %>% 
-  filter(active_listings > 0) %>% 
-  glmer((CRI) ~
-          scale(med_income_z) *  
-          scale(housing_loss_pct) + 
-          scale(housing_need_z) *
-          scale(med_income_z) + 
-          scale(non_mover_z) +
-          scale(population) + 
-          scale(owner_occupied_z) +
-         scale(active_listings) +
-          (1 | city), 
-        family = Gamma(link = "log"),
-        data = ., 
-        nAGQ = 100)
-
-ghq_interaction %>% 
-  summary()
-
-# Calculate r squared
-  # R2m referes to the marginal variance explained by fixed effects
-  # R2c refers to the conditional variance explained by the entire model
-  # delta works for all models 
-      # first order Taylor series expansion 
-      # most flexible as it works for all kinds of distributions and link functions 
-  # lognormal is limited to distributions with logarithmic link (such as this case)
-  # trigamma is limited to distributions with logarithmic link (such as this case)
-      # most accurate estimate of the observation level variance
-
-r.squaredGLMM(ghq_interaction)
-
-# Reported values using delta estimation - the only one that allows for direct comparison
-# linear_model - 0.422
-# linear_model_reduced - 0.412
-# linear_model_reduced_2 - 0.379
-# random_intercept - 0.443
-# random_slope - 0.730 - pretty sure this model is invalid
-# pql - 0.567
-# laplace - 0.680
-# ghq - 0.730
-# ghq_interaction - 0.734
-
-# Evidently ghq_interaction is the best model, both theoretically and statistically.
-  # Though a high R squred of 0.734, must report the lognormal and trigamma results as well
-
-# Explore the model
-plot(fitted(ghq_interaction), residuals(ghq_interaction), xlab = "Fitted Values", ylab = "Residuals")
-abline(h = 0, lty = 2)
-lines(smooth.spline(fitted(ghq), residuals(ghq)))
-
-# Residual plot using the ghq model
-airbnb_neighbourhoods_error <- airbnb_neighbourhoods %>% 
-  filter(active_listings>0) %>% 
-  mutate(error = resid(ghq_interaction), 
-         variance = error^2, 
-         predicted = CRI - error)
-
-ggplot(airbnb_neighbourhoods_error , aes(x = CRI, y = error)) +
-  geom_point() 
-
-# Plot error 
-airbnb_neighbourhoods_error %>% 
-  filter(city == "Montreal") %>%  
-  dplyr::select(c("geometry", "error")) %>% 
-  st_as_sf() %>% 
-  mapview()
-
