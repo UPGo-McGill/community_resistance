@@ -26,6 +26,7 @@ cityname  <- c("Albuquerque", "Anaheim", "Anchorage", "Arlington", "Atlanta",
                "Santa Ana", "Santa Clarita", "Scottsdale", "Seattle", "Spokane", "Stockton", 
                "Tacoma", "Tampa", "Toledo", "Tucson", "Tulsa", "Virginia Beach", "Washington", 
                "Wichita", "Winston Salem")
+
 # Import factiva and lexisnexis files
 
 media <- 

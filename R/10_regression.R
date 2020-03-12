@@ -261,6 +261,7 @@ ghq <- neighbourhoods_table %>%
         family = Gamma(link = "log"),
         data = ., 
         nAGQ = 100)
+
 ghq %>% 
   summary()
 
