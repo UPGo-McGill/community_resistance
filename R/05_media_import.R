@@ -33,8 +33,7 @@ media <-
   
   map(cityname, ~{
     
-    rbind(import_factiva(.x), 
-          import_lexisnexis(.x)) %>% 
+      import_lexisnexis(.x) %>% 
       dplyr::select(1:9) %>% 
       group_by(Author) %>% 
       filter(as.numeric(Word_Count) > 100) %>% 
