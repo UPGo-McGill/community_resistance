@@ -49,20 +49,18 @@ ner <-
         entity_extract(type = "named", concatenator = " ") %>% 
         filter(entity_type == "GPE" |
                  entity_type == "FAC" |
-                 entity_type == "ORG" |
                  entity_type == "LOC" |
-                 entity_type == "PERSON") %>% 
-        filter(entity != cityname[.x]) %>% 
+                 entity_type == "PERSON" |
+                 entity_type == "ORG") %>% 
         filter(nchar(entity) > 2) %>% 
         dplyr::select(doc_id, entity),
       spacy_parse(media[[.x]]$Headline) %>% 
         entity_extract(type = "named", concatenator = " ") %>% 
         filter(entity_type == "GPE" |
                  entity_type == "FAC" |
-                 entity_type == "ORG" |
                  entity_type == "LOC" |
-                 entity_type == "PERSON") %>% 
-        filter(entity != cityname[.x]) %>% 
+                 entity_type == "PERSON" |
+                 entity_type == "ORG") %>% 
         filter(nchar(entity) > 2) %>% 
         dplyr::select(doc_id, entity)) %>% 
       distinct() 
