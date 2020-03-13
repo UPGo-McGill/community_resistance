@@ -85,6 +85,9 @@ ner_compressed <- ner_compressed %>%
   anti_join(locations)
 
 # Query Google to geocode the locations for their latitude and longitude
+  # NOTE: IF THE API RUNS OUT DURING THE QUERY, JOIN THE OUTPUT (LOCATIONS_NEW) 
+  # WITH EXISTING LOCATIONS (LINE 93), SAVE LOCATIONS (LINE 98), 
+  # AND RERUN FROM LINE 83 ONWARDS 
 locations_new <- mutate_geocode(ner_compressed, entity)
 
 # Join with the existing locations
