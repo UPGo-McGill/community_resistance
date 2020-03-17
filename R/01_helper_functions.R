@@ -61,16 +61,6 @@ plan(multiprocess)
 # Run Google Maps API Key
 #register_google(key = "", write = TRUE)
 
-# Function to replace NaN with 0
-is.nan.data.frame <- function(x)
-  do.call(cbind, lapply(x, is.nan))
-
-# Data loader that allows for in place renaming
-loadRdata <- function(fileName){
-  load(fileName)
-  get(ls()[ls() != "fileName"])
-}
-
 # PUMA import 
 import_puma <- function(state) {
   pumas(state, class = "sf") %>% 
