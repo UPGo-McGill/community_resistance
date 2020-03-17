@@ -186,7 +186,7 @@ lemmatized_articles <- lemmatized_articles %>%
   dplyr::select(-c(mentions)) 
 
 
-# Trim the original media files to include only those that mention Airbnb more than once
+# Trim the original media files to include only those that mention Airbnb more than twice
 media <- media %>% 
   mutate(relevant = media$ID %in% lemmatized_articles$doc_id) %>% 
   filter(relevant == TRUE) %>% 
