@@ -21,6 +21,8 @@ property <-
       strr_as_sf(102009)
 })
 
+plan(multiprocess)
+
 daily <- 
   map(property, ~{
     daily_all %>%
@@ -40,17 +42,15 @@ host <-
 upgo_disconnect()
 
 # Process multilistings
+
 daily <-
-  map(seq_along(daily), ~{
-    strr_multi(daily[[.x]], host[[.x]])
-  })
+  map2(daily, host, strr_multi)
 
 # Run the raffle to assign a neighbourhood to each listing
+
 property <-
-  map(seq_along(property), ~{
-   property[[.x]] %>% 
-      strr_raffle(neighbourhoods[[.x]], neighbourhood, households) 
-  })
+  map2(property, neighbourhoods, strr_raffle, neighbourhood, households, 
+       seed = 10)
 
 # Add last twelve months revenue
 property <-
@@ -72,24 +72,31 @@ LTM_property <-
   })
 
 # Calculate FREH and GH listings
-FREH <- 
-  map(daily, ~{
-    .x %>% 
-      strr_FREH("2015-01-01", end_date) %>% 
-      filter(FREH == TRUE) %>% 
-      dplyr::select(-FREH)
-  })
+  # Note that I have changed the start dates such that this does not have
+  # to be rerun for the temporal analysis
 
-GH <- map(property, ~{
-  .x %>% 
-    strr_ghost(start_date = "2015-01-01", end_date = end_date)
-})
+FREH <- map(daily, strr_FREH, "2015-01-01", end_date)
+GH <- map(property, strr_ghost, start_date = "2015-01-01", end_date = end_date)
 
 # Calculate principal residence fields
+
 property <- 
   map(seq_along(property), ~{
-    property[[.x]] %>% 
-      strr_principal_residence(daily[[.x]], FREH[[.x]], GH[[.x]], 
-                               start_date = end_date, end_date = end_date, 
-                               sensitivity = 0.5)
+    strr_principal_residence(
+      property[[.x]], daily[[.x]], FREH[[.x]], GH[[.x]], start_date, end_date,
+      PR_10, 0.1)
+  })
+
+property <- 
+  map(seq_along(property), ~{
+    strr_principal_residence(
+      property[[.x]], daily[[.x]], FREH[[.x]], GH[[.x]], start_date, end_date,
+      PR_25, 0.25)
+  })
+
+property <- 
+  map(seq_along(property), ~{
+    strr_principal_residence(
+      property[[.x]], daily[[.x]], FREH[[.x]], GH[[.x]], start_date, end_date,
+      PR_50, 0.5)
   })
