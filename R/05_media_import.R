@@ -18,13 +18,12 @@ media <-
   })
 
 
-# Tidy text 
+ # Tidy text 
 
-tidy_text <- map(media, ~{
-  
-  str_tidytext(.x)
-  
-})
+tidy_text <- 
+  suppressMessages(
+    future_map(media, str_tidytext)
+  )
 
 
 # Create media and lemmatized_articles list to allow for further text analysis
