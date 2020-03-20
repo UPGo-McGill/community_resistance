@@ -30,14 +30,14 @@ dictionary[["negativeWords"]] = c(dictionary[["negativeWords"]], machine_learnin
 
 # Assign a score to each article
 
-media <- map(seq_along(media), ~{
-  
- media[[.x]] %>% 
-    mutate(
-      sentiment = (str_count(lemmatized_articles[[.x]]$lemmas, paste(dictionary[["positiveWords"]], collapse = '|'))*1 +
-                     str_count(lemmatized_articles[[.x]]$lemmas, paste(dictionary[["negativeWords"]], collapse = '|'))*-1) /
-        as.numeric(media[[.x]]$Word_Count))
-})
+media <- 
+  future_map2(media, lemmatized_articles, ~{
+    .x %>% 
+      mutate(
+        sentiment = (str_count(.y$lemmas, paste(dictionary[["positiveWords"]], collapse = '|')) * 1 +
+                       str_count(.y$lemmas, paste(dictionary[["negativeWords"]], collapse = '|')) * -1) /
+          as.numeric(.x$Word_Count))
+  })
 
 
 ############################### 2 - NAMED ENTITY RECOGNITION AND GEOCODING ################################################################## 
@@ -120,7 +120,8 @@ ner_locations <- map(seq_along(cityname), ~{
 
 for (n in seq_along(cityname)) {
 
-ner_locations[[n]]$doc_id <- as.numeric(gsub("text", "",ner_locations[[n]]$doc_id)) }
+ner_locations[[n]]$doc_id <- 
+  as.numeric(gsub("text", "", ner_locations[[n]]$doc_id)) }
 
 
 ############################################## 3 - NEIGHBOURHOOD SENTIMENT #################################################
@@ -131,7 +132,8 @@ ner_locations[[n]]$doc_id <- as.numeric(gsub("text", "",ner_locations[[n]]$doc_i
 for (n in seq_along(cityname)) {
   
   temp <- ner_locations[[n]] %>% 
-    left_join(media[[n]] %>% dplyr::select(c("ID", "sentiment")), by = c("doc_id" = "ID")) %>% 
+    left_join(media[[n]] %>% dplyr::select(c("ID", "sentiment")), 
+              by = c("doc_id" = "ID")) %>% 
     dplyr::select(c("doc_id", "neighbourhood", "sentiment")) %>% 
     st_drop_geometry() %>% 
     distinct()
@@ -141,10 +143,11 @@ for (n in seq_along(cityname)) {
     left_join(left_join(aggregate(temp$sentiment, list(temp$neighbourhood), mean),
                         temp %>% 
                           group_by(neighbourhood) %>% 
-                          tally(), by = c("Group.1" = "neighbourhood")), by = c("neighbourhood" = "Group.1")) %>% 
+                          tally(), by = c("Group.1" = "neighbourhood")), 
+              by = c("neighbourhood" = "Group.1")) %>% 
     mutate(sentiment = x,
            media_count = n, 
-           CRI = -1*sentiment*media_count) %>% 
+           CRI = -1 * sentiment * media_count) %>% 
     dplyr::select(-c("x", "n"))
   
   rm(temp)
