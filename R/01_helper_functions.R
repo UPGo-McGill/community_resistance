@@ -47,7 +47,8 @@ library(SnowballC)
 library(lubridate)
 library(future)
 # plan(upgo)
-plan(multiprocess)
+# plan(multiprocess)
+library(udpipe)
 
 # Note: spaCy requires the user to download a version of miniconda and follow a set of instructions to set up
 
