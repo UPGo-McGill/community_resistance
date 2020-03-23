@@ -87,6 +87,14 @@ for (n in seq_along(cityname)) {
     filter(relevant == TRUE) %>% 
     dplyr::select(-relevant)
   
+    media[[n]] <-
+      media[[n]] %>%
+      mutate(ID = 1:nrow(media[[n]]))
+
+    lemmatized_articles[[n]] <-
+      lemmatized_articles[[n]] %>%
+      mutate(doc_id = 1:nrow(lemmatized_articles[[n]]))
+  
 }
 
 
