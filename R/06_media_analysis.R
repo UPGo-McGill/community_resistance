@@ -163,36 +163,42 @@ ner_compressed <-
 load("data/locations.Rdata")
 
 # Find only the locations that have yet to be queried.
-ner_compressed <- ner_compressed %>% 
+ner_compressed <-
+  ner_compressed %>% 
   anti_join(locations)
 
 # Query Google to geocode the locations for their latitude and longitude
 # NOTE: IF THE API RUNS OUT DURING THE QUERY, JOIN THE OUTPUT (LOCATIONS_NEW) 
 # WITH EXISTING LOCATIONS (LINE 93), SAVE LOCATIONS (LINE 98), 
 # AND RERUN FROM LINE 83 ONWARDS 
-locations_new <- mutate_geocode(ner_compressed, entity)
+locations_new <- 
+  mutate_geocode(ner_compressed, entity)
 
 # Join with the existing locations
-locations <- locations_new %>% 
+locations <- 
+  locations_new %>% 
   rbind(locations)
 
 # Save the locations so that this does not need to be rerun
 save(locations, file = "locations.Rdata")
 
 # Remove the locations that were not geocoded
-locations <- locations %>% 
+locations <- 
+  locations %>% 
   filter(!is.na(lon)) %>% 
   st_as_sf(coords = c ("lon", "lat"), crs = 4326) %>% 
   st_transform(102009)
 
 # Perform a join to associate each entity with each document id
-ner_locations <- map(ner, ~{
+ner_locations <- 
+  map(ner, ~{
   inner_join(.x, locations)
 })
 
 # Perform a spatial join to determine what locations fall into which neighbourhoods
 
-ner_locations <- map(seq_along(cityname), ~{
+ner_locations <- 
+  map(seq_along(cityname), ~{
   ner_locations[[.x]] %>%
     st_as_sf() %>% 
     st_transform(102009) %>% 
