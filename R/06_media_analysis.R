@@ -42,40 +42,122 @@ media <-
 
 ############################### 2 - NAMED ENTITY RECOGNITION AND GEOCODING ################################################################## 
 
-ner <- 
-  map(seq_along(media), ~{
-    rbind(
-      spacy_parse(media[[.x]]$Article) %>% 
-        entity_extract(type = "named", concatenator = " ") %>% 
-        filter(entity_type == "GPE" |
-                 entity_type == "FAC" |
-                 entity_type == "LOC" |
-                 entity_type == "PERSON" |
-                 entity_type == "ORG") %>% 
-        filter(nchar(entity) > 2) %>% 
-        dplyr::select(doc_id, entity),
-      spacy_parse(media[[.x]]$Headline) %>% 
-        entity_extract(type = "named", concatenator = " ") %>% 
-        filter(entity_type == "GPE" |
-                 entity_type == "FAC" |
-                 entity_type == "LOC" |
-                 entity_type == "PERSON" |
-                 entity_type == "ORG") %>% 
-        filter(nchar(entity) > 2) %>% 
-        dplyr::select(doc_id, entity)) %>% 
-      distinct() 
+# Where lem is the output from 
+# lem[[n]] <- 
+#   udpipe(media[[n]], object = english) 
+
+output <- 
+  map(lem, ~{
+    
+    # Isolate proper nouns
+    
+    .x <- 
+      .x %>% 
+      filter(upos == "PROPN") %>% 
+      dplyr::select(c(doc_id, term_id, lemma)) %>% 
+      mutate(mid = TRUE) %>% 
+      mutate(end = TRUE)
+    
+    # However, some proper nouns are more than one word.
+    # These have to be joined accordingly, based on the term id.
+    
+    for (i in 1:nrow(.x)) {
+      
+      .x[i,] <- 
+        .x[i,] %>% 
+        mutate(mid = ifelse(term_id ==
+                              as.numeric(.x[i-1,] %>% 
+                                           dplyr::select(term_id) + 1), 
+                            TRUE, 
+                            FALSE))
+      
+    }  
+    
+    # These must be kept in separate loops.
+    
+    for (i in 1:nrow(.x)) {
+      
+      .x[i,] <-
+        .x[i,] %>%
+        mutate(end = ifelse(.x[i,]$mid == TRUE &
+                              .x[i+1,]$mid == FALSE,
+                            TRUE,
+                            FALSE))
+      
+    }
+    
+    .x <- 
+      .x %>% 
+      mutate(position = 
+               case_when(end == TRUE ~ "end",
+                         end == FALSE & mid == TRUE ~ "middle",
+                         end == FALSE & mid == FALSE ~ "start",
+                         is.na(mid) ~ "start")) %>% 
+      dplyr::select(-c(mid, end)) 
+    
+    
+    # Note: this portion CANNOT be run in parallel in terms of i.
+    for (i in nrow(.x):1) {
+      
+      if  (.x[i,]$position == "end" |
+           .x[i,]$position == "middle") {
+        
+        .x[i-1,]$lemma = 
+          paste(.x[i-1,]$lemma,
+                .x[i,]$lemma)
+        
+      }
+    }
+    
+    # Create named entities table  
+    ner <- 
+      .x %>% 
+      filter(position == "start") %>% 
+      mutate(entity = lemma) %>% 
+      filter(nchar(entity) > 2, 
+             entity != "USA",
+             entity != "U.S.",
+             entity != "America",
+             entity != "United States") %>%
+      dplyr::select(c("doc_id", "entity"))    
+    
+    list(ner)
+    
   })
+
+ner <- 
+  output %>% 
+  map(~{.x[[1]]})
+
+# Clean the named entities by removing punctuation and making all lowercase
+output <- 
+  
+  map(ner, ~{
+    .x$entity <- 
+      .x$entity %>% 
+      gsub("[[:punct:]]", " ", .) %>% 
+      tolower()
+    
+  })
+
+ner <-
+  
+  map2(ner, output, ~{
+    
+    .x %>% 
+      mutate(entity = .y)
+    
+  })
+
 
 # Collapse the named entity recognition to reduce processing times and number of api queries
 ner_compressed <- 
   map_df(ner, ~{
     .x %>% 
       dplyr::select(entity)
-    }) %>% 
+  }) %>% 
   distinct()
 
-ner_compressed$entity <- ner_compressed$entity %>% 
-  gsub("[[:punct:]]", " ", .)
 
 # Load locations that have already been queried.
 load("data/locations.Rdata")
@@ -85,9 +167,9 @@ ner_compressed <- ner_compressed %>%
   anti_join(locations)
 
 # Query Google to geocode the locations for their latitude and longitude
-  # NOTE: IF THE API RUNS OUT DURING THE QUERY, JOIN THE OUTPUT (LOCATIONS_NEW) 
-  # WITH EXISTING LOCATIONS (LINE 93), SAVE LOCATIONS (LINE 98), 
-  # AND RERUN FROM LINE 83 ONWARDS 
+# NOTE: IF THE API RUNS OUT DURING THE QUERY, JOIN THE OUTPUT (LOCATIONS_NEW) 
+# WITH EXISTING LOCATIONS (LINE 93), SAVE LOCATIONS (LINE 98), 
+# AND RERUN FROM LINE 83 ONWARDS 
 locations_new <- mutate_geocode(ner_compressed, entity)
 
 # Join with the existing locations
@@ -116,18 +198,18 @@ ner_locations <- map(seq_along(cityname), ~{
     st_transform(102009) %>% 
     st_join(neighbourhoods[[.x]], join = st_intersects) %>% 
     filter(!is.na(neighbourhood))
-    })
+})
 
 for (n in seq_along(cityname)) {
-
-ner_locations[[n]]$doc_id <- 
-  as.numeric(gsub("text", "", ner_locations[[n]]$doc_id)) }
+  
+  ner_locations[[n]]$doc_id <- 
+    as.numeric(gsub("text", "", ner_locations[[n]]$doc_id)) }
 
 
 ############################################## 3 - NEIGHBOURHOOD SENTIMENT #################################################
 
 # Determine a community resistance index per neighbourhood
-  # Dependent on the number of mentions per neighbhourhood and the average sentiment of the articles
+# Dependent on the number of mentions per neighbhourhood and the average sentiment of the articles
 
 for (n in seq_along(cityname)) {
   
