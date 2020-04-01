@@ -42,14 +42,10 @@ media <-
 
 ############################### 2 - NAMED ENTITY RECOGNITION AND GEOCODING ################################################################## 
 
-# Where lem is the output from 
-# lem[[n]] <- 
-#   udpipe(media[[n]], object = english) 
-
 output <- 
-  map(lem, ~{
+  map(lemma_intermediate, ~{
     
-    # Isolate proper nouns
+# Isolate proper nouns
     
     .x <- 
       .x %>% 
@@ -58,32 +54,28 @@ output <-
       mutate(mid = TRUE) %>% 
       mutate(end = TRUE)
     
-    # However, some proper nouns are more than one word.
-    # These have to be joined accordingly, based on the term id.
+# However, some proper nouns are more than one word.
+# These have to be joined accordingly, based on the term id.
     
-    for (i in 1:nrow(.x)) {
-      
-      .x[i,] <- 
-        .x[i,] %>% 
-        mutate(mid = ifelse(term_id ==
+  for (i in 1:nrow(.x)) {
+    .x[i,] <- 
+       .x[i,] %>% 
+        mutate(mid = 
+                 ifelse(term_id ==
                               as.numeric(.x[i-1,] %>% 
-                                           dplyr::select(term_id) + 1), 
+                                         dplyr::select(term_id) + 1), 
                             TRUE, 
                             FALSE))
-      
     }  
     
-    # These must be kept in separate loops.
-    
-    for (i in 1:nrow(.x)) {
-      
+  for (i in 1:nrow(.x)) {
       .x[i,] <-
         .x[i,] %>%
-        mutate(end = ifelse(.x[i,]$mid == TRUE &
-                              .x[i+1,]$mid == FALSE,
-                            TRUE,
-                            FALSE))
-      
+        mutate(end = 
+                 ifelse(.x[i,]$mid == TRUE &
+                        .x[i+1,]$mid == FALSE,
+                          TRUE,
+                          FALSE))
     }
     
     .x <- 
@@ -96,20 +88,22 @@ output <-
       dplyr::select(-c(mid, end)) 
     
     
-    # Note: this portion CANNOT be run in parallel in terms of i.
+    .x[nrow(.x), ]$position = 
+      ifelse(.x[nrow(.x)-1, ]$position == "middle",
+             "end", 
+             "start")
+    
+# Note: this portion CANNOT be run in parallel in terms of i.
     for (i in nrow(.x):1) {
-      
       if  (.x[i,]$position == "end" |
            .x[i,]$position == "middle") {
-        
         .x[i-1,]$lemma = 
           paste(.x[i-1,]$lemma,
                 .x[i,]$lemma)
-        
       }
     }
     
-    # Create named entities table  
+# Create named entities table  
     ner <- 
       .x %>% 
       filter(position == "start") %>% 
@@ -131,24 +125,18 @@ ner <-
 
 # Clean the named entities by removing punctuation and making all lowercase
 output <- 
-  
   map(ner, ~{
     .x$entity <- 
       .x$entity %>% 
       gsub("[[:punct:]]", " ", .) %>% 
       tolower()
-    
   })
 
 ner <-
-  
   map2(ner, output, ~{
-    
     .x %>% 
       mutate(entity = .y)
-    
   })
-
 
 # Collapse the named entity recognition to reduce processing times and number of api queries
 ner_compressed <- 
@@ -157,7 +145,6 @@ ner_compressed <-
       dplyr::select(entity)
   }) %>% 
   distinct()
-
 
 # Load locations that have already been queried.
 load("data/locations.Rdata")
@@ -169,8 +156,8 @@ ner_compressed <-
 
 # Query Google to geocode the locations for their latitude and longitude
 # NOTE: IF THE API RUNS OUT DURING THE QUERY, JOIN THE OUTPUT (LOCATIONS_NEW) 
-# WITH EXISTING LOCATIONS (LINE 93), SAVE LOCATIONS (LINE 98), 
-# AND RERUN FROM LINE 83 ONWARDS 
+# WITH EXISTING LOCATIONS, SAVE LOCATIONS. 
+# AND RERUN. 
 locations_new <- 
   mutate_geocode(ner_compressed, entity)
 
