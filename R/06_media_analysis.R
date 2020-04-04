@@ -207,8 +207,7 @@ for (n in seq_along(cityname)) {
 for (n in seq_along(cityname)) {
   
   temp <- ner_locations[[n]] %>% 
-    left_join(media[[n]] %>% dplyr::select(c("ID", "sentiment")), 
-              by = c("doc_id" = "ID")) %>% 
+    left_join(media[[n]] %>% dplyr::select(c("doc_id", "sentiment"))) %>% 
     dplyr::select(c("doc_id", "neighbourhood", "sentiment")) %>% 
     st_drop_geometry() %>% 
     distinct()
