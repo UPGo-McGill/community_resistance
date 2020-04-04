@@ -528,15 +528,13 @@ lemmatizer <- function(.x) {
       mutate(lemmas = gsub('\\b\\w{1,2}\\b','', lemmas)) %>% 
       mutate(mentions = str_count(lem$lemmas, paste(airbnb, collapse="|"))) %>% 
       filter(mentions > 2) %>%
-      dplyr::select(-c(mentions)) %>%
-      mutate(doc_id = 1:n())
+      dplyr::select(-c(mentions))
     
     media <- 
       .x %>% 
       mutate(relevant = doc_id %in% as.numeric(lem$doc_id)) %>% 
       filter(relevant == TRUE) %>% 
-      dplyr::select(-relevant) %>% 
-      mutate(ID = 1:n())
+      dplyr::select(-relevant)
     
     list(media, lem, lem_initial)
     
