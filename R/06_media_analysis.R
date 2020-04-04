@@ -193,10 +193,11 @@ ner_locations <-
     filter(!is.na(neighbourhood))
 })
 
-for (n in seq_along(cityname)) {
-  
-  ner_locations[[n]]$doc_id <- 
-    as.numeric(gsub("text", "", ner_locations[[n]]$doc_id)) }
+# ONLY IF RAN WITH SPACY
+# for (n in seq_along(cityname)) {
+#   
+#   ner_locations[[n]]$doc_id <- 
+#     as.numeric(gsub("text", "", ner_locations[[n]]$doc_id)) }
 
 
 ############################################## 3 - NEIGHBOURHOOD SENTIMENT #################################################
