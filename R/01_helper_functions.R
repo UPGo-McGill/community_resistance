@@ -501,3 +501,47 @@ strr_principal_residence <-
     left_join(property, pr_table, by = "property_ID")
   }
 
+lemmatizer <- function(.x) {
+  
+  tryCatch({
+    
+    lem_initial <- 
+      udpipe(.x, object = english) 
+    
+    lem <- 
+      lem_initial %>% 
+      dplyr::select(c(doc_id, lemma)) %>% 
+      group_by(doc_id) %>% 
+      filter(lemma != "-PRON-") %>%
+      mutate(lemma = str_replace_all(lemma, "[^a-zA-Z0-9 ]", " ")) %>%
+      filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
+      mutate(lemma = strsplit(as.character(lemma), " ")) %>%
+      unnest(lemma) %>%
+      filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
+      dplyr::summarise(lemmas = paste(as.character(lemma), collapse = " ")) %>%
+      mutate(doc_id = as.numeric(paste(
+        flatten(str_extract_all(doc_id, "[[:digit:]]+"))))) %>%
+      arrange(doc_id) %>%
+      mutate_each(list(tolower)) %>%
+      mutate(lemmas = str_squish(str_replace_all(lemmas, "[^a-zA-Z0-9 ]", " "))
+      ) %>%
+      mutate(lemmas = gsub('\\b\\w{1,2}\\b','', lemmas)) %>% 
+      mutate(mentions = str_count(lem$lemmas, paste(airbnb, collapse="|"))) %>% 
+      filter(mentions > 2) %>%
+      dplyr::select(-c(mentions)) %>%
+      mutate(doc_id = 1:n())
+    
+    media <- 
+      .x %>% 
+      mutate(relevant = doc_id %in% as.numeric(lem$doc_id)) %>% 
+      filter(relevant == TRUE) %>% 
+      dplyr::select(-relevant) %>% 
+      mutate(ID = 1:n())
+    
+    list(media, lem, lem_initial)
+    
+  }, error = function(e) vector("list", 3))
+  
+}
+
+
