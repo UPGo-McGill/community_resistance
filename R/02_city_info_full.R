@@ -1,41 +1,30 @@
-######################################### CITY INFORMATION INPUT ########################################################
+##### 02. CITY INFORMATION INPUT ###############################################
 
 source("R/01_helper_functions.R")
 
-# List of city names
-  # These names correspond to folder titles
-# cityname_canada <- c("Calgary", "Edmonton", "Gatineau", "Halifax", 
-#                      "Hamilton", "Kitchener", "London", "Montreal", 
-#                      "Oshawa", "Ottawa", "Quebec", "Regina", 
-#                      "Saskatoon", "St. Catharines", "Toronto", 
-#                      "Vancouver", "Victoria", "Windsor", "Winnipeg")
-
 # note that there are two Glendales
-cityname  <- c("Albuquerque", "Anaheim", "Anchorage", "Arlington", "Atlanta", 
-                 "Aurora", "Austin", "Bakersfield", "Baltimore",
-                 "Baton Rouge", "Birmingham", "Boise", "Boston",
-                 "Buffalo", "Cincinnati", "Chandler", "Charlotte", "Chesapeake",
-                 "Chicago", "Chula Vista", "Cleveland", "Colorado Springs", 
-                 "Columbus", "Corpus Christi",  "Dallas", "Denver", "Des Moines", 
-                 "Detroit", "Durham", "El Paso", "Fayetteville", "Fontana", 
-                 "Fort Wayne", "Fort Worth", "Fremont", "Fresno", "Garland", 
-                 "Gilbert", "Glendale", "Glendale", "Grand Rapids", 
-                 "Greensboro", "Henderson", "Hialeah", "Honolulu", "Houston", 
-                 "Huntington Beach", "Indianapolis", "Irvine", "Irving", "Jacksonville", 
-                 "Jersey City", "Kansas City", "Laredo", "Las Vegas", "Lexington", 
-                 "Lincoln", "Long Beach", "Los Angeles", "Louisville", "Lubbock", 
-                 "Madison", "Memphis", "Mesa", "Miami", "Milwaukee", "Minneapolis", "Modesto", 
-                 "Moreno Valley", "Nashville", "New Orleans", "New York", "Newark",
-                 "Norfolk", "North Las Vegas", "Oakland", "Oklahoma City", "Omaha",
-                 "Orlando", "Oxnard", "Philadelphia", "Phoenix", "Pittsburgh", "Plano", 
-                 "Portland", "Raleigh", "Reno", "Richmond", "Riverside", "Rochester", 
-                 "Sacramento", "Saint Louis", "Saint Paul", "Saint Petersburg", "Salt Lake City", 
-                 "San Antonio", "San Bernardino", "San Diego", "San Francisco", "San Jose", 
-                 "Santa Ana", "Santa Clarita", "Scottsdale", "Seattle", "Spokane", "Stockton", 
-                 "Tacoma", "Tampa", "Toledo", "Tucson", "Tulsa", "Virginia Beach", "Washington", 
-                 "Wichita", "Winston Salem")
-
-# cityname = c(cityname_canada, cityname_us)
+cityname  <- 
+  c("Albuquerque", "Anaheim", "Anchorage", "Arlington", "Atlanta", "Aurora", 
+    "Austin", "Bakersfield", "Baltimore", "Baton Rouge", "Birmingham", "Boise", 
+    "Boston", "Buffalo", "Cincinnati", "Chandler", "Charlotte", "Chesapeake",
+    "Chicago", "Chula Vista", "Cleveland", "Colorado Springs", "Columbus", 
+    "Corpus Christi",  "Dallas", "Denver", "Des Moines", "Detroit", "Durham", 
+    "El Paso", "Fayetteville", "Fontana", "Fort Wayne", "Fort Worth", "Fremont", 
+    "Fresno", "Garland", "Gilbert", "Glendale", "Glendale", "Grand Rapids", 
+    "Greensboro", "Henderson", "Hialeah", "Honolulu", "Houston", 
+    "Huntington Beach", "Indianapolis", "Irvine", "Irving", "Jacksonville", 
+    "Jersey City", "Kansas City", "Laredo", "Las Vegas", "Lexington", 
+    "Lincoln", "Long Beach", "Los Angeles", "Louisville", "Lubbock", 
+    "Madison", "Memphis", "Mesa", "Miami", "Milwaukee", "Minneapolis", 
+    "Modesto", "Moreno Valley", "Nashville", "New Orleans", "New York", 
+    "Newark", "Norfolk", "North Las Vegas", "Oakland", "Oklahoma City", "Omaha",
+    "Orlando", "Oxnard", "Philadelphia", "Phoenix", "Pittsburgh", "Plano", 
+    "Portland", "Raleigh", "Reno", "Richmond", "Riverside", "Rochester", 
+    "Sacramento", "Saint Louis", "Saint Paul", "Saint Petersburg", 
+    "Salt Lake City", "San Antonio", "San Bernardino", "San Diego", 
+    "San Francisco", "San Jose", "Santa Ana", "Santa Clarita", "Scottsdale", 
+    "Seattle", "Spokane", "Stockton", "Tacoma", "Tampa", "Toledo", "Tucson", 
+    "Tulsa", "Virginia Beach", "Washington", "Wichita", "Winston Salem")
 
 # Neighbourhood geometries
 neighbourhoods  <- list("Albuquerque" = import_puma("NM") %>% 
@@ -81,14 +70,16 @@ neighbourhoods  <- list("Albuquerque" = import_puma("NM") %>%
                           "Cleveland" = import_puma("OH") %>% 
                             filter(str_detect(neighbourhood, "Cleveland")), 
                           "Colorado Springs" = import_puma("CO") %>% 
-                            filter(str_detect(neighbourhood, "Colorado Springs")),
+                            filter(str_detect(neighbourhood, "Colorado Springs")
+                                   ),
                           "Columbus" = import_puma("OH") %>% 
                             filter(str_detect(neighbourhood, "Columbus")), 
                           "Corpus Christi" = import_puma("TX") %>% 
                             filter(str_detect(neighbourhood, "Corpus")),  
                           "Dallas" = import_puma("TX") %>% 
                             filter(str_detect(neighbourhood, "Dallas")) %>% 
-                            filter(str_detect(neighbourhood, "Dallas County", negate = TRUE)),
+                            filter(str_detect(neighbourhood, "Dallas County", 
+                                              negate = TRUE)),
                           "Denver" = import_puma("CO") %>% 
                             filter(str_detect(neighbourhood, "Denver")), 
                           "Des Moines" = import_puma("IA") %>% 
@@ -131,9 +122,11 @@ neighbourhoods  <- list("Albuquerque" = import_puma("NM") %>%
                             filter(str_detect(neighbourhood, "Honolulu")), 
                           "Houston" = import_puma("TX") %>% 
                             filter(str_detect(neighbourhood, "Houston")) %>% 
-                            filter(str_detect(neighbourhood, "Houston-", negate = TRUE)), 
+                            filter(str_detect(neighbourhood, "Houston-", 
+                                              negate = TRUE)), 
                           "Huntington Beach" = import_puma("CA") %>% 
-                            filter(str_detect(neighbourhood, "Huntington Beach")), 
+                            filter(str_detect(neighbourhood, "Huntington Beach")
+                                   ), 
                           "Indianapolis" = import_puma("IN") %>% 
                             filter(str_detect(neighbourhood, "Indianapolis")), 
                           "Irvine" = import_puma("CA") %>% 
@@ -150,7 +143,8 @@ neighbourhoods  <- list("Albuquerque" = import_puma("NM") %>%
                             filter(str_detect(neighbourhood, "Laredo")), 
                           "Las Vegas" = import_puma("NV") %>% 
                             filter(str_detect(neighbourhood, "Vegas")) %>% 
-                            filter(str_detect(neighbourhood, "North Las Vegas", negate = TRUE)), 
+                            filter(str_detect(neighbourhood, "North Las Vegas", 
+                                              negate = TRUE)), 
                           "Lexington" = import_puma("KY") %>% 
                             filter(str_detect(neighbourhood, "Lexington")), 
                           "Lincoln" = import_puma("NE") %>% 
@@ -171,9 +165,12 @@ neighbourhoods  <- list("Albuquerque" = import_puma("NM") %>%
                             filter(str_detect(neighbourhood, "Mesa")), 
                           "Miami" = import_puma("FL") %>% 
                             filter(str_detect(neighbourhood, "Miami City") |
-                                   str_detect(neighbourhood, "Miami Beach City") |
-                                   str_detect(neighbourhood, "Miami Springs City") |
-                                   str_detect(neighbourhood, "Miami Gardens City") |
+                                   str_detect(neighbourhood, 
+                                              "Miami Beach City") |
+                                   str_detect(neighbourhood, 
+                                              "Miami Springs City") |
+                                   str_detect(neighbourhood, 
+                                              "Miami Gardens City") |
                                    str_detect(neighbourhood, "Greater Miami")),
                           "Milwaukee" = import_puma("WI") %>% 
                             filter(str_detect(neighbourhood, "Milwaukee")),
@@ -194,7 +191,8 @@ neighbourhoods  <- list("Albuquerque" = import_puma("NM") %>%
                           "Norfolk" = import_puma("VA") %>% 
                             filter(str_detect(neighbourhood, "Norfolk")), 
                           "North Las Vegas" = import_puma("NV") %>% 
-                            filter(str_detect(neighbourhood, "North Las Vegas")), 
+                            filter(str_detect(neighbourhood, "North Las Vegas")
+                                   ), 
                           "Oakland" = import_puma("CA") %>% 
                             filter(str_detect(neighbourhood, "Oakland")), 
                           "Oklahoma City" = import_puma("OK") %>% 
@@ -238,11 +236,13 @@ neighbourhoods  <- list("Albuquerque" = import_puma("NM") %>%
                           "San Antonio" = import_puma("TX") %>% 
                             filter(str_detect(neighbourhood, "Antonio")) , 
                           "San Bernardino" = import_puma("CA") %>% 
-                            filter(str_detect(neighbourhood, "Bernardino City")), 
+                            filter(str_detect(neighbourhood, "Bernardino City")
+                                   ), 
                           "San Diego" = import_puma("CA") %>% 
                             filter(str_detect(neighbourhood, "San Diego City") |
                                      str_detect(neighbourhood, "Dieguito") |
-                                     str_detect(neighbourhood, "Rancho Bernardo") |
+                                     str_detect(neighbourhood, 
+                                                "Rancho Bernardo") |
                                      str_detect(neighbourhood, "Navajo")), 
                           "San Francisco" = import_puma("CA") %>% 
                             filter(str_detect(neighbourhood, "San Francisco")), 

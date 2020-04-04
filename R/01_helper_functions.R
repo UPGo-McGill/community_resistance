@@ -1,4 +1,4 @@
-############# HELPER FUNCTIONS ##################
+#### 01. HELPER FUNCTIONS ######################################################
 
 # Install packages
 library(tm.plugin.lexisnexis)
@@ -36,9 +36,9 @@ library(cowplot)
 library(dplyr)
 library(tibble)
 library(devtools)
-devtools::install_github("UPGo-McGill/strr")
+# devtools::install_github("UPGo-McGill/strr")
 library(strr)
-devtools::install_github("UPGo-McGill/upgo")
+# devtools::install_github("UPGo-McGill/upgo")
 library(upgo)
 library(tidyr)
 library(SentimentAnalysis)
@@ -46,18 +46,18 @@ library(glmnet)
 library(SnowballC)
 library(lubridate)
 library(future)
-# plan(upgo)
-# plan(multiprocess)
 library(udpipe)
 
-# Note: spaCy requires the user to download a version of miniconda and follow a set of instructions to set up
+# Note: spaCy requires the user to download a version of miniconda and follow a 
+# set of instructions to set up
 
 # Run Canadian census API key
 # options(cancensus.api_key = "")
 # options(cancensus.cache_path = "path")
 
 # Run US census API key
-# census_api_key("dab993e99dc7faf74295fc559dc2e1764b60e6b9", install = TRUE, overwrite = TRUE)
+# census_api_key("dab993e99dc7faf74295fc559dc2e1764b60e6b9", install = TRUE, 
+               # overwrite = TRUE)
 
 # Run Google Maps API Key
 #register_google(key = "", write = TRUE)
@@ -67,8 +67,8 @@ import_puma <- function(state) {
   pumas(state, class = "sf") %>% 
     st_transform(102009) %>%
     mutate(neighbourhood = NAMELSAD10) %>% 
-    dplyr::select(-GEOID10, -NAMELSAD10, -STATEFP10, -MTFCC10, -FUNCSTAT10, -ALAND10,
-                  -AWATER10, -INTPTLAT10, -INTPTLON10) %>% 
+    dplyr::select(-GEOID10, -NAMELSAD10, -STATEFP10, -MTFCC10, -FUNCSTAT10, 
+                  -ALAND10, -AWATER10, -INTPTLAT10, -INTPTLON10) %>% 
     dplyr::select(CODE_ID = PUMACE10, neighbourhood, geometry)
 }
 
@@ -82,18 +82,23 @@ import_factiva <- function(cityname) {
   
   corpus <- 
     map(files, ~{
-      tm:::c.VCorpus(Corpus(FactivaSource(paste(path, "FTV", .x, sep = "/")), list(language = NA)))
+      tm:::c.VCorpus(Corpus(FactivaSource(paste(path, "FTV", .x, sep = "/")), 
+                            list(language = NA)))
     }) %>% do.call(c, .)
   
-  media_FTV <- tibble(Source_ID = numeric(0), Newspaper = character(0), Date = character(0), 
-                      Word_Count = numeric(0), Section = character(0), Author = character(0), 
-                      Edition = character(0), Headline = character(0), Article = character(0))
+  media_FTV <- tibble(Source_ID = numeric(0), Newspaper = character(0), 
+                      Date = character(0), 
+                      Word_Count = numeric(0), Section = character(0), 
+                      Author = character(0), 
+                      Edition = character(0), Headline = character(0), 
+                      Article = character(0))
   
   for (n in c(1:length(corpus))) {
     
     media_FTV[n,1] = paste("FTV", n)
     media_FTV[n,2] = paste(corpus[[n]]$meta$origin, collapse="")
-    media_FTV[n,3] = paste(as.character(corpus[[n]]$meta$datetimestamp), collapse = "")
+    media_FTV[n,3] = paste(as.character(corpus[[n]]$meta$datetimestamp), 
+                           collapse = "")
     media_FTV[n,4] = paste(corpus[[n]]$meta$wordcount, collapse = "")
     media_FTV[n,5] = paste(corpus[[n]]$meta$section, collapse = "")
     media_FTV[n,6] = paste(corpus[[n]]$meta$author,collapse = "") 
@@ -117,7 +122,8 @@ files <- list.files(path = paste(path, "LN", sep = "/"))
 
 media_LN <- map_dfr(files, ~{
   lnt_read(paste(path, "LN", .x, sep = "/"))@meta %>% 
-          right_join(lnt_read(paste(path, "LN", .x, sep = "/"))@articles, by = "ID") %>% 
+          right_join(lnt_read(paste(path, "LN", .x, sep = "/"))@articles, 
+                     by = "ID") %>% 
     dplyr::select(-c("Source_File", "Graphic", "ID"))
 })
 
@@ -157,27 +163,32 @@ lemmatized_articles <- spacy_articles%>%
   unnest(lemma) %>%
   filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
   dplyr::summarise(lemmas = paste(as.character(lemma), collapse = " ")) %>%
-  mutate(doc_id = as.numeric(paste(flatten(str_extract_all(doc_id,"[[:digit:]]+"))))) %>%
+  mutate(doc_id = as.numeric(paste(flatten(str_extract_all(
+    doc_id,"[[:digit:]]+"))))) %>%
   arrange(doc_id) %>%
   mutate_each(list(tolower)) %>%
   mutate(lemmas = str_squish(str_replace_all(lemmas, "[^a-zA-Z0-9 ]", " "))) %>%
   mutate(lemmas = gsub('\\b\\w{1,2}\\b','', lemmas))
 
 # Search for Airbnb mentions in the cleaned text
-airbnb <- c("airbnb", "homeshar", "home shar", "shortterm", "short term", "str ", "strs", "guest",
-            "shortstay", "short stay", "home stay", "homestay", "hotel", "home share", "airbnb host",
-            "host", "home sharing", "homeshare", "homesharing", "timeshare", "letting", "shortterm rental",
-            "longterm", "rental", "legislation", "short term rental", "hotelization", "legalization", 
-            "homeaway", "vrbo", "rent", "market", "tenant", "home", "house", "apartment", "condo")
+airbnb <- c("airbnb", "homeshar", "home shar", "shortterm", "short term", 
+            "str ", "strs", "guest", "shortstay", "short stay", "home stay", 
+            "homestay", "hotel", "home share", "airbnb host", "host", 
+            "home sharing", "homeshare", "homesharing", "timeshare", "letting", 
+            "shortterm rental", "longterm", "rental", "legislation", 
+            "short term rental", "hotelization", "legalization", "homeaway", 
+            "vrbo", "rent", "market", "tenant", "home", "house", "apartment", 
+            "condo")
 
 lemmatized_articles <- lemmatized_articles %>% 
   mutate(mentions = 
-           str_count(lemmatized_articles$lemmas, paste(airbnb, collapse="|"))) %>% 
+           str_count(lemmatized_articles$lemmas, paste(airbnb, collapse="|"))
+         ) %>% 
   filter(mentions > 2) %>%
   dplyr::select(-c(mentions)) 
 
 
-# Trim the original media files to include only those that mention Airbnb more than twice
+# Trim the original media files to include only those that mention Airbnb > 2
 media <- media %>% 
   mutate(relevant = media$ID %in% lemmatized_articles$doc_id) %>% 
   filter(relevant == TRUE) %>% 
@@ -255,8 +266,8 @@ overdisp_fun <- function(model) {
 
 # Bivariate plotting
 
-bivariate_mapping <- function(data, cityname, var1, var2, quantiles_var1 = NULL, quantiles_var2 = NULL,  
-                              title, xlab, ylab) {
+bivariate_mapping <- function(data, cityname, var1, var2, quantiles_var1 = NULL, 
+                              quantiles_var2 = NULL, title, xlab, ylab) {
  
   
   # Set up mapping theme
@@ -412,7 +423,8 @@ strr_principal_residence <-
       daily %>% 
       group_by(property_ID) %>% 
       summarize(ML = if_else(
-        sum(multi * (date >= start_date)) + sum(multi * (date <= end_date)) >= sens_n, 
+        sum(multi * (date >= start_date)) + sum(multi * (date <= end_date)
+                                                ) >= sens_n, 
         TRUE, FALSE))
    
      pr_n <-
