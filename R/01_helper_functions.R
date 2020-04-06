@@ -510,7 +510,7 @@ lemmatizer <- function(.x) {
     
     lem <- 
       lem_initial %>% 
-      dplyr::select(c(doc_id, lemma)) %>% 
+      dplyr::select(doc_id, lemma) %>% 
       group_by(doc_id) %>% 
       filter(lemma != "-PRON-") %>%
       mutate(lemma = str_replace_all(lemma, "[^a-zA-Z0-9 ]", " ")) %>%
@@ -526,17 +526,13 @@ lemmatizer <- function(.x) {
       mutate(lemmas = str_squish(str_replace_all(lemmas, "[^a-zA-Z0-9 ]", " "))
       ) %>%
       mutate(lemmas = gsub('\\b\\w{1,2}\\b','', lemmas)) %>% 
-      mutate(mentions = str_count(lem$lemmas, paste(airbnb, collapse="|"))) %>% 
-      filter(mentions > 2) %>%
-      dplyr::select(-c(mentions))
+      filter(str_count(lemmas, paste(airbnb, collapse="|")) > 2)
     
-    media <- 
+    media_entry <- 
       .x %>% 
-      mutate(relevant = doc_id %in% as.numeric(lem$doc_id)) %>% 
-      filter(relevant == TRUE) %>% 
-      dplyr::select(-relevant)
+      filter(doc_id %in% as.numeric(lem$doc_id))
     
-    list(media, lem, lem_initial)
+    list(media_entry, lem, lem_initial)
     
   }, error = function(e) vector("list", 3))
   

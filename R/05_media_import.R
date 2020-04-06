@@ -1,24 +1,51 @@
-######################################### MEDIA IMPORT ###############################
+#### 05. MEDIA IMPORT ##########################################################
 
 source("R/01_helper_functions.R")
-library(future)
-plan(multiprocess, workers = 20)
-library(furrr)
 
-# Import lexisnexis files
+library(future)
+library(furrr)
+plan(multiprocess, workers = 30)
+options(future.globals.maxSize = +Inf)
+
+
+### Import and preparation #####################################################
+
+## Import lexisnexis files
 
 media <- 
-  
   map(cityname, ~{
-    
     import_lexisnexis(.x) %>% 
       dplyr::select(1:9) %>% 
       group_by(Author) %>% 
       filter(as.numeric(Word_Count) > 100) %>% 
       distinct(Headline, .keep_all = TRUE) %>% 
       ungroup()
-    
   })
+
+# Assign a doc_id and text field for processing
+media <- 
+  future_map(media, ~{
+    .x %>% mutate(doc_id = 1:n()) %>% rename(text = Article)
+  })
+
+
+## Reorder media, cityname and neighbourhoods from fewest to most media articles
+
+media_order <- order(map_int(media, nrow))
+cityname <- cityname[media_order]
+media <- media[media_order]
+neighbourhoods <- neighbourhoods[media_order]
+
+# Save files for processing
+save(media, neighbourhoods, cityname, media_order, 
+     file = "data/lemma_prep.Rdata")
+
+
+### Lemmatize articles #########################################################
+
+model <- udpipe_download_model("english")
+
+english <- udpipe_load_model(model)
 
 # Tidy text
 airbnb <- 
@@ -31,269 +58,59 @@ airbnb <-
     "house", "apartment", "condo")
 
 
-### USING UDPIPE ##########
-
-model <- udpipe_download_model("english")
-
-english <- udpipe_load_model(model)
-
-# Assign a doc_id and text field for processing
-media <- 
-  future_map(media, ~{
-    
-    .x %>% 
-      mutate(doc_id = 1:n(),
-             text = Article)
-    
-  })
+# Lemmatize the articles to refine results and prepare for NER
+output_1 <- future_map(media[1:60], lemmatizer, .progress = TRUE)
+output_2 <- future_map(media[61:90], lemmatizer, .progress = TRUE)
+output_3 <- map(media[91:100], ~{
+  .x %>% group_split(ceiling(doc_id / ceiling(nrow(.x) / 30)), keep = FALSE) %>% 
+    future_map(lemmatizer, .progress = TRUE)})
+output_4 <- map(media[101:110], ~{
+  .x %>% group_split(ceiling(doc_id / ceiling(nrow(.x) / 30)), keep = FALSE) %>% 
+    future_map(lemmatizer, .progress = TRUE)})
+output_5 <- map(media[111:115], ~{
+  .x %>% group_split(ceiling(doc_id / ceiling(nrow(.x) / 30)), keep = FALSE) %>% 
+    future_map(lemmatizer, .progress = TRUE)})
 
 
-# Lemmatize the articles to refine results and prepare for 
-# named entity recognition
+## Consolidate then split up output and clean up
 
-output <- 
-  future_map(media, ~{
-  
-    tryCatch({
-      lem_initial <- 
-        udpipe(.x, object = english) %>% 
-        dplyr::select(c(doc_id, lemma))
-      
-      lem <- 
-        lem_initial %>% 
-        group_by(doc_id) %>% 
-        filter(lemma != "-PRON-") %>%
-        mutate(lemma = str_replace_all(lemma, "[^a-zA-Z0-9 ]", " ")) %>%
-        filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
-        mutate(lemma = strsplit(as.character(lemma), " ")) %>%
-        unnest(lemma) %>%
-        filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
-        dplyr::summarise(lemmas = paste(as.character(lemma), collapse = " ")) %>%
-        mutate(doc_id = as.numeric(paste(flatten(str_extract_all(doc_id, 
-                                                                 "[[:digit:]]+"))))) %>%
-        arrange(doc_id) %>%
-        mutate_each(list(tolower)) %>%
-        mutate(lemmas = str_squish(str_replace_all(lemmas, "[^a-zA-Z0-9 ]", " "))) %>%
-        mutate(lemmas = gsub('\\b\\w{1,2}\\b','', lemmas))
-      
-      lem <- 
-        lem %>% 
-        mutate(mentions = 
-                 str_count(lem$lemmas, paste(airbnb, collapse="|"))) %>% 
-        filter(mentions > 2) %>%
-        dplyr::select(-c(mentions)) 
-      
-      .x <- 
-        .x %>% 
-        mutate(relevant = doc_id %in% as.numeric(lem$doc_id)) %>% 
-        filter(relevant == TRUE) %>% 
-        dplyr::select(-relevant) %>% 
-        mutate(ID = 1:n())
-      
-      lem <-
-        lem %>%
-        mutate(doc_id = 1:n())
-      
-      list(.x, lem, lem_initial)
-    }, error = function(e)  vector("list", 3))
-    
-}, .progress = TRUE)
+output_3 <- 
+  output_3 %>% 
+  map(~list(
+    map_dfr(.x, function(x) x[[1]]),
+    map_dfr(.x, function(x) x[[2]]),
+    map_dfr(.x, function(x) x[[3]])
+    ))
+
+output_4 <- 
+  output_4 %>% 
+  map(~list(
+    map_dfr(.x, function(x) x[[1]]),
+    map_dfr(.x, function(x) x[[2]]),
+    map_dfr(.x, function(x) x[[3]])
+  ))
+
+output_5 <- 
+  output_5 %>% 
+  map(~list(
+    map_dfr(.x, function(x) x[[1]]),
+    map_dfr(.x, function(x) x[[2]]),
+    map_dfr(.x, function(x) x[[3]])
+  ))
 
 
-media <-
-  map(output, ~{.x[[1]]})
+output <- c(output_1, output_2, output_3, output_4, output_5)
+rm(output_1, output_2, output_3, output_4, output_5)
 
-lemmatized_articles <- 
-  map(output, ~{.x[[2]]})
-
-lemma_intermediate <- 
-  map(output, ~.x[[3]])
+media <- map(output, ~.x[[1]])
+lemmatized_articles <- map(output, ~.x[[2]])
+lemma_intermediate <- map(output, ~.x[[3]])
 
 
+## Clean up
 
+rm(airbnb, english, model, output)
 
-### USING SPACY ###########
-# # Parse and lemmatize text. Remove articles that mention STRs less than thrice.
-# # Must be done in batches of 200 articles otherwise R aborts.
-# 
-# # I have been doing this in batches a few cities at a time.
-#
-# spacy_initialize()
-# 
-# for (n in 13:15) {
-#   
-#   lem_articles_temp = list()
-#   media_temp = list()
-#   
-#   if(nrow(media[[n]]) < 200) {
-#     
-#     media_temp[[1]] <- 
-#       media[[n]][1:nrow(media[[n]]),]
-#     
-#     media_temp[[1]] <- 
-#       media_temp[[1]] %>% 
-#       mutate(ID = 1:nrow(media[[n]]))
-#     
-#     spacy_articles <- 
-#       spacy_parse(as.character(media_temp[[1]]$Article),
-#                   pos = FALSE, entity = FALSE, tag = FALSE)
-#     
-#     spacy_articles <- 
-#       spacy_articles %>% 
-#       mutate(doc_id = as.numeric(str_remove(spacy_articles$doc_id, "text")))
-#     
-#     lem_articles_temp[[1]] <-
-#       spacy_articles %>%
-#       group_by(doc_id) %>%
-#       filter(lemma != "-PRON-") %>%
-#       mutate(lemma = str_replace_all(lemma, "[^a-zA-Z0-9 ]", " ")) %>%
-#       filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
-#       mutate(lemma = strsplit(as.character(lemma), " ")) %>%
-#       unnest(lemma) %>%
-#       filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
-#       dplyr::summarise(lemmas = paste(as.character(lemma), collapse = " ")) %>%
-#       mutate(doc_id = as.numeric(paste(flatten(str_extract_all(doc_id,"[[:digit:]]+"))))) %>%
-#       arrange(doc_id) %>%
-#       mutate_each(list(tolower)) %>%
-#       mutate(lemmas = str_squish(str_replace_all(lemmas, "[^a-zA-Z0-9 ]", " "))) %>%
-#       mutate(lemmas = gsub('\\b\\w{1,2}\\b','', lemmas))
-#     
-#     lem_articles_temp[[1]] <- 
-#       lem_articles_temp[[1]] %>% 
-#       mutate(mentions = 
-#                str_count(lem_articles_temp[[1]]$lemmas, paste(airbnb, collapse="|"))) %>% 
-#       filter(mentions > 2) %>%
-#       dplyr::select(-c(mentions)) 
-#     
-#     media_temp[[1]] <- 
-#       media_temp[[1]] %>% 
-#       mutate(relevant = media_temp[[1]]$ID %in% as.numeric(lem_articles_temp[[1]]$doc_id)) %>% 
-#       filter(relevant == TRUE) %>% 
-#       dplyr::select(-relevant)
-#     
-#   } else {
-#     
-#     for (i in 1:floor(nrow(media[[n]])/200)) {
-#       
-#       media_temp[[i]] <- 
-#         media[[n]][(i*200-199):(i*200),]
-#       
-#       media_temp[[i]] <- 
-#         media_temp[[i]] %>% 
-#         mutate(ID = 1:200)
-#       
-#       spacy_articles <- 
-#         spacy_parse(as.character(media_temp[[i]]$Article),
-#                     pos = FALSE, entity = FALSE, tag = FALSE)
-#       
-#       spacy_articles <- 
-#         spacy_articles %>% 
-#         mutate(doc_id = as.numeric(str_remove(spacy_articles$doc_id, "text")))
-#       
-#       lem_articles_temp[[i]] <-
-#         spacy_articles %>%
-#         group_by(doc_id) %>%
-#         filter(lemma != "-PRON-") %>%
-#         mutate(lemma = str_replace_all(lemma, "[^a-zA-Z0-9 ]", " ")) %>%
-#         filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
-#         mutate(lemma = strsplit(as.character(lemma), " ")) %>%
-#         unnest(lemma) %>%
-#         filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
-#         dplyr::summarise(lemmas = paste(as.character(lemma), collapse = " ")) %>%
-#         mutate(doc_id = as.numeric(paste(flatten(str_extract_all(doc_id,"[[:digit:]]+"))))) %>%
-#         arrange(doc_id) %>%
-#         mutate_each(list(tolower)) %>%
-#         mutate(lemmas = str_squish(str_replace_all(lemmas, "[^a-zA-Z0-9 ]", " "))) %>%
-#         mutate(lemmas = gsub('\\b\\w{1,2}\\b','', lemmas))
-#       
-#       lem_articles_temp[[i]] <- 
-#         lem_articles_temp[[i]] %>% 
-#         mutate(mentions = 
-#                  str_count(lem_articles_temp[[i]]$lemmas, paste(airbnb, collapse="|"))) %>% 
-#         filter(mentions > 2) %>%
-#         dplyr::select(-c(mentions)) 
-#       
-#       media_temp[[i]] <- 
-#         media_temp[[i]] %>% 
-#         mutate(relevant = media_temp[[i]]$ID %in% as.numeric(lem_articles_temp[[i]]$doc_id)) %>% 
-#         filter(relevant == TRUE) %>% 
-#         dplyr::select(-relevant)
-#       
-#     }
-#     
-#     i = i + 1
-#     
-#     media_temp[[i]] <- 
-#       media[[n]][(i*200-199):nrow(media[[n]]),]
-#     
-#     media_temp[[i]] <- 
-#       media_temp[[i]] %>% 
-#       mutate(ID = 1:nrow(media_temp[[i]]))
-#     
-#     spacy_articles <- 
-#       spacy_parse(as.character(media_temp[[i]]$Article),
-#                   pos = FALSE, entity = FALSE, tag = FALSE)
-#     
-#     spacy_articles <- 
-#       spacy_articles %>% 
-#       mutate(doc_id = as.numeric(str_remove(spacy_articles$doc_id, "text")))
-#     
-#     lem_articles_temp[[i]] <-
-#       spacy_articles %>%
-#       group_by(doc_id) %>%
-#       filter(lemma != "-PRON-") %>%
-#       mutate(lemma = str_replace_all(lemma, "[^a-zA-Z0-9 ]", " ")) %>%
-#       filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
-#       mutate(lemma = strsplit(as.character(lemma), " ")) %>%
-#       unnest(lemma) %>%
-#       filter(!lemma %in% filter(stop_words, lexicon == "snowball")$word) %>%
-#       dplyr::summarise(lemmas = paste(as.character(lemma), collapse = " ")) %>%
-#       mutate(doc_id = as.numeric(paste(flatten(str_extract_all(doc_id,"[[:digit:]]+"))))) %>%
-#       arrange(doc_id) %>%
-#       mutate_each(list(tolower)) %>%
-#       mutate(lemmas = str_squish(str_replace_all(lemmas, "[^a-zA-Z0-9 ]", " "))) %>%
-#       mutate(lemmas = gsub('\\b\\w{1,2}\\b','', lemmas))
-#     
-#     lem_articles_temp[[i]] <- 
-#       lem_articles_temp[[i]] %>% 
-#       mutate(mentions = 
-#                str_count(lem_articles_temp[[i]]$lemmas, paste(airbnb, collapse="|"))) %>% 
-#       filter(mentions > 2) %>%
-#       dplyr::select(-c(mentions)) 
-#     
-#     media_temp[[i]] <- 
-#       media_temp[[i]] %>% 
-#       mutate(relevant = media_temp[[i]]$ID %in% as.numeric(lem_articles_temp[[i]]$doc_id)) %>% 
-#       filter(relevant == TRUE) %>% 
-#       dplyr::select(-relevant)
-#     
-#   }
-#   
-#   
-# # Compile to the city level
-#   
-#   media_parsed[[n]] = do.call(rbind, media_temp)
-#   
-#   lemmatized_articles[[n]] = do.call(rbind, lem_articles_temp)
-# 
-# # Assign ID for further text processing
-#   
-#   media_parsed[[n]] <-
-#     media_parsed[[n]] %>% 
-#     mutate(ID = 1:nrow(media_parsed[[n]]))
-#   
-#   lemmatized_articles[[n]] <- 
-#     lemmatized_articles[[n]] %>% 
-#     mutate(doc_id = 1:nrow(lemmatized_articles[[n]]))
-#   
-# }
-# 
-# # Saving in case of crash
-# 
-# save(media_parsed, file = "data/media_parsed.Rdata")
-# save(lemmatized_articles, file = "data/lemmatized_articles.Rdata")
-# 
-# # Set media_parsed as media and archive the original media file
-# # media <- 
-# #   media_parsed
-# 
+save(media, neighbourhoods, lemmatized_articles, lemma_intermediate, cityname,
+     media_order, file = "data/end_of_script_5.Rdata")
+
