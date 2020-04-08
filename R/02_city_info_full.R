@@ -110,8 +110,8 @@ neighbourhoods  <- list("Albuquerque" = import_puma("NM") %>%
                             filter(str_detect(neighbourhood, "Glendale")), 
                           "Glendale CA" = import_puma("CA") %>% 
                             filter(str_detect(neighbourhood, "Glendale")), 
-                          "Grand Rapids" = import_puma("TX") %>% 
-                            filter(str_detect(neighbourhood, "Garland")), 
+                          "Grand Rapids" = import_puma("MI") %>% 
+                            filter(str_detect(neighbourhood, "Grand Rapids")), 
                           "Greensboro" = import_puma("NC") %>% 
                             filter(str_detect(neighbourhood, "Greensboro")), 
                           "Henderson" = import_puma("NV") %>% 
