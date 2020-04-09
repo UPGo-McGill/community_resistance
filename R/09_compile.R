@@ -7,9 +7,15 @@ source("R/01_helper_functions.R")
 neighbourhoods <-
   map2(neighbourhoods, cityname, ~{
     .x %>% 
-      mutate(geometry = st_union(st_collection_extract(geometry, "MULTIPOLYGON")),
+      mutate(
+        #geometry = st_union(st_collection_extract(geometry, "MULTIPOLYGON")),
              city = .y)
   })
+
+
+neighbourhoods_table <- 
+  do.call(rbind, neighbourhoods)
+
 
 # # Add country field
 # neighbourhoods_table <- 
@@ -24,3 +30,4 @@ neighbourhoods <-
 #   dplyr::select(-NAME)
 #  
 # 
+
