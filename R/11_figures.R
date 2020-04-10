@@ -23,7 +23,7 @@ media_table %>%
   ggplot(aes(x = month_yr, y = n)) +
   geom_area() +
   stat_smooth(
-    geom = 'area', method = 'loess', span = 1/3,
+    geom = 'area', method = 'loess', span = 1/5,
     alpha = 1/2, fill = "orange")
 
 # Regional number of articles over time
@@ -36,7 +36,7 @@ media_table %>%
   ggplot(aes(x = month_yr, y = n)) +
   geom_area() +
   stat_smooth(
-    geom = 'area', method = 'loess', span = 1/3,
+    geom = 'area', method = 'loess', span = 1/5,
     alpha = 1/2, fill = "orange") +
   facet_wrap(vars(region))
 
@@ -67,11 +67,15 @@ media_table %>%
   group_by(city, month_yr) %>% 
   count() %>%
   ggplot(aes(x = month_yr, y = n)) +
-  geom_area() +
+  #geom_area() +
   stat_smooth(
-    geom = 'area', method = 'loess', span = 1/3,
+    geom = 'area', method = 'loess', span = 1/5,
     alpha = 1/2, fill = "orange") +
   facet_wrap(vars(city)) 
+
+cities <- 
+  cities_media[5:13,1] %>% 
+  do.call(paste, .)
 
 media_table %>% 
   filter(Date >= "2015-01-01" &
@@ -79,8 +83,12 @@ media_table %>%
   filter(city %in% cities) %>% 
   group_by(city, month_yr) %>% 
   count() %>%
-  ggplot(aes(x = month_yr, y = n, fill = city)) +
-  geom_area()
+  ggplot(aes(x = month_yr, y = n)) +
+  geom_area(aes(alpha = 0.2)) +
+  stat_smooth(
+    geom = 'area', method = 'loess', span = 1/5,
+    alpha = 1/2, fill = "orange") +
+  facet_wrap(vars(city)) 
 
 ##### SENTIMENT
 
@@ -141,34 +149,71 @@ media_table %>%
             #  color = "black") +
   facet_wrap(vars(city))
 
+##### COMMUNITY RESISTANCE INDEX
 
+# Country CRI over time
 
+media_table %>% 
+  filter(Date >= "2015-01-01") %>% 
+  group_by(month_yr) %>% 
+  summarize(sentiment = mean(sentiment, na.rm = TRUE),
+            articles = n()) %>% 
+  mutate(CRI = -1 * sentiment * articles) %>% 
+  ggplot(aes(month_yr, CRI)) +
+  geom_smooth()
 
+# Region CRI over time
 
+media_table %>% 
+  filter(Date >= "2015-01-01") %>% 
+  group_by(region, month_yr) %>% 
+  summarize(sentiment = mean(sentiment, na.rm = TRUE),
+            articles = n()) %>% 
+  mutate(CRI = -1 * sentiment * articles) %>% 
+  ggplot(aes(month_yr, CRI)) +
+  geom_smooth() +
+  facet_wrap(vars(region))
 
+# City CRI over time
 
-
-
-
-
-
-
-# Certain words over time?
-  # eviction, gentrification, displacement
-
-# CRI over time by region
-
-
-# CRI grouped by city
-
-neighbourhoods_table %>% 
+cities_media <- 
+  media_table %>% 
   group_by(city) %>% 
-  summarise(mean = mean(CRI, na.rm = TRUE)) %>% 
-  st_drop_geometry() %>% 
-  ggplot(aes(mean)) +
-  geom_bar()
+  count() %>% 
+  arrange(desc(n))
 
-# CRI over time by entire country
+cities <- 
+  cities_media[1:4,1] %>% 
+  do.call(paste, .)
+
+media_table %>% 
+  filter(Date >= "2015-01-01" &
+           Date <= "2019-12-31") %>% 
+  filter(city %in% cities) %>% 
+  group_by(city, month_yr) %>% 
+  summarize(sentiment = mean(sentiment, na.rm = TRUE),
+            articles = n()) %>% 
+  mutate(CRI = -1 * sentiment * articles) %>% 
+  ggplot(aes(month_yr, CRI)) +
+  geom_smooth() +
+  facet_wrap(vars(city))
+
+cities <- 
+  cities_media[5:20,1] %>% 
+  do.call(paste, .)
+
+media_table %>% 
+  filter(Date >= "2015-01-01" &
+           Date <= "2019-12-31") %>% 
+  filter(city %in% cities) %>% 
+  group_by(city, month_yr) %>% 
+  summarize(sentiment = mean(sentiment, na.rm = TRUE),
+            articles = n()) %>% 
+  mutate(CRI = -1 * sentiment * articles) %>% 
+  ggplot(aes(month_yr, CRI)) +
+  geom_smooth() +
+  facet_wrap(vars(city))
+
 
 ###### SIGNIFICANT AND INSIGNIFICANT VARIABLE PLOTTING ##########
 # CRI versus significant variable
