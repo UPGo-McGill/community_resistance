@@ -17,13 +17,13 @@ neighbourhoods <-
   })
 
 # Create a dataframe from the list
+
 neighbourhoods_table <- 
   do.call(rbind, neighbourhoods)
 
-
 # Create a region variable
 
-northeast <- c("New York", "Philadelphia", "Boston", "Pittsburg",
+northeast <- c("New York", "Philadelphia", "Boston", "Pittsburgh",
                "Newark", "Jersey City", "Buffalo", "Rochester")
 
 midwest <- c("Chicago", "Columbus", "Indianapolis", "Detroit", 
@@ -34,7 +34,7 @@ midwest <- c("Chicago", "Columbus", "Indianapolis", "Detroit",
 
 south <- c("Houston", "San Antonio", "Dallas", "Austin", 
            "Jacksonville", "Fort Worth", "Charlotte", "Washington",
-           "El Paso", "Nashville", "Memphis", "Oklahoma", "Louisville",
+           "El Paso", "Nashville", "Memphis", "Oklahoma City", "Louisville",
            "Baltimore", "Atlanta", "Miami", "Raleigh", "Virginia Beach",
            "Tulsa", "Arlington", "Tampa", "New Orleans", "Corpus Christi",
            "Lexington", "Greensboro", "Plano", "Orlando", "Durham", 
@@ -59,17 +59,33 @@ neighbourhoods_table <-
                                 ifelse(city %in% south, "south",
                                        ifelse(city %in% west, "west", "error"))))) 
 
-# # Add country field
-# neighbourhoods_table <- 
-#   st_join(neighbourhoods_table %>% 
-#             st_as_sf() %>% 
-#             st_transform(102009), nation() %>% 
-#                                   st_as_sf() %>% 
-#                                   st_transform(102009) %>% 
-#                                   dplyr::select(NAME), 
-#          left = TRUE) %>% 
-#   mutate(country = ifelse(is.na(NAME), "Canada", "United States")) %>% 
-#   dplyr::select(-NAME)
-#  
-# 
+# Manipulate the media file for temporal analysis
 
+media <-
+  map2(media, cityname, ~{
+    .x %>% 
+      mutate(
+        city = .y)
+  })
+
+# Reduce to only the variables we will use
+
+media <- 
+  map(media, ~{
+    .x %>% 
+      dplyr::select(c("Date", "sentiment", "city"))
+  })
+
+# Create a dataframe from the list
+
+media_table <- 
+  do.call(rbind, media)
+
+# Add regional variable
+
+media_table <- 
+  media_table %>% 
+  mutate(region = ifelse(city %in% northeast, "northeast",
+                         ifelse(city %in% midwest, "midwest",
+                                ifelse(city %in% south, "south",
+                                       ifelse(city %in% west, "west", "error"))))) 
