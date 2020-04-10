@@ -113,41 +113,43 @@ MSAs_us <-
 MSAs_us <- 
   core_based_statistical_areas(cb = TRUE, class = "sf", refresh = TRUE) %>% 
   st_transform(102009) %>% 
-  dplyr::select(c("GEOID", "geometry")) %>% 
+  dplyr::select(GEOID, geometry) %>% 
   left_join(MSAs_us, ., by = c("CMA_UID" = "GEOID")) %>% 
   st_as_sf(sf_column_name = "geometry")
 
 
 ## Import census variables for CTs
 
-CTs_us <- 
-  rbind(reduce(map(states, function(x) {
-    get_acs(geography = "tract", variables = 
-              c("B01003_001", "B19013_001", "B15003_022", "B25070_007", 
-                "B25070_008", "B25070_009", "B25070_010", "B25091_008",
-                "B25091_009", "B25091_010", "B25091_011", "B07001_017", 
-                "B25012_002", "B25011_026", "B06007_002", "B06007_004",
-                "B06007_007", "B05001_006", "B01001H_001", "B11001_005", 
-                "B11001_006", "B11001_002"),
-            state = x, geometry = TRUE)}),
-    rbind), 
-    reduce(map(states, function(x) {
-      get_acs(geography = "tract", variables = c("C17002_001", "C17002_008"),
-              state = x, geometry = TRUE)}),
-      rbind))
+CTs <-
+  map(states, ~get_acs(
+    geography = "tract",
+    variables = c(
+      "B01003_001", "B19013_001", "B15003_022", "B25070_007", 
+      "B25070_008", "B25070_009", "B25070_010", "B25091_008",
+      "B25091_009", "B25091_010", "B25091_011", "B07001_017", 
+      "B25012_002", "B25011_026", "B06007_002", "B06007_004",
+      "B06007_007", "B05001_006", "B01001H_001", "B11001_005", 
+      "B11001_006", "B11001_002", "C17002_001", "C17002_008"), 
+  state = .x,
+  geometry = TRUE)) %>% 
+  do.call(rbind, .)
 
 # Tidy the naming and coding of census tracts
-CTs_us <- CTs_us %>% 
+CTs <- 
+  CTs %>% 
   st_transform(102009) %>% 
-  dplyr::select(-c("moe")) %>% 
+  dplyr::select(-moe) %>% 
   spread(variable, estimate) %>% 
   separate(NAME, into = c("CT", "County_name", "State_name"), sep = ",") %>% 
-  mutate(ST_UID = substr(CTs_us$GEOID, 1, 2),
+  mutate(ST_UID = substr(GEOID, 1, 2),
          CT_UID = as.numeric(gsub("Census Tract ", "", CT))) %>% 
-  dplyr::select(-c("CT", "State_name"))
+  dplyr::select(-CT, -State_name) %>% 
+  as_tibble() %>% 
+  st_as_sf()
 
 # Tidy the variables
-CTs_us <- CTs_us %>% 
+CTs <-
+  CTs %>% 
   mutate(language = B06007_002 + B06007_004 + B06007_007,
          housing_need = B25070_007 + B25070_008 + B25070_009 + B25070_010 +
            B25091_008 + B25091_009 + B25091_010 + B25091_011,
@@ -155,10 +157,11 @@ CTs_us <- CTs_us %>%
          low_income_pct_pop = 1 - C17002_008/C17002_001, 
          lone_parent = B11001_005 + B11001_006) %>% 
   dplyr::select(
-    -c("B06007_002", "B06007_004", "B06007_007", "B25070_007", "B25070_008", 
-       "B25070_009", "B25070_010", "B25091_008", "B25091_009", "B25091_010",
-       "B25091_011", "C17002_008", "C17002_001", "B11001_005", "B11001_006")
+    -c(B06007_002, B06007_004, B06007_007, B25070_007, B25070_008, B25070_009, 
+       B25070_010, B25091_008, B25091_009, B25091_010, B25091_011, C17002_008,
+       C17002_001, B11001_005, B11001_006)
     ) %>% 
+  dplyr::select(-geometry, everything(), geometry) %>% 
   set_names(
     c("Geo_UID", "County_name", "white", "population", "non_citizen", 
       "non_mover", "families", "university_education", "med_income", "rental", 
@@ -180,46 +183,31 @@ CTs_us <- CTs_us %>%
   mutate(
     lone_parent_pct_families = lone_parent/families, 
     low_income = low_income_pct_pop * population) %>% 
-  st_join(MSAs_us, left = FALSE, suffix = c("",".y")) %>% 
+  st_join(MSAs_us, left = FALSE, suffix = c("", ".y")) %>% 
   dplyr::select(c(1, 29, 30, 2, 5:28, 56))
   
          
 ## Z scores
 
-datalist = list()
-
-for (n in c(1:nrow(MSAs_us))) {
-  
-  CTs_us_temp <- CTs_us %>% 
-    filter(CMA_UID == as.numeric(st_drop_geometry(MSAs_us[n, 1]))) %>% 
-    mutate_at(
-      .vars = 
-        c("population", "households", "med_income", "university_education", 
-          "housing_need", "non_mover", "owner_occupied", "rental", "language", 
-          "citizen", "white", "low_income", "lone_parent", 
-          "university_education_pct_pop", "housing_need_pct_household", 
-          "non_mover_pct_pop", "owner_occupied_pct_household", 
-          "rental_pct_household", "language_pct_pop", "citizen_pct_pop", 
-          "white_pct_pop", "low_income_pct_pop", "lone_parent_pct_families"),
-      .funs = list(`z` = ~{(.- mean(., na.rm = TRUE))/sd(., na.rm = TRUE)})) 
-  
-  datalist[[n]] <- CTs_us_temp
-}
-
-CTs_us <- do.call(rbind, datalist)
-
-CTs_us$geometry <- st_cast(CTs_us$geometry, "MULTIPOLYGON")
-
-
-## Combine census tracts
-
 CTs <- 
-  CTs_us %>% 
-  mutate(country = "US") %>% 
-  st_transform(102009)
+  CTs %>% 
+  group_by(CMA_UID) %>% 
+  mutate_at(
+    .vars = 
+      c("population", "households", "med_income", "university_education", 
+        "housing_need", "non_mover", "owner_occupied", "rental", "language", 
+        "citizen", "white", "low_income", "lone_parent", 
+        "university_education_pct_pop", "housing_need_pct_household", 
+        "non_mover_pct_pop", "owner_occupied_pct_household", 
+        "rental_pct_household", "language_pct_pop", "citizen_pct_pop", 
+        "white_pct_pop", "low_income_pct_pop", "lone_parent_pct_families"),
+    .funs = list(`z` = ~{(.- mean(., na.rm = TRUE))/sd(., na.rm = TRUE)})) %>% 
+  ungroup() %>% 
+  mutate(geometry = st_cast(geometry, "MULTIPOLYGON")) %>% 
+  dplyr::select(-geometry, everything(), geometry)
 
 
 ## Clean up
 
-rm(CTs_us, CTs_us_temp, datalist, MSAs_us, states, us, variables_us)
+rm(MSAs_us, states, us, variables_us)
 
