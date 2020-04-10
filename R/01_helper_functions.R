@@ -539,3 +539,65 @@ lemmatizer <- function(.x) {
 }
 
 
+ner_fun <- function(.x) {
+  
+  # Isolate proper nouns
+  
+  .x <- 
+    .x %>% 
+    filter(upos == "PROPN") %>% 
+    dplyr::select(c(doc_id, term_id, lemma)) %>% 
+    mutate(mid = TRUE, end = TRUE)
+  
+  # Proper nouns of more than one word have to be joined based on the term id.
+  
+  for (i in 1:nrow(.x)) {
+    .x[i,] <- 
+      .x[i,] %>% 
+      mutate(mid = if_else(
+        term_id == as.numeric(.x[i - 1,] %>% dplyr::select(term_id) + 1), 
+        TRUE, FALSE))
+  }  
+  
+  for (i in 1:nrow(.x)) {
+    .x[i,] <-
+      .x[i,] %>%
+      mutate(end = if_else(mid & !.x[i + 1,]$mid, TRUE, FALSE))
+  }
+  
+  .x <- 
+    .x %>% 
+    mutate(position = 
+             case_when(end ~ "end",
+                       !end & mid ~ "middle",
+                       !end & !mid ~ "start",
+                       is.na(mid) ~ "start")) %>% 
+    dplyr::select(-mid, -end) 
+  
+  if (nrow(.x) > 1) {
+    .x[nrow(.x), ]$position <- 
+      if_else(.x[nrow(.x) - 1, ]$position == "middle", "end", "start")
+  }
+  
+  # Note: this portion CANNOT be run in parallel in terms of i.
+  for (i in nrow(.x):1) {
+    if  (.x[i,]$position == "end" | .x[i,]$position == "middle") {
+      .x[i -1,]$lemma <- paste(.x[i - 1,]$lemma, .x[i,]$lemma)
+    }}
+  
+  # Create named entities table  
+  ner <- 
+    .x %>% 
+    filter(position == "start") %>% 
+    mutate(entity = lemma) %>% 
+    filter(nchar(entity) > 2, 
+           entity != "USA",
+           entity != "U.S.",
+           entity != "America",
+           entity != "United States") %>%
+    dplyr::select(c("doc_id", "entity"))    
+  
+  ner  
+}
+
+
