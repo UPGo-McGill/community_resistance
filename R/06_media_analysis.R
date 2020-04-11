@@ -174,6 +174,7 @@ for (n in seq_along(cityname)) {
 
 save(neighbourhoods, file = "data/neighbourhoods_script_6.Rdata")
 save(media, file = "data/media.Rdata")
+file.remove("data/end_of_script_5.Rdata")
 
 rm(lemma_intermediate, lemmatized_articles, locations, media, ner, 
    ner_compressed, ner_locations)

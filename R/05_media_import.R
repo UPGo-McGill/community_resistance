@@ -4,7 +4,7 @@ source("R/01_helper_functions.R")
 
 library(future)
 library(furrr)
-plan(multiprocess, workers = 30)
+plan(multiprocess)
 options(future.globals.maxSize = +Inf)
 
 

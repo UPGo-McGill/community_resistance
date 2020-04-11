@@ -1,9 +1,10 @@
-#################################### AIRBNB ANALYSIS ######################################
+#### 08. AIRBNB ANALYSIS #######################################################
 
 source("R/01_helper_functions.R")
 
 # active_listings on end date
-neighbourhoods <- future_map(seq_along(neighbourhoods), ~{
+neighbourhoods <- 
+  future_map(seq_along(neighbourhoods), ~{
   property[[.x]] %>% 
     filter(housing == TRUE) %>% 
     filter(created <= end_date,
@@ -18,7 +19,8 @@ neighbourhoods <- future_map(seq_along(neighbourhoods), ~{
 
 
 # active_listings_avg over the past twelve months
-neighbourhoods <- future_map(seq_along(neighbourhoods), ~{
+neighbourhoods <- 
+  future_map(seq_along(neighbourhoods), ~{
   daily[[.x]] %>% 
     filter(date <= end_date &
              date >= start_date) %>% 
@@ -32,7 +34,8 @@ neighbourhoods <- future_map(seq_along(neighbourhoods), ~{
 
 
 # active_listings_yoy growth rate from one year to the next
-neighbourhoods <- future_map(seq_along(neighbourhoods), ~{
+neighbourhoods <- 
+  future_map(seq_along(neighbourhoods), ~{
   property[[.x]] %>% 
     filter(housing == TRUE) %>% 
     filter(created <= ymd(end_date) - years(1),
@@ -48,7 +51,8 @@ neighbourhoods <- future_map(seq_along(neighbourhoods), ~{
 
 
 # EH and EH_pct - distribution of listing types on end date
-neighbourhoods <- future_map(seq_along(neighbourhoods), ~{
+neighbourhoods <- 
+  future_map(seq_along(neighbourhoods), ~{
   property[[.x]] %>% 
     filter(housing == TRUE, 
            listing_type == "Entire home/apt",
@@ -65,7 +69,8 @@ neighbourhoods <- future_map(seq_along(neighbourhoods), ~{
 
 
 # revenue_LTM and the average revenue per listing over the past twelve months
-neighbourhoods <- future_map(seq_along(neighbourhoods), ~{
+neighbourhoods <- 
+  future_map(seq_along(neighbourhoods), ~{
   LTM_property[[.x]] %>% 
     group_by(neighbourhood) %>% 
     summarize(revenue_LTM = sum(revenue_LTM, na.rm = TRUE)) %>% 
@@ -76,12 +81,13 @@ neighbourhoods <- future_map(seq_along(neighbourhoods), ~{
 
   
 # GH in terms of listing count (not housing units) on the end date
-neighbourhoods <- future_map(seq_along(neighbourhoods), ~{ 
+neighbourhoods <- 
+  future_map(seq_along(neighbourhoods), ~{ 
   GH[[.x]] %>% 
     filter(date == end_date) %>%
     dplyr::select(ghost_ID, listing_count, housing_units, property_IDs) %>% 
     st_centroid() %>% 
-    strr_raffle(neighbourhoods[[.x]], neighbourhood, households) %>% 
+    st_intersection(neighbourhoods[[.x]]) %>% 
     group_by(neighbourhood) %>% 
     summarize(GH = sum(listing_count)) %>% 
     st_drop_geometry() %>% 
@@ -92,7 +98,8 @@ neighbourhoods <- future_map(seq_along(neighbourhoods), ~{
 
 # FREH status on the end date, but taken as a percentage in terms of active listings
   # over the past year since the calculation involves the past year as a time frame
-neighbourhoods <- future_map(seq_along(neighbourhoods), ~{ 
+neighbourhoods <- 
+  future_map(seq_along(neighbourhoods), ~{ 
   property[[.x]] %>% 
     dplyr::select(c("property_ID", "neighbourhood")) %>% 
     right_join(FREH[[.x]] %>% 
@@ -109,7 +116,8 @@ neighbourhoods <- future_map(seq_along(neighbourhoods), ~{
 
 
 # MLs on the end date
-neighbourhoods <- map(seq_along(neighbourhoods), ~{ 
+neighbourhoods <- 
+  map(seq_along(neighbourhoods), ~{ 
   daily[[.x]] %>% 
     filter(date == end_date) %>% 
     filter(multi == TRUE) %>% 
@@ -125,12 +133,13 @@ neighbourhoods <- map(seq_along(neighbourhoods), ~{
 
 
 # housing_loss
-neighbourhoods <- map(seq_along(neighbourhoods), ~{ 
+neighbourhoods <- 
+  future_map(seq_along(neighbourhoods), ~{ 
   GH[[.x]] %>% 
     filter(date == end_date) %>%
     dplyr::select(ghost_ID, listing_count, housing_units, property_IDs) %>% 
     st_centroid() %>% 
-    strr_raffle(neighbourhoods[[.x]], neighbourhood, households) %>% 
+    st_intersection(neighbourhoods[[.x]]) %>% 
     group_by(neighbourhood) %>% 
     summarize(GH_housing = sum(housing_units)) %>% 
     st_drop_geometry() %>% 
@@ -140,8 +149,9 @@ neighbourhoods <- map(seq_along(neighbourhoods), ~{
 })
 
 
-# revenue_10pct - the distribution of revenue earned in terms of top 10% of hosts
-neighbourhoods <- map(seq_along(neighbourhoods), ~{ 
+# revenue_10pct - distribution of revenue earned in terms of top 10% of hosts
+neighbourhoods <- 
+  future_map(seq_along(neighbourhoods), ~{ 
   daily[[.x]] %>% 
     filter(date >= start_date, 
            date <= end_date, 
@@ -159,7 +169,8 @@ neighbourhoods <- map(seq_along(neighbourhoods), ~{
 
 # principal_res on the end date
 
-neighbourhoods <- map(seq_along(neighbourhoods), ~{
+neighbourhoods <- 
+  future_map(seq_along(neighbourhoods), ~{
   property[[.x]] %>% 
     filter(PR_10 == TRUE) %>% 
     group_by(neighbourhood) %>% 
@@ -171,7 +182,8 @@ neighbourhoods <- map(seq_along(neighbourhoods), ~{
     dplyr::select(-n)
 })
 
-neighbourhoods <- map(seq_along(neighbourhoods), ~{
+neighbourhoods <- 
+  future_map(seq_along(neighbourhoods), ~{
   property[[.x]] %>% 
     filter(PR_25 == TRUE) %>% 
     group_by(neighbourhood) %>% 
@@ -183,7 +195,8 @@ neighbourhoods <- map(seq_along(neighbourhoods), ~{
     dplyr::select(-n)
 })
 
-neighbourhoods <- map(seq_along(neighbourhoods), ~{
+neighbourhoods <- 
+  map(seq_along(neighbourhoods), ~{
   property[[.x]] %>% 
     filter(PR_50 == TRUE) %>% 
     group_by(neighbourhood) %>% 
@@ -195,8 +208,10 @@ neighbourhoods <- map(seq_along(neighbourhoods), ~{
     dplyr::select(-n)
 })
 
-save(neighbourhoods, file = "neighbourhoods_temp.Rdata")  
+save(neighbourhoods, file = "data/neighbourhoods.Rdata")
+file.remove("data/neighbourhoods_script_6.Rdata")
 
+rm(property, LTM_property, daily, FREH, GH)
 
 
 
