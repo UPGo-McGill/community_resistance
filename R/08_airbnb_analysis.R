@@ -211,7 +211,7 @@ neighbourhoods <-
 save(neighbourhoods, file = "data/neighbourhoods.Rdata")
 file.remove("data/neighbourhoods_script_6.Rdata")
 
-rm(property, LTM_property, daily, FREH, GH)
+rm(property, LTM_property, daily, FREH, GH, host)
 
 
 
