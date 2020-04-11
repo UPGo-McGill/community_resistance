@@ -1,149 +1,97 @@
-######################################### MEDIA ANALYSIS ########################################################
+#### 06. MEDIA ANALYSIS ########################################################
 
 source("R/01_helper_functions.R")
 
 
-############################################ 1 - SENTIMENT ANALYSIS ##############################################################
+### Sentiment analysis #########################################################
 
-# Create dictionary using the QDAP dictionary as a starting point
+## Create dictionary using the QDAP dictionary as a starting point
 
-dictionary <- c(SentimentDictionaryBinary(qdapDictionaries::positive.words,
+dictionary <- 
+  c(SentimentDictionaryBinary(qdapDictionaries::positive.words,
                                           qdapDictionaries::negative.words))
 
-machine_learning_synonyms = c("protest", "anti", "affordability", "mobilize", "mobilise",
-                              "mobilization", "mobilisation", "oppose",  "resist", 
-                              "opposition", "gentrification", "threaten", "rent", 
-                              "expensive", "unaffordable", "eviction", "landlord",
-                              "threat", "manifestation", "complaint", "disapprove",
-                              "evict", "overtourism", "detriment", "ghost", "nuisance",
-                              "consultation", "opponent",  "discrimination", "critic", 
-                              "crisis", "shortage", "blame", "garbage", "noise", "complain", 
-                              "concern", "coalition", "hostile", "hostility", "fairbnb", 
-                              "activist", "activism", "displace", "illegal", "housing",
-                              "market", "multiple", "listings", "disturbance", "damage", 
-                              "threat", "residence", "hotel", "gap", "investment", "poor", 
-                              "need", "rent hike", "community led", "housing stock", "nuisance",
-                              "garbage", "noise", "party", "disrespect", "lockbox", "regulation",
-                              "unregulate", "scarce", "fines", "fined", "shut")
+machine_learning_synonyms <- 
+  c("protest", "anti", "affordability", "mobilize", "mobilise", "mobilization", 
+    "mobilisation", "oppose",  "resist", "opposition", "gentrification", 
+    "threaten", "rent", "expensive", "unaffordable", "eviction", "landlord",
+    "threat", "manifestation", "complaint", "disapprove", "evict", 
+    "overtourism", "detriment", "ghost", "nuisance", "consultation", "opponent",
+    "discrimination", "critic", "crisis", "shortage", "blame", "garbage", 
+    "noise", "complain", "concern", "coalition", "hostile", "hostility", 
+    "fairbnb", "activist", "activism", "displace", "illegal", "housing", 
+    "market", "multiple", "listings", "disturbance", "damage", "threat", 
+    "residence", "hotel", "gap", "investment", "poor", "need", "rent hike", 
+    "community led", "housing stock", "nuisance", "garbage", "noise", "party", 
+    "disrespect", "lockbox", "regulation", "unregulate", "scarce", "fines", 
+    "fined", "shut")
 
-dictionary[["negativeWords"]] = c(dictionary[["negativeWords"]], machine_learning_synonyms)
+dictionary[["negativeWords"]] <- 
+  c(dictionary[["negativeWords"]], machine_learning_synonyms)
 
-# Assign a score to each article
+
+## Assign a score to each article
 
 media <- 
   future_map2(media, lemmatized_articles, ~{
+    .y <- 
+      .y %>% 
+      mutate(lemmas = unlist(map(lemmas, str_split, " "), recursive = FALSE),
+             lemmas = map(lemmas, ~.x[str_detect(.x, "")]))
     .x %>% 
       mutate(
-        sentiment = (str_count(.y$lemmas, paste(dictionary[["positiveWords"]], collapse = '|')) * 1 +
-                       str_count(.y$lemmas, paste(dictionary[["negativeWords"]], collapse = '|')) * -1) /
-          as.numeric(.x$Word_Count))
-  })
+        sentiment = map_int(.y$lemmas, ~{
+          sum(.x %in% dictionary[["positiveWords"]]) -
+            sum(.x %in% dictionary[["negativeWords"]])
+        }) / as.numeric(.x$Word_Count))
+  }, .progress = TRUE)
+
+rm(dictionary, machine_learning_synonyms)
 
 
-############################### 2 - NAMED ENTITY RECOGNITION AND GEOCODING ################################################################## 
-
-output <- 
-  map(lemma_intermediate, ~{
-    
-# Isolate proper nouns
-    
-    .x <- 
-      .x %>% 
-      filter(upos == "PROPN") %>% 
-      dplyr::select(c(doc_id, term_id, lemma)) %>% 
-      mutate(mid = TRUE) %>% 
-      mutate(end = TRUE)
-    
-# However, some proper nouns are more than one word.
-# These have to be joined accordingly, based on the term id.
-    
-  for (i in 1:nrow(.x)) {
-    .x[i,] <- 
-       .x[i,] %>% 
-        mutate(mid = 
-                 ifelse(term_id ==
-                              as.numeric(.x[i-1,] %>% 
-                                         dplyr::select(term_id) + 1), 
-                            TRUE, 
-                            FALSE))
-    }  
-    
-  for (i in 1:nrow(.x)) {
-      .x[i,] <-
-        .x[i,] %>%
-        mutate(end = 
-                 ifelse(.x[i,]$mid == TRUE &
-                        .x[i+1,]$mid == FALSE,
-                          TRUE,
-                          FALSE))
-    }
-    
-    .x <- 
-      .x %>% 
-      mutate(position = 
-               case_when(end == TRUE ~ "end",
-                         end == FALSE & mid == TRUE ~ "middle",
-                         end == FALSE & mid == FALSE ~ "start",
-                         is.na(mid) ~ "start")) %>% 
-      dplyr::select(-c(mid, end)) 
-    
-    
-    .x[nrow(.x), ]$position = 
-      ifelse(.x[nrow(.x)-1, ]$position == "middle",
-             "end", 
-             "start")
-    
-# Note: this portion CANNOT be run in parallel in terms of i.
-    for (i in nrow(.x):1) {
-      if  (.x[i,]$position == "end" |
-           .x[i,]$position == "middle") {
-        .x[i-1,]$lemma = 
-          paste(.x[i-1,]$lemma,
-                .x[i,]$lemma)
-      }
-    }
-    
-# Create named entities table  
-    ner <- 
-      .x %>% 
-      filter(position == "start") %>% 
-      mutate(entity = lemma) %>% 
-      filter(nchar(entity) > 2, 
-             entity != "USA",
-             entity != "U.S.",
-             entity != "America",
-             entity != "United States") %>%
-      dplyr::select(c("doc_id", "entity"))    
-    
-    list(ner)
-    
-  })
+### Named entity recognition and geocoding ##################################### 
 
 ner <- 
-  output %>% 
-  map(~{.x[[1]]})
+  lemma_intermediate[1:60] %>% 
+  future_map(ner_fun, .progress = TRUE)
+
+ner_2 <- 
+  lemma_intermediate[61:80] %>% 
+  future_map(ner_fun, .progress = TRUE)
+
+ner_3 <- 
+  lemma_intermediate[81:115] %>% 
+  map(~{
+    
+    no_docs <- 
+      ceiling(.x %>% group_by(doc_id) %>% n_groups() / 60)
+    
+    no_iterations <- 
+      ceiling(.x %>% group_by(doc_id) %>% n_groups() / no_docs)
+    
+    chunks <- 
+      map(1:no_iterations, function(x) {
+        i <- 1 + (x - 1) * no_docs
+        .x %>% filter(doc_id %in% c(i:(i + no_docs - 1)))
+      })
+    
+    chunks %>% 
+      future_map(ner_fun, .progress = TRUE) %>% 
+      bind_rows()
+  })
+
+# Combine ner pieces  
+ner <- c(ner, ner_2, ner_3, ner_109)
 
 # Clean the named entities by removing punctuation and making all lowercase
-output <- 
-  map(ner, ~{
-    .x$entity <- 
-      .x$entity %>% 
-      gsub("[[:punct:]]", " ", .) %>% 
-      tolower()
-  })
+ner <- map(ner, mutate, entity = tolower(gsub("[[:punct:]]", " ", entity)))
 
-ner <-
-  map2(ner, output, ~{
-    .x %>% 
-      mutate(entity = .y)
-  })
+save(ner, file = "data/ner.Rdata")
 
-# Collapse the named entity recognition to reduce processing times and number of api queries
+
+# Collapse the named entity recognition to reduce API queries
 ner_compressed <- 
-  map_df(ner, ~{
-    .x %>% 
-      dplyr::select(entity)
-  }) %>% 
+  map_df(ner, dplyr::select, entity) %>% 
   distinct()
 
 # Load locations that have already been queried.
@@ -167,7 +115,7 @@ locations <-
   rbind(locations)
 
 # Save the locations so that this does not need to be rerun
-save(locations, file = "locations.Rdata")
+save(locations, file = "data/locations.Rdata")
 
 # Remove the locations that were not geocoded
 locations <- 
@@ -178,44 +126,39 @@ locations <-
 
 # Perform a join to associate each entity with each document id
 ner_locations <- 
-  map(ner, ~{
-  inner_join(.x, locations)
-})
+  future_map(ner, inner_join, locations, by = "entity", .progress = TRUE)
 
-# Perform a spatial join to determine what locations fall into which neighbourhoods
-
-ner_locations <- 
-  map(seq_along(cityname), ~{
-  ner_locations[[.x]] %>%
-    st_as_sf() %>% 
-    st_transform(102009) %>% 
-    st_join(neighbourhoods[[.x]], join = st_intersects) %>% 
-    filter(!is.na(neighbourhood))
-})
-
-# ONLY IF RAN WITH SPACY
-# for (n in seq_along(cityname)) {
-#   
-#   ner_locations[[n]]$doc_id <- 
-#     as.numeric(gsub("text", "", ner_locations[[n]]$doc_id)) }
+# Perform a spatial join to match locations to neighbourhoods
+ner_locations <-
+  future_map2(ner_locations, neighbourhoods, ~{
+    .x %>%
+      st_as_sf() %>% 
+      st_transform(102009) %>% 
+      st_join(.y) %>%
+      filter(!is.na(neighbourhood))
+    }, .progress = TRUE)
 
 
-############################################## 3 - NEIGHBOURHOOD SENTIMENT #################################################
+### Neighbourhood sentiment ####################################################
 
 # Determine a community resistance index per neighbourhood
-# Dependent on the number of mentions per neighbhourhood and the average sentiment of the articles
 
 for (n in seq_along(cityname)) {
   
-  temp <- ner_locations[[n]] %>% 
-    left_join(media[[n]] %>% dplyr::select(c("doc_id", "sentiment"))) %>% 
+  ner_locations[[n]]$doc_id <- 
+    as.numeric(ner_locations[[n]]$doc_id)
+  
+  temp <- 
+    ner_locations[[n]] %>% 
+    inner_join(media[[n]] %>% dplyr::select(c("doc_id", "sentiment"))) %>% 
     dplyr::select(c("doc_id", "neighbourhood", "sentiment")) %>% 
     st_drop_geometry() %>% 
     distinct()
   
   neighbourhoods[[n]] <- 
     neighbourhoods[[n]] %>% 
-    left_join(left_join(aggregate(temp$sentiment, list(temp$neighbourhood), mean),
+    left_join(left_join(aggregate(temp$sentiment, list(temp$neighbourhood), 
+                                  mean),
                         temp %>% 
                           group_by(neighbourhood) %>% 
                           tally(), by = c("Group.1" = "neighbourhood")), 
@@ -229,5 +172,8 @@ for (n in seq_along(cityname)) {
   
 }
 
+save(neighbourhoods, file = "data/neighbourhoods_script_6.Rdata")
+save(media, file = "data/media.Rdata")
 
-
+rm(lemma_intermediate, lemmatized_articles, locations, media, ner, 
+   ner_compressed, ner_locations)
