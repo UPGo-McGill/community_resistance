@@ -59,48 +59,23 @@ airbnb <-
 
 
 # Lemmatize the articles to refine results and prepare for NER
-output_1 <- future_map(media[1:60], lemmatizer, .progress = TRUE)
-output_2 <- future_map(media[61:90], lemmatizer, .progress = TRUE)
-output_3 <- map(media[91:100], ~{
-  .x %>% group_split(ceiling(doc_id / ceiling(nrow(.x) / 30)), keep = FALSE) %>% 
-    future_map(lemmatizer, .progress = TRUE)})
-output_4 <- map(media[101:110], ~{
-  .x %>% group_split(ceiling(doc_id / ceiling(nrow(.x) / 30)), keep = FALSE) %>% 
-    future_map(lemmatizer, .progress = TRUE)})
-output_5 <- map(media[111:115], ~{
-  .x %>% group_split(ceiling(doc_id / ceiling(nrow(.x) / 30)), keep = FALSE) %>% 
-    future_map(lemmatizer, .progress = TRUE)})
+output <- 
+  map(media, ~{
+    .x %>% 
+      group_split(ceiling(doc_id / ceiling(nrow(.x) / 30)), keep = FALSE) %>% 
+      future_map(lemmatizer, .progress = TRUE)
+    })
 
 
 ## Consolidate then split up output and clean up
 
-output_3 <- 
-  output_3 %>% 
+output <- 
+  output %>% 
   map(~list(
     map_dfr(.x, function(x) x[[1]]),
     map_dfr(.x, function(x) x[[2]]),
     map_dfr(.x, function(x) x[[3]])
     ))
-
-output_4 <- 
-  output_4 %>% 
-  map(~list(
-    map_dfr(.x, function(x) x[[1]]),
-    map_dfr(.x, function(x) x[[2]]),
-    map_dfr(.x, function(x) x[[3]])
-  ))
-
-output_5 <- 
-  output_5 %>% 
-  map(~list(
-    map_dfr(.x, function(x) x[[1]]),
-    map_dfr(.x, function(x) x[[2]]),
-    map_dfr(.x, function(x) x[[3]])
-  ))
-
-
-output <- c(output_1, output_2, output_3, output_4, output_5)
-rm(output_1, output_2, output_3, output_4, output_5)
 
 media <- map(output, ~.x[[1]])
 lemmatized_articles <- map(output, ~.x[[2]])
@@ -111,6 +86,9 @@ lemma_intermediate <- map(output, ~.x[[3]])
 
 rm(airbnb, english, model, output)
 
-save(media, neighbourhoods, lemmatized_articles, lemma_intermediate, cityname,
-     media_order, file = "data/end_of_script_5.Rdata")
+save(lemmatized_articles, lemma_intermediate, file = "data/lemmas.Rdata")
+save(cityname, media_order, file = "data/cityname.Rdata")
+
+save(media, neighbourhoods, file = "data/end_of_script_5.Rdata")
+file.remove("data/lemma_prep.Rdata")
 
