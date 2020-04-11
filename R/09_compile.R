@@ -210,4 +210,12 @@ cities_table <-
                                 ifelse(city %in% south, "south",
                                        ifelse(city %in% west, "west", "error"))))) 
 
+# Add city-level measures to the neigbhourhood table
+
+neighbourhoods_table <- 
+  neighbourhoods_table %>% 
+  left_join(cities_table %>% dplyr::select(-geometry), 
+            by = "city", suffix = c("", "_city"))
+
+
 save(media_table, neighbourhoods_table, cities_table, file = "data/modeling_data.Rdata")
