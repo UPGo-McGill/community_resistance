@@ -36,7 +36,7 @@ neighbourhoods  <- list("Albuquerque" = import_puma("NM") %>%
                           "Arlington" = import_puma("TX") %>% 
                             filter(str_detect(neighbourhood, "Arlington")),
                           "Atlanta" = import_puma("GA") %>% 
-                            filter(str_detect(neighbourhood, "Atlanta")), 
+                            filter(str_detect(neighbourhood, "Atlanta City")), 
                           "Aurora" = import_puma("CO") %>% 
                             filter(str_detect(neighbourhood, "Aurora")), 
                           "Austin" = import_puma("TX") %>% 
