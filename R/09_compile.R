@@ -2,6 +2,10 @@
 
 source("R/01_helper_functions.R")
 
+load("data/media.Rdata")
+load("data/neighbourhoods.Rdata")
+load("data/cityname.Rdata")
+
 # Distinguish between Glendale AZ and Glendale CA
 cityname[[32]] = "Glendale AZ"
 cityname[[33]] = "Glendale CA"
@@ -89,3 +93,5 @@ media_table <-
                          ifelse(city %in% midwest, "midwest",
                                 ifelse(city %in% south, "south",
                                        ifelse(city %in% west, "west", "error"))))) 
+
+save(media_table, neighbourhoods_table, file = "data/modeling_data.Rdata")
