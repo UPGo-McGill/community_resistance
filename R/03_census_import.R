@@ -208,6 +208,6 @@ CTs <-
 
 
 ## Clean up
-
+save(MSAs_us, file = "data/MSAs.Rdata")
 rm(MSAs_us, states, us, variables_us)
 
