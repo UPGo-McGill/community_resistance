@@ -152,7 +152,7 @@ cities_table <-
   media_table %>% 
   group_by(city) %>% 
   count() %>% 
-  left_join(cities_table) %>% 
+  left_join(cities_table, .) %>% 
   mutate(CRI = -1 * n * sentiment)
 
 cities_table <- 
@@ -167,7 +167,7 @@ cities_table <-
   filter(Date >= "2018-01-01") %>% 
   group_by(city) %>% 
   count() %>% 
-  left_join(cities_table) %>% 
+  left_join(cities_table, .) %>% 
   mutate(CRI_2yr = -1 * n * sentiment_2yr)
 
 cities_table <- 
@@ -182,7 +182,7 @@ cities_table <-
   filter(Date >= "2019-01-01") %>% 
   group_by(city) %>% 
   count() %>% 
-  left_join(cities_table) %>% 
+  left_join(cities_table, .) %>% 
   mutate(CRI_1yr = -1 * n * sentiment_1yr)
 
  cities_table <- 
