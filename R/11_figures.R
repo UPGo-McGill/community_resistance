@@ -2,6 +2,7 @@
 
 source("R/01_helper_functions.R")
 
+load("data/modeling_data.Rdata")
 
 ################################### MEDIA ANALYSIS ###########################################
 
@@ -215,7 +216,7 @@ media_table %>%
   facet_wrap(vars(city))
 
 
-###### SIGNIFICANT AND INSIGNIFICANT VARIABLE PLOTTING ##########
+################################# SIGNIFICANT AND INSIGNIFICANT VARIABLE PLOTTING #########################
 # CRI versus significant variable
 
 ###### CRI PER CITY #######
