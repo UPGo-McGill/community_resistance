@@ -26,6 +26,12 @@ neighbourhoods <-
 neighbourhoods_table <- 
   do.call(rbind, neighbourhoods)
 
+# Add housing loss as a percent of STR listings
+
+neighbourhoods_table <- 
+  neighbourhoods_table %>% 
+  mutate(housing_loss_pct_listings = housing_loss/active_listings)
+
 # Create a region variable
 
 northeast <- c("New York", "Philadelphia", "Boston", "Pittsburgh",
@@ -228,6 +234,7 @@ cities_table <-
          FREH_pct = FREH/active_listings_avg,
          ML_pct = ML/active_listings,
          housing_loss_pct_households = housing_loss/households,
+         housing_loss_pct_listings = housing_loss/active_listings,
          PR_10_pct = PR_10/active_listings,
          PR_25_pct = PR_25/active_listings,
          PR_50_pct = PR_50/active_listings)
@@ -244,7 +251,7 @@ cities_table <-
 
 neighbourhoods_table <- 
   neighbourhoods_table %>% 
-  left_join(cities_table %>% dplyr::select(-geometry), 
+  left_join(cities_table %>% st_drop_geometry(), 
             by = "city", suffix = c("", "_city"))
 
 
