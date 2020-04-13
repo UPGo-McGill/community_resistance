@@ -47,6 +47,9 @@ library(SnowballC)
 library(lubridate)
 library(future)
 library(udpipe)
+install.packages("glmulti")
+library(rJava)
+library(glmulti)
 
 # Note: spaCy requires the user to download a version of miniconda and follow a 
 # set of instructions to set up
