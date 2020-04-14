@@ -27,10 +27,10 @@ cityname  <-
     "Tulsa", "Virginia Beach", "Washington", "Wichita", "Winston Salem")
 
 # Neighbourhood geometries
-neighbourhoods  <- list("Albuquerque" = import_puma("NM") %>% 
-                            filter(str_detect(neighbourhood, "Albuquerque")),
+neighbourhoods <- list("Albuquerque" = import_puma("NM") %>% 
+                            filter(str_detect(neighbourhood, "Albuquerque City")),
                           "Anaheim" = import_puma("CA") %>% 
-                            filter(str_detect(neighbourhood, "Anaheim")), 
+                            filter(str_detect(neighbourhood, "Anaheim City")), 
                           "Anchorage" = import_puma("AK") %>% 
                             filter(str_detect(neighbourhood, "Anchorage")),
                           "Arlington" = import_puma("TX") %>% 
@@ -46,7 +46,7 @@ neighbourhoods  <- list("Albuquerque" = import_puma("NM") %>%
                           "Baltimore" = import_puma("MD") %>% 
                             filter(str_detect(neighbourhood, "Baltimore City")), 
                           "Baton Rouge" = import_puma("LA") %>% 
-                            filter(str_detect(neighbourhood, "Baton")), 
+                            filter(str_detect(neighbourhood, "Baton Rouge City")), 
                           "Birmingham" = import_puma("AL") %>% 
                             filter(str_detect(neighbourhood, "Birmingham")), 
                           "Boise" = import_puma("ID") %>% 
@@ -70,8 +70,7 @@ neighbourhoods  <- list("Albuquerque" = import_puma("NM") %>%
                           "Cleveland" = import_puma("OH") %>% 
                             filter(str_detect(neighbourhood, "Cleveland")), 
                           "Colorado Springs" = import_puma("CO") %>% 
-                            filter(str_detect(neighbourhood, "Colorado Springs")
-                                   ),
+                            filter(str_detect(neighbourhood, "Colorado Springs")),
                           "Columbus" = import_puma("OH") %>% 
                             filter(str_detect(neighbourhood, "Columbus")), 
                           "Corpus Christi" = import_puma("TX") %>% 
@@ -83,19 +82,24 @@ neighbourhoods  <- list("Albuquerque" = import_puma("NM") %>%
                           "Denver" = import_puma("CO") %>% 
                             filter(str_detect(neighbourhood, "Denver")), 
                           "Des Moines" = import_puma("IA") %>% 
-                            filter(str_detect(neighbourhood, "Moines")), 
+                            filter(str_detect(neighbourhood, "Des Moines City") |
+                                     str_detect(neighbourhood, "West Des Moines")), 
                           "Detroit" = import_puma("MI") %>% 
                             filter(str_detect(neighbourhood, "Detroit")), 
                           "Durham" = import_puma("NC") %>% 
                             filter(str_detect(neighbourhood, "Durham")), 
                           "El Paso" = import_puma("TX") %>% 
-                            filter(str_detect(neighbourhood, "Paso")), 
+                            filter(str_detect(neighbourhood, "Paso")) %>% 
+                            filter(str_detect(neighbourhood, "County", 
+                                            negate = TRUE)), 
                           "Fayetteville" = import_puma("NC") %>% 
                             filter(str_detect(neighbourhood, "Fayette")), 
                           "Fontana" = import_puma("CA") %>% 
                             filter(str_detect(neighbourhood, "Fontana")), 
                           "Fort Wayne" = import_puma("IN") %>% 
-                            filter(str_detect(neighbourhood, "Wayne")), 
+                            filter(str_detect(neighbourhood, "Fort Wayne")) %>% 
+                            filter(str_detect(neighbourhood, "Outside Fort Wayne City", 
+                                            negate = TRUE)), 
                           "Fort Worth" = import_puma("TX") %>% 
                             filter(str_detect(neighbourhood, "Fort Worth")), 
                           "Fremont" = import_puma("CA") %>% 
@@ -119,14 +123,15 @@ neighbourhoods  <- list("Albuquerque" = import_puma("NM") %>%
                           "Hialeah" = import_puma("FL") %>% 
                             filter(str_detect(neighbourhood, "Hialeah")), 
                           "Honolulu" = import_puma("HI") %>% 
-                            filter(str_detect(neighbourhood, "Honolulu")), 
+                            filter(str_detect(neighbourhood, "Honolulu")) %>% 
+                            filter(str_detect(neighbourhood, "Rural", 
+                                             negate = TRUE)),
                           "Houston" = import_puma("TX") %>% 
                             filter(str_detect(neighbourhood, "Houston")) %>% 
                             filter(str_detect(neighbourhood, "Houston-", 
                                               negate = TRUE)), 
                           "Huntington Beach" = import_puma("CA") %>% 
-                            filter(str_detect(neighbourhood, "Huntington Beach")
-                                   ), 
+                            filter(str_detect(neighbourhood, "Huntington Beach")), 
                           "Indianapolis" = import_puma("IN") %>% 
                             filter(str_detect(neighbourhood, "Indianapolis")), 
                           "Irvine" = import_puma("CA") %>% 
@@ -154,9 +159,11 @@ neighbourhoods  <- list("Albuquerque" = import_puma("NM") %>%
                           "Los Angeles" = import_puma("CA") %>% 
                             filter(str_detect(neighbourhood, "LA City")), 
                           "Louisville" = import_puma("KY") %>% 
-                            filter(str_detect(neighbourhood, "Louisville")), 
+                            filter(str_detect(neighbourhood, "Louisville") &
+                                     (str_detect(neighbourhood, "Northwest")|
+                                     str_detect(neighbourhood, "Central"))), 
                           "Lubbock" = import_puma("TX") %>% 
-                            filter(str_detect(neighbourhood, "Lubbock")), 
+                            filter(str_detect(neighbourhood, "Lubbock City")), 
                           "Madison" = import_puma("WI") %>% 
                             filter(str_detect(neighbourhood, "Madison")), 
                           "Memphis" = import_puma("TN") %>% 
@@ -173,7 +180,7 @@ neighbourhoods  <- list("Albuquerque" = import_puma("NM") %>%
                                               "Miami Gardens City") |
                                    str_detect(neighbourhood, "Greater Miami")),
                           "Milwaukee" = import_puma("WI") %>% 
-                            filter(str_detect(neighbourhood, "Milwaukee")),
+                            filter(str_detect(neighbourhood, "Milwaukee City")),
                           "Minneapolis" = import_puma("MN") %>% 
                             filter(str_detect(neighbourhood, "Minneapolis")), 
                           "Modesto" = import_puma("CA") %>% 
@@ -191,8 +198,7 @@ neighbourhoods  <- list("Albuquerque" = import_puma("NM") %>%
                           "Norfolk" = import_puma("VA") %>% 
                             filter(str_detect(neighbourhood, "Norfolk")), 
                           "North Las Vegas" = import_puma("NV") %>% 
-                            filter(str_detect(neighbourhood, "North Las Vegas")
-                                   ), 
+                            filter(str_detect(neighbourhood, "North Las Vegas")), 
                           "Oakland" = import_puma("CA") %>% 
                             filter(str_detect(neighbourhood, "Oakland")), 
                           "Oklahoma City" = import_puma("OK") %>% 
@@ -236,8 +242,7 @@ neighbourhoods  <- list("Albuquerque" = import_puma("NM") %>%
                           "San Antonio" = import_puma("TX") %>% 
                             filter(str_detect(neighbourhood, "Antonio")) , 
                           "San Bernardino" = import_puma("CA") %>% 
-                            filter(str_detect(neighbourhood, "Bernardino City")
-                                   ), 
+                            filter(str_detect(neighbourhood, "Bernardino City")), 
                           "San Diego" = import_puma("CA") %>% 
                             filter(str_detect(neighbourhood, "San Diego City") |
                                      str_detect(neighbourhood, "Dieguito") |
@@ -257,7 +262,7 @@ neighbourhoods  <- list("Albuquerque" = import_puma("NM") %>%
                           "Seattle" = import_puma("WA") %>% 
                             filter(str_detect(neighbourhood, "Seattle")), 
                           "Spokane" = import_puma("WA") %>% 
-                            filter(str_detect(neighbourhood, "Spokane")), 
+                            filter(str_detect(neighbourhood, "Spokane City")), 
                           "Stockton" = import_puma("CA") %>% 
                             filter(str_detect(neighbourhood, "Stockton")), 
                           "Tacoma" = import_puma("WA") %>% 
@@ -276,7 +281,7 @@ neighbourhoods  <- list("Albuquerque" = import_puma("NM") %>%
                           "Wichita" =  import_puma("KS") %>% 
                             filter(str_detect(neighbourhood, "Wichita")), 
                           "Winston Salem" = import_puma("NC") %>% 
-                            filter(str_detect(neighbourhood, "Winston-Salem")))
+                            filter(str_detect(neighbourhood, "Winston-Salem City")))
                           
 
                           
