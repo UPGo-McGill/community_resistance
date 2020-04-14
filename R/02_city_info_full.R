@@ -44,7 +44,7 @@ neighbourhoods  <- list("Albuquerque" = import_puma("NM") %>%
                           "Bakersfield" = import_puma("CA") %>% 
                             filter(str_detect(neighbourhood, "Bakersfield")), 
                           "Baltimore" = import_puma("MD") %>% 
-                            filter(str_detect(neighbourhood, "Baltimore")), 
+                            filter(str_detect(neighbourhood, "Baltimore City")), 
                           "Baton Rouge" = import_puma("LA") %>% 
                             filter(str_detect(neighbourhood, "Baton")), 
                           "Birmingham" = import_puma("AL") %>% 
