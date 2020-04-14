@@ -5,7 +5,7 @@ source("R/01_helper_functions.R")
 load("data/media.Rdata")
 load("data/neighbourhoods.Rdata")
 load("data/cityname.Rdata")
-
+load("data/neighbourhoods_updated.Rdata")
 
 # Distinguish between Glendale AZ and Glendale CA
 cityname[[32]] = "Glendale AZ"
@@ -25,6 +25,15 @@ neighbourhoods <-
 
 neighbourhoods_table <- 
   do.call(rbind, neighbourhoods)
+
+# Pare down city geometries in accordance with city_info_full_changes
+
+neighbourhoods_updated_table <- 
+  do.call(rbind, neighbourhoods_updated)
+
+neighbourhoods_table <- 
+  neighbourhoods_table %>% 
+  filter(neighbourhood %in% neighbourhoods_updated_table$neighbourhood)
 
 # Add housing loss as a percent of STR listings
 
@@ -256,3 +265,4 @@ neighbourhoods_table <-
 
 
 save(media_table, neighbourhoods_table, cities_table, file = "data/modeling_data.Rdata")
+
