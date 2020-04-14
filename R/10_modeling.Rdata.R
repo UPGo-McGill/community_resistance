@@ -313,13 +313,14 @@ r.squaredGLMM(best)
 
 # UPDATED MODEL
 
-  # R SQUARED 0.19, AIC 1976
+  # R SQUARED 0.19, AIC 1976 - HOUSING LOSS VERY SIGNIFICANT
   # TAKE OUT BOTTOM 50 CITIES BY MEDIA - RSQUARED 0.2, AIC 1624
+  # TAKE OUT BOTH BOTTOM 50 MEASURES - RSQUARED 0.21, AIC 1511
 
 model <- 
   neighbourhoods_table %>% 
-   #filter(CRI > 0) %>% 
-  filter(city %in% cityname[51:115]) %>% 
+  # filter(CRI > 0) %>% 
+  # filter(city %in% cityname[51:115]) %>% 
   # filter(!(city %in% bottom_50)) %>% 
   glm((CRI) ~ 
         active_listings +
@@ -344,6 +345,7 @@ r.squaredGLMM(model)
 
 plot(model)
 
+# When including the city, the r squared increases to 0.26 but the AIC decreases 
 
 # Model by city
 model <- 
@@ -387,10 +389,11 @@ model <-
   cities_table %>% 
   # filter(CRI > 0) %>% 
   # filter(city %in% cityname[51:115]) %>% 
-  # filter(!(city %in% bottom_50)) %>% 
+   filter(!(city %in% bottom_50)) %>% 
   glm((CRI) ~ 
         population +
-         non_mover_pct_pop,
+         non_mover_pct_pop +
+        region,
       family = gaussian, 
       data = .)
 
@@ -398,9 +401,16 @@ summary(model)
 
 r.squaredGLMM(model)
 
+# R squared improves to 0.37 if you take out the bottom 50 cities by population
+  # west region is slightly significant
 
 
+#### TOMORROW
 
+# 1. Go through this weighted thing 
+# 2. Make a final model
+# 3. MLM modeling if i take out the smallest x cities
+# 4. Make list of conclusions
 
 
 
