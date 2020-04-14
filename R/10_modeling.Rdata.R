@@ -429,10 +429,10 @@ model_puma <-
   # filter(!(city %in% bottom_50)) %>% 
   glm((CRI) ~ 
         active_listings +
-        # active_listings_yoy +
+       # active_listings_yoy +
         housing_loss_pct_households +
        # housing_need_pct_household +
-        population+
+       # population +
         non_mover_pct_pop +
         active_listings_city + 
         non_mover_pct_pop_city +
@@ -482,14 +482,40 @@ r.squaredGLMM(model_region)
 
 # Multi-level modeling
   # Can only include cities with at least three PUMAs
+  # Not as useful as including the city-level variables
+model_mlm <- 
+  neighbourhoods_table %>% 
+  filter(city %in% 
+           (neighbourhoods_table %>% 
+           st_drop_geometry() %>% 
+           group_by(city) %>% 
+           tally() %>% 
+           filter(n >=3) %>% 
+           dplyr::select(city) %>% 
+           do.call(paste, .))) %>% 
+  lmer((CRI) ~
+                scale(active_listings) +
+                # active_listings_yoy +
+                # PR_50_ct +
+                housing_loss_pct_households +
+                # scale(population) +
+                # scale(med_income) +
+                # housing_need_pct_household +
+                 non_mover_pct_pop +
+                # owner_occupied_pct_household +
+                # low_income_pct_pop +
+                # language_pct_pop +
+                # white_pct_pop + 
+                # citizen_pct_pop +
+                # university_education_pct_pop +
+                # lone_parent_pct_families  +
+        (1 | city), 
+        data = ., 
+       REML = FALSE)
 
-neighbourhoods_table %>% 
-  group_by(city) %>% 
-  tally()
+summary(model_mlm)
 
-#### TOMORROW
+r.squaredGLMM(model_mlm)      
 
-# 3. MLM modeling if i take out the smallest x cities
-# 4. Make list of conclusions
 
 
