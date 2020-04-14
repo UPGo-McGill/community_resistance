@@ -116,7 +116,7 @@ model <-
         active_listings +
         active_listings_yoy +
         # PR_50_ct +
-         housing_loss_pct_households +
+        housing_loss_pct_households +
         population +
         med_income +
         housing_need_pct_household +
@@ -148,7 +148,10 @@ best <-
 
 summary(best)
 
+weightable(best)
+
 # Only has the intercept, active_listings, housing_loss_pct_households, and non_mover_pct pop
+# No need to include other models via weighting 
 
 best <- 
   neighbourhoods_table %>% 
@@ -290,6 +293,9 @@ best <-
 
 summary(best)
 
+weightable(best)
+# No noticeable jump in AIC, best to just use the first model
+
 # The variables at the city-level that explain variance: 
   # active_listings, non_mover, owner_occupied, language, citizen, lone_parent
 
@@ -308,6 +314,8 @@ best <-
       family = gaussian, 
       data = .)
 
+summary(best)
+
 r.squaredGLMM(best)
 
 
@@ -324,10 +332,10 @@ model <-
   # filter(!(city %in% bottom_50)) %>% 
   glm((CRI) ~ 
         active_listings +
-        active_listings_yoy +
+        # active_listings_yoy +
         housing_loss_pct_households +
         population+
-        housing_need_pct_household+
+       # housing_need_pct_household+
         non_mover_pct_pop +
         active_listings_city + 
         non_mover_pct_pop_city +
@@ -385,11 +393,15 @@ best <-
 
 summary(best)
 
+weightable(best)
+
+# No need to weight numerous models
+
 model <- 
   cities_table %>% 
   # filter(CRI > 0) %>% 
   # filter(city %in% cityname[51:115]) %>% 
-   filter(!(city %in% bottom_50)) %>% 
+  # filter(!(city %in% bottom_50)) %>% 
   glm((CRI) ~ 
         population +
          non_mover_pct_pop +
@@ -404,59 +416,80 @@ r.squaredGLMM(model)
 # R squared improves to 0.37 if you take out the bottom 50 cities by population
   # west region is slightly significant
 
+# FINAL MODEL
+  # apply filter accordingly.
+  # technically we shouldn't include region as it worsens the model,
+    # but interesting to talk about the differences
+
+# PUMA-SCALE
+model_puma <- 
+  neighbourhoods_table %>% 
+  # filter(CRI > 0) %>% 
+  # filter(city %in% cityname[51:115]) %>% 
+  # filter(!(city %in% bottom_50)) %>% 
+  glm((CRI) ~ 
+        active_listings +
+        # active_listings_yoy +
+        housing_loss_pct_households +
+       # housing_need_pct_household +
+        population+
+        non_mover_pct_pop +
+        active_listings_city + 
+        non_mover_pct_pop_city +
+        owner_occupied_pct_household_city +
+        language_pct_pop_city +
+        citizen_pct_pop_city +
+        lone_parent_pct_families_city +
+        region,
+      family = gaussian, 
+      data = .)
+
+summary(model_puma)
+
+r.squaredGLMM(model_puma)
+
+plot(model_puma)
+
+# CITY-SCALE
+model_city <- 
+  cities_table %>% 
+  # filter(CRI > 0) %>% 
+  # filter(city %in% cityname[51:115]) %>% 
+  # filter(!(city %in% bottom_50)) %>% 
+  glm((CRI) ~ 
+        population +
+        non_mover_pct_pop +
+        region,
+      family = gaussian, 
+      data = .)
+
+summary(model_city)
+
+r.squaredGLMM(model_city)
+
+# REGION-SCALE
+  # just to talk about the west if we dont include region in the other models
+model_region <- 
+  neighbourhoods_table %>% 
+  glm((CRI) ~
+        region,
+      family = gaussian,
+      data = .)
+
+summary(model_region)
+
+r.squaredGLMM(model_region)
+
+# Multi-level modeling
+  # Can only include cities with at least three PUMAs
+
+neighbourhoods_table %>% 
+  group_by(city) %>% 
+  tally()
 
 #### TOMORROW
 
-# 1. Go through this weighted thing 
-# 2. Make a final model
 # 3. MLM modeling if i take out the smallest x cities
 # 4. Make list of conclusions
 
-
-
-
-
-weightable(best)
-
-# Top 4 have similair aic
-
-model1 <-   
-  neighbourhoods_table %>% 
-  filter(active_listings > 0) %>% 
-  glm(CRI ~ active_listings +
-        PR_50_ct,
-      family = gaussian(), 
-      data = .)
-
-model2 <- 
-  neighbourhoods_table %>% 
-  filter(active_listings > 0) %>% 
-  glm(CRI ~ active_listings +
-        active_listings_yoy +
-        PR_50_ct,
-      family = gaussian(), 
-      data = .)
-
-model3 <- 
-  neighbourhoods_table %>% 
-  filter(active_listings > 0) %>% 
-  glm(CRI ~ active_listings,
-      family = gaussian(), 
-      data = .)
-
-model4 <- 
-  neighbourhoods_table %>% 
-  filter(active_listings > 0) %>% 
-  glm(CRI ~ active_listings +
-        active_listings_yoy,
-      family = gaussian(), 
-      data = .)
-
-model_average <- 
-  model.avg(model1, 
-            model2, 
-            model3, 
-            model4)
-
-summary(model_average)
 
