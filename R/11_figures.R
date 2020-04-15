@@ -4,6 +4,90 @@ source("R/01_helper_functions.R")
 
 load("data/modeling_data.Rdata")
 
+################################### AIRBNB ANALYSIS ########################################
+
+cities_table %>% 
+  dplyr::select(c("city", "active_listings_avg")) %>% 
+  arrange(desc(active_listings_avg))
+
+cities_table %>% 
+  dplyr::select(c("region", "city", "active_listings_avg")) %>% 
+  group_by(region) %>% 
+  summarize(active_listings_avg_region = sum(active_listings_avg, na.rm = TRUE)) %>% 
+  arrange(desc(active_listings_avg_region))
+
+cities_table %>% 
+  mutate(active_listings_per_household = active_listings_avg/households) %>% 
+  dplyr::select(c("city", "active_listings_per_household")) %>% 
+  arrange(desc(active_listings_per_household))
+
+cities_table %>% 
+  dplyr::select(c("region", "city", "active_listings_avg", "households")) %>% 
+  group_by(region) %>% 
+  summarize(active_listings_avg_region = sum(active_listings_avg, na.rm = TRUE), 
+            households_region = sum(households, na.rm = TRUE)) %>% 
+  mutate(active_listings_per_household = active_listings_avg_region/households_region) %>% 
+  dplyr::select(c("region", "active_listings_per_household")) %>% 
+  arrange(desc(active_listings_per_household))
+
+cities_table %>% 
+  dplyr::select(c("city", "revenue_LTM")) %>% 
+  arrange(desc(revenue_LTM))
+
+cities_table %>% 
+  st_drop_geometry() %>% 
+  dplyr::select(c("region", "city", "revenue_LTM")) %>% 
+  group_by(region) %>% 
+  summarize(revenue_LTM_region = sum(as.numeric(revenue_LTM, na.rm = TRUE))) %>% 
+  arrange(desc(revenue_LTM_region))
+
+cities_table %>% 
+  dplyr::select(c("city", "revenue_LTM_per_listing")) %>% 
+  arrange(desc(revenue_LTM_per_listing))
+
+cities_table %>% 
+  st_drop_geometry() %>% 
+  dplyr::select(c("region", "city", "revenue_LTM", "active_listings_avg")) %>% 
+  group_by(region) %>% 
+  summarize(revenue_LTM_per_listing_region = sum(as.numeric(revenue_LTM, na.rm = TRUE))/sum(active_listings_avg, na.rm = TRUE)) %>% 
+  arrange(desc(revenue_LTM_per_listing_region))
+
+cities_table %>% 
+  #filter(active_listings_avg > 5000) %>% 
+  dplyr::select(c("city", "active_listings_yoy")) %>% 
+  arrange(desc(active_listings_yoy))
+
+cities_table %>% 
+  st_drop_geometry() %>% 
+  dplyr::select(c("region", "city", "active_listings_prev", "active_listings")) %>% 
+  group_by(region) %>% 
+  summarize(active_listings_yoy_region = sum(as.numeric(active_listings, na.rm = TRUE))/sum(active_listings_prev, na.rm = TRUE)) %>% 
+  arrange(desc(active_listings_yoy_region))
+
+cities_table %>% 
+  dplyr::select(c("city", "housing_loss")) %>% 
+  arrange(desc(housing_loss))
+
+cities_table %>% 
+  st_drop_geometry() %>% 
+  dplyr::select(c("region", "city", "housing_loss")) %>% 
+  group_by(region) %>% 
+  summarize(housing_loss_region = sum(housing_loss, na.rm = TRUE))%>% 
+  arrange(desc(housing_loss_region))
+
+cities_table %>% 
+  dplyr::select(c("city", "housing_loss_pct_households")) %>% 
+  arrange(desc(housing_loss_pct_households))
+
+cities_table %>% 
+  st_drop_geometry() %>% 
+  dplyr::select(c("region", "city", "housing_loss", "households")) %>% 
+  group_by(region) %>% 
+  summarize(housing_loss_pct_households_region = sum(housing_loss, na.rm = TRUE)/sum(households, na.rm = TRUE))%>% 
+  arrange(desc(housing_loss_pct_households_region))
+
+
+
 ################################### MEDIA ANALYSIS ###########################################
 
 ##### NUMBER OF ARTICLES
@@ -150,6 +234,7 @@ media_table %>%
             #  color = "black") +
   facet_wrap(vars(city))
 
+
 ##### COMMUNITY RESISTANCE INDEX
 
 # Country CRI over time
@@ -225,18 +310,20 @@ media_table %>%
 
 ############################################# BIVARIATE MAPPING ################################################################
   # Visualizing two variables at the same time using a bivariate colour scale
-data <- airbnb_neighbourhoods %>%  
-  filter(city == "New Orleans") %>% 
-  mutate(CRI = CRI/max(CRI)) %>% 
+data <- 
+  neighbourhoods_table %>%  
+  filter(city == "Miami") %>% 
+  filter(!is.na(CRI)) %>% 
+  filter(!is.na(housing_loss_pct_households)) %>% 
   st_as_sf() 
 
-quantiles_CRI <- c(0, 0.02, 0.2, 1)
+# uantiles_CRI <- c(0, 0.02, 0.2, 1)
 
 # Specify data, variables, title, labels, and quantiles (optional)
 bivariate_mapping(data = data,
                   var1 = data$CRI, 
-                  var2 = data$white_z, 
-                  quantiles_var1 = quantiles_CRI, 
+                  var2 = data$housing_loss_pct_households, 
+                 # quantiles_var1 = quantiles_CRI, 
                   title = "Housing Loss and Community Resistance",
                   xlab = "Increasing CRI", 
                   ylab = "Increasing White") %>% 
