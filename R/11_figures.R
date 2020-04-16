@@ -123,7 +123,7 @@ media_table %>%
   stat_smooth(
     geom = 'area', method = 'loess', span = 1/5,
     alpha = 1/2, fill = "orange") +
-  facet_wrap(vars(region))
+  facet_grid(vars(region))
 
 media_table %>% 
   filter(Date >= "2015-01-01" &
@@ -131,7 +131,7 @@ media_table %>%
   group_by(region, month_yr) %>% 
   count() %>%
   ggplot(aes(x = month_yr, y = n, fill = region)) +
-  geom_area()
+  geom_area() 
 
 # Number of articles by city
 
@@ -301,31 +301,146 @@ media_table %>%
   facet_wrap(vars(city))
 
 
-################################# SIGNIFICANT AND INSIGNIFICANT VARIABLE PLOTTING #########################
-# CRI versus significant variable
-
-###### CRI PER CITY #######
-# Map of actual/predicted CRI for a few cities 
-
-
 ############################################# BIVARIATE MAPPING ################################################################
-  # Visualizing two variables at the same time using a bivariate colour scale
+# Visualizing two variables at the same time using a bivariate colour scale
+
+# What cities to include? 3 for each variable
+  # Top 15 cities with media attention
+cities_media <- 
+  media_table %>% 
+  group_by(city) %>% 
+  count() %>% 
+  arrange(desc(n)) %>% 
+  dplyr::select(city) %>% 
+  do.call(paste, .)
+
+# But also those with the highest instances of the variable
+
+# Housing_loss_pct_households 
+  # New Orleans (most housing loss), Jersey City (high housing loss), San Fran (media)
+cities_housing_loss <- 
+  cities_table %>% 
+    arrange(desc(housing_loss_pct_households)) %>% 
+    dplyr::select(city) %>% 
+    st_drop_geometry() %>% 
+    do.call(paste, .)
+
 data <- 
   neighbourhoods_table %>%  
-  filter(city == "Miami") %>% 
+  filter(city == "Chicago") %>% 
   filter(!is.na(CRI)) %>% 
-  filter(!is.na(housing_loss_pct_households)) %>% 
+  filter(housing_loss_pct_households >= 0) %>% 
   st_as_sf() 
-
-# uantiles_CRI <- c(0, 0.02, 0.2, 1)
 
 # Specify data, variables, title, labels, and quantiles (optional)
 bivariate_mapping(data = data,
                   var1 = data$CRI, 
                   var2 = data$housing_loss_pct_households, 
-                 # quantiles_var1 = quantiles_CRI, 
-                  title = "Housing Loss and Community Resistance",
+                  #quantiles_var1 = quantiles_CRI,
+                  #quantiles_var2 = c(0, 0.00001, 0.001, 1), 
+                  title = "Housing Loss and Community Resistance in San Francisco",
                   xlab = "Increasing CRI", 
-                  ylab = "Increasing White") %>% 
+                  ylab = "Increasing Housing Loss") %>% 
   plot()
+
+
+# Active_listings
+cities_active_listings <- 
+  cities_table %>% 
+  arrange(desc(active_listings)) %>% 
+  dplyr::select(city) %>% 
+  st_drop_geometry() %>% 
+  do.call(paste, .)
+
+data <- 
+  neighbourhoods_table %>%  
+  filter(city == "Miami") %>% 
+  filter(!is.na(CRI)) %>% 
+  filter(active_listings >= 0) %>% 
+  st_as_sf() %>% 
+  mutate(active_listings_inverse = 1/active_listings)
+
+# Specify data, variables, title, labels, and quantiles (optional)
+bivariate_mapping(data = data,
+                  var1 = data$CRI, 
+                  var2 = data$active_listings_inverse, 
+                  #quantiles_var1 = quantiles_CRI,
+                  #quantiles_var2 = c(0, 0.00001, 0.001, 1), 
+                  title = "Active Listings and Community Resistance in Houston",
+                  xlab = "Increasing CRI", 
+                  ylab = "Decreasing STR Listings") %>% 
+  plot()
+
+# Non_mover_pct_pop
+cities_non_mover <- 
+  cities_table %>% 
+  arrange(desc(non_mover_pct_pop)) %>% 
+  dplyr::select(city) %>% 
+  st_drop_geometry() %>% 
+  do.call(paste, .)
+
+data <- 
+  neighbourhoods_table %>%  
+  filter(city == "Las Vegas") %>% 
+  filter(!is.na(CRI)) %>% 
+  filter(non_mover_pct_pop >= 0) %>% 
+  st_as_sf() 
+
+# Specify data, variables, title, labels, and quantiles (optional)
+bivariate_mapping(data = data,
+                  var1 = data$CRI, 
+                  var2 = data$non_mover_pct_pop, 
+                  #quantiles_var1 = quantiles_CRI,
+                  #quantiles_var2 = c(0, 0.00001, 0.001, 1), 
+                  title = "Non Movers and Community Resistance in Austin",
+                  xlab = "Increasing CRI", 
+                  ylab = "Increasing Non-Movers") %>% 
+  plot()
+
+
+# Owner_occupied_pct_households
+cities_OO <- 
+  cities_table %>% 
+  arrange((owner_occupied_pct_household)) %>% 
+  dplyr::select(city) %>% 
+  st_drop_geometry() %>% 
+  do.call(paste, .)
+
+data <- 
+  neighbourhoods_table %>%  
+  filter(city == "New York") %>% 
+  filter(!is.na(CRI)) %>% 
+  filter(owner_occupied_pct_household >= 0) %>% 
+  st_as_sf() 
+
+#quantiles_CRI <- c(-20, -2.5, 0.2, 2)
+
+# Specify data, variables, title, labels, and quantiles (optional)
+bivariate_mapping(data = data,
+                  var1 = data$CRI, 
+                  var2 = data$rental_pct_household, 
+                  #quantiles_var1 = quantiles_CRI,
+                  #quantiles_var2 = c(0, 0.00001, 0.001, 1), 
+                  title = "Rental Households and Community Resistance in Seattle",
+                  xlab = "Increasing CRI", 
+                  ylab = "Increasing Rental Households") %>% 
+  plot()
+
+
+
+################################# SIGNIFICANT AND INSIGNIFICANT VARIABLE PLOTTING #########################
+# CRI versus significant variable
+
+neighbourhoods_table %>% 
+#  filter(city == "Miami") %>% 
+  #filter(CRI>0) %>% 
+  ggplot(aes((med_income), CRI)) +
+  geom_area() +
+  geom_smooth(method = "lm")
+
+plot(neighbourhoods_table$CRI, neighbourhoods_table$housing_loss_pct_households, type = "b") 
+?plot
+
+###### CRI PER CITY #######
+# Map of actual/predicted CRI for a few cities 
 
