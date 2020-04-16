@@ -192,7 +192,7 @@ neighbourhoods_table$city <- as.factor(neighbourhoods_table$city)
 model <- 
   neighbourhoods_table %>% 
   # filter(CRI > 0) %>% 
-   filter(city %in% cityname[51:115]) %>% 
+  # filter(city %in% cityname[51:115]) %>% 
   # filter(!(city %in% bottom_50)) %>% 
   glm((CRI) ~ 
          active_listings +
@@ -210,7 +210,8 @@ model <-
         #  citizen_pct_pop +
         #  university_education_pct_pop +
         # lone_parent_pct_families +
-         city,
+        # city +
+         region,
       family = gaussian, 
       data = .)
 
@@ -218,15 +219,15 @@ summary(model)
 
 r.squaredGLMM(model)
 
-# Including the city as a variable if you filter out the bottom 50 cities (in terms of media)
-  # provides a higher AIC and lower R squared. This is not the case if you do not filter out  
+# Including the city as a variable if you filter out the bottom 50 cities (in terms of media and population)
+  # provides a higher AIC and higher R squared. This is not the case if you do not filter out  
   # the cities
 
 # Adding in region
 model <- 
   neighbourhoods_table %>% 
   # filter(CRI > 0) %>% 
-  filter(city %in% cityname[51:115]) %>% 
+ # filter(city %in% cityname[51:115]) %>% 
   # filter(!(city %in% bottom_50)) %>% 
   glm((CRI) ~ 
         active_listings +
@@ -297,7 +298,7 @@ weightable(best)
 # No noticeable jump in AIC, best to just use the first model
 
 # The variables at the city-level that explain variance: 
-  # active_listings, non_mover, owner_occupied, language, citizen, lone_parent
+# active_listings, non_mover, owner_occupied, language, citizen, lone_parent
 
 best <- 
   neighbourhoods_table %>% 
@@ -318,13 +319,7 @@ summary(best)
 
 r.squaredGLMM(best)
 
-
-# UPDATED MODEL
-
-  # R SQUARED 0.19, AIC 1976 - HOUSING LOSS VERY SIGNIFICANT
-  # TAKE OUT BOTTOM 50 CITIES BY MEDIA - RSQUARED 0.2, AIC 1624
-  # TAKE OUT BOTH BOTTOM 50 MEASURES - RSQUARED 0.21, AIC 1511
-
+# Put all variables in the model
 model <- 
   neighbourhoods_table %>% 
   # filter(CRI > 0) %>% 
@@ -332,16 +327,32 @@ model <-
   # filter(!(city %in% bottom_50)) %>% 
   glm((CRI) ~ 
         active_listings +
-        # active_listings_yoy +
+        active_listings_yoy +
         housing_loss_pct_households +
-        population+
-       # housing_need_pct_household+
+        population +
+        med_income +
+        housing_need_pct_household +
         non_mover_pct_pop +
+        owner_occupied_pct_household +
+        low_income_pct_pop+
+        language_pct_pop +
+        white_pct_pop + 
+        citizen_pct_pop +
+        university_education_pct_pop +
+        lone_parent_pct_families +
         active_listings_city + 
+        active_listings_yoy_city +
+        housing_loss_pct_households_city +
+        population_city +
+        med_income_city +
+        housing_need_pct_household_city +
         non_mover_pct_pop_city +
         owner_occupied_pct_household_city +
+        low_income_pct_pop_city +
         language_pct_pop_city +
+        white_pct_pop_city + 
         citizen_pct_pop_city +
+        university_education_pct_pop_city +
         lone_parent_pct_families_city +
         region,
       family = gaussian, 
@@ -351,9 +362,78 @@ summary(model)
 
 r.squaredGLMM(model)
 
+best <- 
+  glmulti(model, level = 1, crit = "aic")
+
+summary(best)
+
+weightable(best)
+
+model <- 
+  neighbourhoods_table %>% 
+  # filter(CRI > 0) %>% 
+  # filter(city %in% cityname[51:115]) %>% 
+  # filter(!(city %in% bottom_50)) %>% 
+  glm((CRI) ~ 
+        active_listings +
+        housing_loss_pct_households +
+        non_mover_pct_pop +
+        owner_occupied_pct_household +
+        low_income_pct_pop+
+        citizen_pct_pop +
+        university_education_pct_pop +
+        population_city +
+        med_income_city,
+        # housing_need_pct_household_city ,
+        # non_mover_pct_pop_city,
+        # owner_occupied_pct_household_city,
+        # low_income_pct_pop_city +
+        # language_pct_pop_city +
+        # white_pct_pop_city + 
+        # citizen_pct_pop_city +
+        # university_education_pct_pop_city +
+        # lone_parent_pct_families_city +
+        # region,
+      family = gaussian, 
+      data = .)
+
+summary(model)
+
+r.squaredGLMM(model)
+
+# UPDATED MODEL
+
+  # R SQUARED 0.20, AIC 1914 - HOUSING LOSS QUITE SIGNIFICANT
+  # TAKE OUT BOTTOM 50 CITIES BY MEDIA - RSQUARED 0.22, AIC 1573
+  # TAKE OUT  BOTTOM 50 BY POPULATION - RSQUARED 0.22, AIC 1634
+  # TAKE OUT BOTH BOTTOM 50 MEASURES - RSQUARED 0.22, AIC 1456 
+      # but housing loss is less significant
+
+model <- 
+  neighbourhoods_table %>% 
+  # filter(CRI > 0) %>% 
+   filter(city %in% cityname[51:115]) %>% 
+   filter(!(city %in% bottom_50)) %>% 
+  glm((CRI) ~ 
+        active_listings +
+        housing_loss_pct_households +
+        non_mover_pct_pop +
+        owner_occupied_pct_household +
+        low_income_pct_pop+
+        citizen_pct_pop +
+        university_education_pct_pop +
+        population_city +
+        med_income_city,
+        #region,
+      family = gaussian, 
+      data = .)
+
+summary(model)
+
+r.squaredGLMM(model)
+
 plot(model)
 
-# When including the city, the r squared increases to 0.26 but the AIC decreases 
 
 # Model by city
 model <- 
@@ -386,7 +466,7 @@ r.squaredGLMM(model)
 
 # Not much can be said when just considering city
   # non_mover has a positive correlate and population a negative
-  # Explains about 25% of the variance
+  # Explains about 22% of the variance
 
 best <- 
   glmulti(model, level = 1, crit = "aic")
@@ -400,12 +480,12 @@ weightable(best)
 model <- 
   cities_table %>% 
   # filter(CRI > 0) %>% 
-  # filter(city %in% cityname[51:115]) %>% 
-  # filter(!(city %in% bottom_50)) %>% 
+   #filter(city %in% cityname[51:115]) %>% 
+   #filter(!(city %in% bottom_50)) %>% 
   glm((CRI) ~ 
         population +
-         non_mover_pct_pop +
-        region,
+         non_mover_pct_pop,
+      #   region,
       family = gaussian, 
       data = .)
 
@@ -413,8 +493,11 @@ summary(model)
 
 r.squaredGLMM(model)
 
-# R squared improves to 0.37 if you take out the bottom 50 cities by population
-  # west region is slightly significant
+# R squared improves to 0.220 if you take out the bottom 50 cities by media attention, AIC decreases to 341
+# R squared improves to 0.290 if you take out the bottom 50 cities by population, AIC decreases to 332
+    # west region is slightly significant
+# Take out bottom both: R squared increases to 0.32 and AIC decreases to 253
+
 
 # FINAL MODEL
   # apply filter accordingly.
@@ -429,17 +512,14 @@ model_puma <-
   # filter(!(city %in% bottom_50)) %>% 
   glm((CRI) ~ 
         active_listings +
-       # active_listings_yoy +
         housing_loss_pct_households +
-       # housing_need_pct_household +
-       # population +
         non_mover_pct_pop +
-        active_listings_city + 
-        non_mover_pct_pop_city +
-        owner_occupied_pct_household_city +
-        language_pct_pop_city +
-        citizen_pct_pop_city +
-        lone_parent_pct_families_city +
+        owner_occupied_pct_household +
+        low_income_pct_pop+
+        citizen_pct_pop +
+        university_education_pct_pop +
+        population_city +
+        med_income_city +
         region,
       family = gaussian, 
       data = .)
@@ -470,7 +550,7 @@ r.squaredGLMM(model_city)
 # REGION-SCALE
   # just to talk about the west if we dont include region in the other models
 model_region <- 
-  neighbourhoods_table %>% 
+  cities_table %>% 
   glm((CRI) ~
         region,
       family = gaussian,
