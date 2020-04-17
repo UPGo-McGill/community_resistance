@@ -86,6 +86,53 @@ cities_table %>%
   summarize(housing_loss_pct_households_region = sum(housing_loss, na.rm = TRUE)/sum(households, na.rm = TRUE))%>% 
   arrange(desc(housing_loss_pct_households_region))
 
+# Visualizing STR activity
+
+cities_table %>% 
+  st_cast("POINT") %>% 
+  ggplot() + 
+  geom_sf(aes(size = active_listings, colour = region))
+
+cities_table %>% 
+  st_cast("POINT") %>% 
+  ggplot() + 
+  geom_sf(aes(size = housing_loss, colour = region))
+
+cities_table %>% 
+  st_cast("POINT") %>% 
+  ggplot() + 
+  geom_sf(aes(size = revenue_LTM, colour = region))
+
+cities_table %>% 
+  group_by(region) %>% 
+  ggplot() + 
+  geom_violin(aes(x = region, y = active_listings))
+
+cities_table %>% 
+  group_by(region) %>% 
+  ggplot() + 
+  geom_violin(aes(x = region, y = housing_loss))
+
+cities_table %>% 
+  mutate(country = "United States") %>% 
+  ggplot() + 
+  geom_violin(aes(x = country, y = active_listings))
+
+cities_table %>% 
+  mutate(country = "United States") %>% 
+  ggplot() + 
+  geom_violin(aes(x = country, y = housing_loss))
+
+cities_table %>% 
+  mutate(country = "United States") %>% 
+  ggplot() + 
+  geom_violin(aes(x = country, y = revenue_LTM))
+
+
+cities_table %>% 
+  group_by(region) %>% 
+  ggplot() + 
+  geom_violin(aes(y = region, x = housing_loss))
 
 
 ################################### MEDIA ANALYSIS ###########################################
@@ -110,6 +157,11 @@ media_table %>%
   stat_smooth(
     geom = 'area', method = 'loess', span = 1/5,
     alpha = 1/2, fill = "orange")
+
+cities_table %>% 
+  st_cast("POINT") %>% 
+  ggplot() + 
+  geom_sf(aes(size = n, colour = region))
 
 # Regional number of articles over time
 
@@ -426,21 +478,69 @@ bivariate_mapping(data = data,
                   ylab = "Increasing Rental Households") %>% 
   plot()
 
+# Now, to show the absense of a relationship
+# Active listings yoy 
+cities_yoy <- 
+  cities_table %>% 
+  filter(active_listings>1000) %>% 
+  arrange(desc(active_listings_yoy)) %>% 
+  dplyr::select(city) %>% 
+  st_drop_geometry() %>% 
+  do.call(paste, .)
 
+data <- 
+  neighbourhoods_table %>%  
+  filter(city == "Las Vegas") %>% 
+  filter(!is.na(CRI)) %>% 
+  filter(!is.na(active_listings_yoy)) %>% 
+  st_as_sf() 
+
+#quantiles_CRI <- c(-20, -2.5, 0.2, 2)
+
+# Specify data, variables, title, labels, and quantiles (optional)
+bivariate_mapping(data = data,
+                  var1 = data$CRI, 
+                  var2 = data$rental_pct_household, 
+                  #quantiles_var1 = quantiles_CRI,
+                  #quantiles_var2 = c(0, 0.00001, 0.001, 1), 
+                  title = "STR Growth Rates and Community Resistance in Las Vegas",
+                  xlab = "Increasing CRI", 
+                  ylab = "Increasing STR Growth Rates") %>% 
+  plot()
+
+# Med income 
+cities_income <- 
+  cities_table %>% 
+  arrange(desc(med_income)) %>% 
+  dplyr::select(city) %>% 
+  st_drop_geometry() %>% 
+  do.call(paste, .)
+
+data <- 
+  neighbourhoods_table %>%  
+  filter(city == "Detroit") %>% 
+  filter(!is.na(CRI)) %>% 
+  st_as_sf() 
+
+#quantiles_CRI <- c(-20, -2.5, 0.2, 2)
+
+# Specify data, variables, title, labels, and quantiles (optional)
+bivariate_mapping(data = data,
+                  var1 = data$CRI, 
+                  var2 = data$med_income, 
+                  #quantiles_var1 = quantiles_CRI,
+                  #quantiles_var2 = c(0, 0.00001, 0.001, 1), 
+                  title = "Median Income and Community Resistance in Detroit",
+                  xlab = "Increasing CRI", 
+                  ylab = "Increasing Median Income") %>% 
+  plot()
 
 ################################# SIGNIFICANT AND INSIGNIFICANT VARIABLE PLOTTING #########################
 # CRI versus significant variable
 
 neighbourhoods_table %>% 
-#  filter(city == "Miami") %>% 
-  #filter(CRI>0) %>% 
-  ggplot(aes((med_income), CRI)) +
-  geom_area() +
+  ggplot(aes(x = owner_occupied_pct_household, y = CRI)) +
+  geom_point() +
   geom_smooth(method = "lm")
 
-plot(neighbourhoods_table$CRI, neighbourhoods_table$housing_loss_pct_households, type = "b") 
-?plot
-
-###### CRI PER CITY #######
-# Map of actual/predicted CRI for a few cities 
 
