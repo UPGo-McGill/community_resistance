@@ -352,6 +352,18 @@ media_table %>%
   geom_smooth() +
   facet_wrap(vars(city))
 
+## CRI
+
+cities_table %>% 
+  dplyr::select(c(city, CRI)) %>% 
+  st_drop_geometry() %>% 
+  arrange(desc(CRI))
+
+neighbourhoods_table %>% 
+  dplyr::select(c(city, neighbourhood, CRI)) %>% 
+  st_drop_geometry() %>% 
+  arrange(desc(CRI))
+
 
 ############################################# BIVARIATE MAPPING ################################################################
 # Visualizing two variables at the same time using a bivariate colour scale
