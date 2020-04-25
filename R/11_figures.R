@@ -88,6 +88,97 @@ cities_table %>%
 
 # Visualizing STR activity
 
+bivariate_color_scale <- 
+  tibble(
+  "3 - 3" = "#3F2949", # high var1, high var2
+  "2 - 3" = "#435786",
+  "1 - 3" = "#4885C1", # low var1, high var2
+  "3 - 2" = "#77324C",
+  "2 - 2" = "#806A8A", # medium var1, medium var2
+  "1 - 2" = "#89A1C8",
+  "3 - 1" = "#AE3A4E", # high var1, low var2
+  "2 - 1" = "#BC7C8F",
+  "1 - 1" = "#CABED0")
+
+cities_table %>% 
+  mutate(country = "") %>% 
+  ggplot(aes(x = country, y = active_listings_avg)) + 
+  geom_violin(fill = "#3F2949",
+              colour = "#CABED0",
+              lwd = 0.25,
+              scale = "count", 
+              adjust = 1,
+              trim = TRUE,
+              draw_quantiles = c(0.25, 0.75),
+              linetype = "dashed") +
+  geom_violin(fill = "transparent",
+              colour = "#CABED0",
+              lwd = 1.25,
+              scale = "count", 
+              adjust = 1,
+              trim = TRUE,
+              draw_quantiles = c(0.5)) +
+  xlab("") +
+  ylab("Number of listings\n") +
+  ggtitle("STR market size by active listings per city in the United States") +
+  scale_y_continuous(labels = comma) +
+  theme_minimal() +
+  theme(text = element_text(family = "Helvetica Light", size = 14),
+        plot.title = element_text(hjust = 0.5))
+
+cities_table %>% 
+  mutate(country = "") %>% 
+  ggplot(aes(x = country, y = housing_loss)) + 
+  geom_violin(fill = "#3F2949",
+              colour = "#CABED0",
+              lwd = 0.25,
+              scale = "count", 
+              adjust = 1,
+              trim = TRUE,
+              draw_quantiles = c(0.25, 0.75),
+              linetype = "dashed") +
+  geom_violin(fill = "transparent",
+              colour = "#CABED0",
+              lwd = 1.25,
+              scale = "count", 
+              adjust = 1,
+              trim = TRUE,
+              draw_quantiles = c(0.5)) +
+  xlab("") +
+  ylab("Housing lost to STRs\n") +
+  ggtitle("STR-induced housing loss per city in the United States") +
+  scale_y_continuous(labels = comma) +
+  theme_minimal() +
+  theme(text = element_text(family = "Helvetica Light", size = 14),
+        plot.title = element_text(hjust = 0.5))
+
+cities_table %>% 
+  mutate(country = "") %>% 
+  ggplot(aes(x = country, y = revenue_LTM)) + 
+  geom_violin(fill = "#3F2949",
+              colour = "#CABED0",
+              lwd = 0.25,
+              scale = "count", 
+              adjust = 1,
+              trim = TRUE,
+              draw_quantiles = c(0.25, 0.75),
+              linetype = "dashed") +
+  geom_violin(fill = "transparent",
+              colour = "#CABED0",
+              lwd = 1.25,
+              scale = "count", 
+              adjust = 1,
+              trim = TRUE,
+              draw_quantiles = c(0.5)) +
+  xlab("") +
+  ylab("Revenue\n") +
+  ggtitle("Revenues generated from STRs in 2019 by city in the United States") +
+  scale_y_continuous(labels = paste0("$", c(0, 250, 500, 750), "M"),
+                     breaks = 10^6 * c(0,250,500,750)) +
+  theme_minimal() +
+  theme(text = element_text(family = "Helvetica Light", size = 14),
+        plot.title = element_text(hjust = 0.5))
+
 cities_table %>% 
   st_cast("POINT") %>% 
   ggplot() + 
@@ -103,36 +194,6 @@ cities_table %>%
   ggplot() + 
   geom_sf(aes(size = revenue_LTM, colour = region))
 
-cities_table %>% 
-  group_by(region) %>% 
-  ggplot() + 
-  geom_violin(aes(x = region, y = active_listings))
-
-cities_table %>% 
-  group_by(region) %>% 
-  ggplot() + 
-  geom_violin(aes(x = region, y = housing_loss))
-
-cities_table %>% 
-  mutate(country = "United States") %>% 
-  ggplot() + 
-  geom_violin(aes(x = country, y = active_listings))
-
-cities_table %>% 
-  mutate(country = "United States") %>% 
-  ggplot() + 
-  geom_violin(aes(x = country, y = housing_loss))
-
-cities_table %>% 
-  mutate(country = "United States") %>% 
-  ggplot() + 
-  geom_violin(aes(x = country, y = revenue_LTM))
-
-
-cities_table %>% 
-  group_by(region) %>% 
-  ggplot() + 
-  geom_violin(aes(y = region, x = housing_loss))
 
 
 ################################### MEDIA ANALYSIS ###########################################
@@ -357,12 +418,17 @@ media_table %>%
 cities_table %>% 
   dplyr::select(c(city, CRI)) %>% 
   st_drop_geometry() %>% 
-  arrange(desc(CRI))
+  arrange(desc(CRI)) %>% view()
 
 neighbourhoods_table %>% 
   dplyr::select(c(city, neighbourhood, CRI)) %>% 
   st_drop_geometry() %>% 
-  arrange(desc(CRI))
+  arrange((CRI)) %>% view()
+
+neighbourhoods_table %>% 
+  dplyr::select(c(city, neighbourhood, CRI)) %>% 
+  st_drop_geometry() %>% 
+  arrange(desc(CRI)) %>% view()
 
 
 ############################################# BIVARIATE MAPPING ################################################################

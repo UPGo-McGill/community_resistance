@@ -50,6 +50,9 @@ library(udpipe)
 install.packages("glmulti")
 library(rJava)
 library(glmulti)
+library(extrafont)
+fonts_install()
+library(scales)
 
 # Note: spaCy requires the user to download a version of miniconda and follow a 
 # set of instructions to set up
