@@ -505,22 +505,23 @@ r.squaredGLMM(model)
     # but interesting to talk about the differences
 
 # PUMA-SCALE
+# Updated models
 model_puma <- 
   neighbourhoods_table %>% 
-  # filter(CRI > 0) %>% 
-  # filter(city %in% cityname[51:115]) %>% 
-  # filter(!(city %in% bottom_50)) %>% 
   glm((CRI) ~ 
         active_listings +
         housing_loss_pct_households +
         non_mover_pct_pop +
         owner_occupied_pct_household +
         low_income_pct_pop+
-        citizen_pct_pop +
+        white_pct_pop + 
         university_education_pct_pop +
+        lone_parent_pct_families +
+        housing_loss_pct_households_city +
         population_city +
         med_income_city +
-        region,
+        language_pct_pop_city +
+        citizen_pct_pop_city,
       family = gaussian, 
       data = .)
 
@@ -528,7 +529,55 @@ summary(model_puma)
 
 r.squaredGLMM(model_puma)
 
-plot(model_puma)
+model_puma <- 
+  neighbourhoods_table %>% 
+  filter(city %in% cityname[51:115]) %>% 
+  glm((CRI) ~ 
+        active_listings +
+        housing_loss_pct_households +
+        non_mover_pct_pop +
+        owner_occupied_pct_household +
+        low_income_pct_pop+
+        white_pct_pop + 
+        university_education_pct_pop +
+        lone_parent_pct_families +
+        population_city +
+        med_income_city +
+        low_income_pct_pop_city +
+        language_pct_pop_city +
+        citizen_pct_pop_city +
+        university_education_pct_pop_city +
+        lone_parent_pct_families_city,
+      family = gaussian, 
+      data = .)
+
+summary(model_puma)
+
+r.squaredGLMM(model_puma)
+
+model_puma <- 
+  neighbourhoods_table %>% 
+  filter(!(city %in% bottom_50)) %>% 
+  glm((CRI) ~ 
+        active_listings +
+        housing_loss_pct_households +
+        non_mover_pct_pop +
+        owner_occupied_pct_household +
+        language_pct_pop +
+        white_pct_pop + 
+        university_education_pct_pop +
+        population_city +
+        med_income_city +
+        language_pct_pop_city +
+        citizen_pct_pop_city,
+      family = gaussian, 
+      data = .)
+
+summary(model_puma)
+
+r.squaredGLMM(model_puma)
+
+
 
 # CITY-SCALE
 model_city <- 
@@ -596,6 +645,7 @@ model_mlm <-
 summary(model_mlm)
 
 r.squaredGLMM(model_mlm)      
+
 
 
 
