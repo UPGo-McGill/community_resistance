@@ -74,10 +74,10 @@ west <- c("Albuquerque", "Anaheim", "Anchorage", "Los Angeles", "Phoenix",
 
 neighbourhoods_table <- 
   neighbourhoods_table %>% 
-  mutate(region = ifelse(city %in% northeast, "northeast",
-                         ifelse(city %in% midwest, "midwest",
-                                ifelse(city %in% south, "south",
-                                       ifelse(city %in% west, "west", "error"))))) 
+  mutate(region = ifelse(city %in% northeast, "Northeast",
+                         ifelse(city %in% midwest, "Midwest",
+                                ifelse(city %in% south, "South",
+                                       ifelse(city %in% west, "West", "error"))))) 
 
 # Manipulate the media file for temporal analysis
 
@@ -105,10 +105,10 @@ media_table <-
 
 media_table <- 
   media_table %>% 
-  mutate(region = ifelse(city %in% northeast, "northeast",
-                         ifelse(city %in% midwest, "midwest",
-                                ifelse(city %in% south, "south",
-                                       ifelse(city %in% west, "west", "error"))))) 
+  mutate(region = ifelse(city %in% northeast, "Northeast",
+                         ifelse(city %in% midwest, "Midwest",
+                                ifelse(city %in% south, "South",
+                                       ifelse(city %in% west, "West", "error"))))) 
 
 
 # Create city-wide table for modeling
