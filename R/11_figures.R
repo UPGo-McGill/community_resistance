@@ -186,17 +186,6 @@ cities_table %>%
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank())
 
-map_data("state") %>% 
-  ggplot() +
-  geom_polygon(aes(x = long, y = lat, group = group)) +
-  geom_sf(data = cities_table %>% 
-                    st_cast("POINT") %>% 
-                    filter(city != "Anchorage" &
-                           city != "Honolulu"), 
-          aes(size = active_listings, 
-              colour = region,
-              fill = "transparent"))
-
 cities_table %>% 
   st_cast("POINT") %>% 
   ggplot() + 
@@ -225,17 +214,6 @@ media_table$month_yr <- (format(as.Date(media_table$Date), "%Y-%m"))
 media_table$month_yr <- as.Date(paste(media_table$month_yr, "-15", sep = ""))
 
 # Country-wide number of articles over time
-bivariate_color_scale <- 
-  tibble(
-    "3 - 3" = "#3F2949", # high var1, high var2
-    "2 - 3" = "#435786",
-    "1 - 3" = "#4885C1", # low var1, high var2
-    "3 - 2" = "#77324C",
-    "2 - 2" = "#806A8A", # medium var1, medium var2
-    "1 - 2" = "#89A1C8",
-    "3 - 1" = "#AE3A4E", # high var1, low var2
-    "2 - 1" = "#BC7C8F",
-    "1 - 1" = "#CABED0")
 
 media_table %>% 
   filter(Date >= "2015-01-01" &
@@ -283,7 +261,8 @@ media_table %>%
   theme(text = element_text(family = "Helvetica Light", size = 14),
         plot.title = element_text(hjust = 0.5), 
         panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank())
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank())
 
 
 # Number of articles by city
@@ -326,7 +305,8 @@ data %>%
   theme(text = element_text(family = "Helvetica Light", size = 14),
         plot.title = element_text(hjust = 0.5), 
         panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank())
+        panel.grid.minor.x = element_blank(), 
+        panel.grid.minor.y = element_blank())
 
 cities <- 
   cities_media[5:13,1] %>% 
@@ -372,14 +352,16 @@ data %>%
   theme(text = element_text(family = "Helvetica Light", size = 14),
         plot.title = element_text(hjust = 0.5), 
         panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank())
+        panel.grid.minor.x = element_blank(), 
+        panel.grid.minor.y = element_blank())
 
 ##### SENTIMENT
 
 # Country-wide sentiment of articles over time
 
 media_table %>% 
-  filter(Date >= "2015-01-01") %>% 
+  filter(Date >= "2015-01-01" &
+           Date <= "2019-12-31") %>% 
   ggplot(aes(Date, sentiment)) +
   #geom_point() +
   geom_smooth(span = 0.8, 
@@ -404,7 +386,8 @@ media_table %>%
 # Regional sentiment of articles over time
 
 media_table %>% 
-  filter(Date >= "2015-01-01") %>% 
+  filter(Date >= "2015-01-01" &
+           Date <= "2019-12-31") %>% 
 ggplot(aes(Date, sentiment)) +
   #geom_point() +
   geom_smooth(span = 0.8, 
@@ -436,7 +419,8 @@ cities <-
 
 data <- 
   media_table %>% 
-  filter(Date >= "2015-01-01") %>% 
+  filter(Date >= "2015-01-01" &
+           Date <= "2019-12-31") %>% 
   filter(city %in% cities)
 
 data$city <- factor(data$city, levels = c("New York",
@@ -467,7 +451,8 @@ cities <-
 
 data <- 
   media_table %>% 
-  filter(Date >= "2015-01-01") %>% 
+  filter(Date >= "2015-01-01" &
+           Date <= "2019-12-31") %>% 
   filter(city %in% cities)
 
 data$city <- factor(data$city, levels = c("Chicago",
@@ -503,25 +488,58 @@ data %>%
 # Country CRI over time
 
 media_table %>% 
-  filter(Date >= "2015-01-01") %>% 
+  filter(Date >= "2015-01-01" &
+           Date <= "2019-12-31") %>% 
   group_by(month_yr) %>% 
   summarize(sentiment = mean(sentiment, na.rm = TRUE),
             articles = n()) %>% 
   mutate(CRI = -1 * sentiment * articles) %>% 
   ggplot(aes(month_yr, CRI)) +
-  geom_smooth()
+ # geom_point() +
+  geom_smooth(span = 0.8, 
+              color = "#3F2949", 
+              fill = "#CABED0", 
+              lwd = 2) +
+  geom_smooth(method = lm, 
+              se = FALSE, 
+              color = "#806A8A", 
+              lwd = 1,
+              linetype = "dotted") + 
+  xlab("\nDate") +
+  ylab("CSI\n") +
+  ggtitle("The community sentiment index throughout the United States over time\n") +
+  scale_y_continuous(breaks = pretty_breaks(), labels = number_format(accuracy = 1)) +
+  theme_minimal() +
+  theme(text = element_text(family = "Helvetica Light", size = 14),
+        plot.title = element_text(hjust = 0.5), 
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
 
 # Region CRI over time
 
 media_table %>% 
-  filter(Date >= "2015-01-01") %>% 
+  filter(Date >= "2015-01-01" &
+           Date <= "2019-12-31") %>% 
   group_by(region, month_yr) %>% 
   summarize(sentiment = mean(sentiment, na.rm = TRUE),
             articles = n()) %>% 
   mutate(CRI = -1 * sentiment * articles) %>% 
   ggplot(aes(month_yr, CRI)) +
-  geom_smooth() +
-  facet_wrap(vars(region))
+  geom_smooth(span = 0.8, 
+              color = "#3F2949", 
+              fill = "#CABED0", 
+              lwd = 1) +
+  facet_grid(vars(region)) +
+  xlab("\nDate") +
+  ylab("CSI\n") +
+  ggtitle("The community sentiment index by region throughout the United States over time\n") +
+  scale_y_continuous(breaks = c(-4, -2, 0, 2, 4), labels = number_format(accuracy = 1)) +
+  theme_minimal() +
+  theme(text = element_text(family = "Helvetica Light", size = 14),
+        plot.title = element_text(hjust = 0.5), 
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(), 
+        panel.grid.minor.y = element_blank())
 
 # City CRI over time
 
@@ -535,33 +553,81 @@ cities <-
   cities_media[1:4,1] %>% 
   do.call(paste, .)
 
-media_table %>% 
+data <- 
+  media_table %>% 
   filter(Date >= "2015-01-01" &
            Date <= "2019-12-31") %>% 
   filter(city %in% cities) %>% 
   group_by(city, month_yr) %>% 
   summarize(sentiment = mean(sentiment, na.rm = TRUE),
             articles = n()) %>% 
-  mutate(CRI = -1 * sentiment * articles) %>% 
+  mutate(CRI = -1 * sentiment * articles) 
+  
+data$city <- factor(data$city, levels = c("New York",
+                                          "San Francisco",
+                                          "Washington",
+                                          "Los Angeles"))
+data %>% 
   ggplot(aes(month_yr, CRI)) +
-  geom_smooth() +
-  facet_wrap(vars(city))
+  geom_smooth(span = 0.8, 
+              color = "#3F2949", 
+              fill = "#CABED0", 
+              lwd = 1) +
+  facet_grid(vars(city)) +
+  xlab("\nDate") +
+  ylab("CSI\n") +
+  ggtitle("The community sentiment index by city throughout the United States over time\n") +
+  scale_y_continuous(breaks = c(-2, 0, 2), 
+                     labels = number_format(accuracy = 1)) +
+  theme_minimal() +
+  theme(text = element_text(family = "Helvetica Light", size = 14),
+        plot.title = element_text(hjust = 0.5), 
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(), 
+        panel.grid.minor.y = element_blank())
 
 cities <- 
-  cities_media[5:20,1] %>% 
+  cities_media[5:13,1] %>% 
   do.call(paste, .)
 
-media_table %>% 
+data <- 
+  media_table %>% 
   filter(Date >= "2015-01-01" &
            Date <= "2019-12-31") %>% 
   filter(city %in% cities) %>% 
   group_by(city, month_yr) %>% 
   summarize(sentiment = mean(sentiment, na.rm = TRUE),
             articles = n()) %>% 
-  mutate(CRI = -1 * sentiment * articles) %>% 
+  mutate(CRI = -1 * sentiment * articles) 
+
+data$city <- factor(data$city, levels = c("Chicago",
+                                          "Boston",
+                                          "Miami", 
+                                          "Seattle",
+                                          "Austin", 
+                                          "Las Vegas",
+                                          "Houston",
+                                          "Philadelphia",
+                                          "San Diego"))
+
+data %>% 
   ggplot(aes(month_yr, CRI)) +
-  geom_smooth() +
-  facet_wrap(vars(city))
+  geom_smooth(span = 0.8, 
+              color = "#3F2949", 
+              fill = "#CABED0", 
+              lwd = 1) +
+  facet_grid(vars(city)) +
+  xlab("\nDate") +
+  ylab("CSI\n") +
+  ggtitle("The community sentiment index by region throughout the United States over time\n") +
+  scale_y_continuous(breaks = c(-0.25, 0, 0.25), 
+                     labels = number_format(accuracy = 0.01)) +
+  theme_minimal() +
+  theme(text = element_text(family = "Helvetica Light", size = 14),
+        plot.title = element_text(hjust = 0.5), 
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(), 
+        panel.grid.minor.y = element_blank())
 
 ## CRI
 
