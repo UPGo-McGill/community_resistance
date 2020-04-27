@@ -251,10 +251,10 @@ cities_table <-
 
 cities_table <- 
   cities_table %>% 
-  mutate(region = ifelse(city %in% northeast, "northeast",
-                         ifelse(city %in% midwest, "midwest",
-                                ifelse(city %in% south, "south",
-                                       ifelse(city %in% west, "west", "error"))))) 
+  mutate(region = ifelse(city %in% northeast, "Northeast",
+                         ifelse(city %in% midwest, "Midwest",
+                                ifelse(city %in% south, "South",
+                                       ifelse(city %in% west, "West", "error"))))) 
 
 # Add city-level measures to the neigbhourhood table
 

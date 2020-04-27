@@ -53,6 +53,7 @@ library(glmulti)
 library(extrafont)
 fonts_install()
 library(scales)
+library(urbnmapr)
 
 # Note: spaCy requires the user to download a version of miniconda and follow a 
 # set of instructions to set up
