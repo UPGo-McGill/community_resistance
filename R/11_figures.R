@@ -88,7 +88,7 @@ cities_table %>%
 
 # Visualizing STR activity
 
-bivariate_color_scale <- 
+colour_scale <- 
   tibble(
   "3 - 3" = "#3F2949", # high var1, high var2
   "2 - 3" = "#435786",
@@ -186,22 +186,64 @@ cities_table %>%
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank())
 
-cities_table %>% 
-  st_cast("POINT") %>% 
-  ggplot() + 
-  geom_sf(aes(size = active_listings, colour = region))
+states_sf <- get_urbn_map("states", sf = TRUE)
 
-cities_table %>% 
-  st_cast("POINT") %>% 
-  ggplot() + 
-  geom_sf(aes(size = housing_loss, colour = region))
+counties_sf <- 
+  get_urbn_map("counties", sf = TRUE)
 
-cities_table %>% 
-  st_cast("POINT") %>% 
-  ggplot() + 
-  geom_sf(aes(size = revenue_LTM, colour = region))
+cities_hawaii_alaska <- 
+  cities_table %>% 
+  filter(city == "Anchorage" |
+           city == "Honolulu") %>% 
+  mutate(county_name = 
+           ifelse(city == "Anchorage",
+                  "Anchorage Municipality",
+                  "Honolulu County"))
+
+cities_hawaii_alaska <- 
+  cities_hawaii_alaska %>% 
+  st_drop_geometry() %>% 
+  left_join(counties_sf) %>%
+  st_as_sf() 
 
 
+cities_table %>%
+  filter(city != "Anchorage" &
+           city != "Honolulu") %>% 
+  ggplot() +
+  geom_sf(data = states_sf, 
+          colour = alpha("#3F2949", 0.75),
+          fill = "transparent") +
+  geom_sf(data = cities_table %>%
+                    filter(city != "Anchorage" &
+                          city != "Honolulu") %>%
+            st_cast("POINT"),
+          aes(size = active_listings, colour = region),
+          alpha = 0.75) +
+   geom_sf(data = cities_hawaii_alaska %>% 
+             st_centroid(),
+           aes(size = active_listings, colour = region),
+           alpha = 0.75) +
+  coord_sf(datum = NA) +
+  theme_minimal() +
+  scale_color_manual(values = c("Midwest" = "#435786", 
+                                "Northeast" = "#77324C",
+                                "South" = "#89A1C8", 
+                                "West" = "#BC7C8F")) +
+  ggtitle("Active STR listings throughout the United States") +
+  xlab("") +
+  ylab("") +
+  labs(colour = "Region",
+       size = "Active listings") +
+  scale_size_continuous(labels = comma,
+                        range = c(3, 10)) +
+  scale_alpha(guide = "none") +
+  guides(colour = guide_legend(override.aes = list(alpha = 0.75, size = 3))) + 
+  guides(size=guide_legend(override.aes=list(colour="#CABED0"))) +
+  theme(text = element_text(family = "Helvetica Light", size = 14),
+        plot.title = element_text(hjust = 0.7), 
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
 
 ################################### MEDIA ANALYSIS ###########################################
 
@@ -235,10 +277,43 @@ media_table %>%
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank())
 
-cities_table %>% 
-  st_cast("POINT") %>% 
-  ggplot() + 
-  geom_sf(aes(size = n, colour = region))
+cities_table %>%
+  filter(city != "Anchorage" &
+           city != "Honolulu") %>% 
+  ggplot() +
+  geom_sf(data = states_sf, 
+          colour = alpha("#3F2949", 0.75),
+          fill = "transparent") +
+  geom_sf(data = cities_table %>%
+            filter(city != "Anchorage" &
+                     city != "Honolulu") %>%
+            st_cast("POINT"),
+          aes(size = n, colour = region),
+          alpha = 0.75) +
+  geom_sf(data = cities_hawaii_alaska %>% 
+            st_centroid(),
+          aes(size = n, colour = region),
+          alpha = 0.75) +
+  coord_sf(datum = NA) +
+  theme_minimal() +
+  scale_color_manual(values = c("Midwest" = "#435786", 
+                                "Northeast" = "#77324C",
+                                "South" = "#89A1C8", 
+                                "West" = "#BC7C8F")) +
+  ggtitle("STR discourse throughout the United States") +
+  xlab("") +
+  ylab("") +
+  labs(colour = "Region",
+       size = "Number of news articles") +
+  scale_size_continuous(labels = comma,
+                        range = c(3, 10)) +
+  scale_alpha(guide = "none") +
+  guides(colour = guide_legend(override.aes = list(alpha = 0.75, size = 3))) + 
+  guides(size= guide_legend(override.aes = list(colour = "#CABED0"))) +
+  theme(text = element_text(family = "Helvetica Light", size = 14),
+        plot.title = element_text(hjust = 0.7), 
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank()) 
 
 # Regional number of articles over time
 
@@ -664,28 +739,116 @@ cities_media <-
 
 # Housing_loss_pct_households 
   # New Orleans (most housing loss), Jersey City (high housing loss), San Fran (media)
-cities_housing_loss <- 
   cities_table %>% 
     arrange(desc(housing_loss_pct_households)) %>% 
     dplyr::select(city) %>% 
     st_drop_geometry() %>% 
     do.call(paste, .)
 
+# Specify data, variables, title, labels, and quantiles (optional)
+  # New Orleans
 data <- 
   neighbourhoods_table %>%  
-  filter(city == "Chicago") %>% 
+  filter(city == "New Orleans") %>% 
   filter(!is.na(CRI)) %>% 
   filter(housing_loss_pct_households >= 0) %>% 
   st_as_sf() 
 
-# Specify data, variables, title, labels, and quantiles (optional)
+water_LA <- 
+  st_read("data/tiger_la_water_CENSUS_2006/tiger_la_water_CENSUS_2006.shp") %>% 
+  st_as_sf() %>% 
+  st_transform(102009)
+
+streets_neworleans <-
+  (getbb("New Orleans") * c(1.01, 0.99, 0.99, 1.01)) %>%
+  opq(timeout = 200) %>%
+  add_osm_feature(key = "highway", value = c("primary", "secondary",
+                                             "tertiary", "motorway")) %>%
+  osmdata_sf()
+
 bivariate_mapping(data = data,
+                  streets = streets_neworleans,
+                  water = water_LA,
+                  buffer = 5000,
                   var1 = data$CRI, 
                   var2 = data$housing_loss_pct_households, 
-                  #quantiles_var1 = quantiles_CRI,
-                  #quantiles_var2 = c(0, 0.00001, 0.001, 1), 
-                  title = "Housing Loss and Community Resistance in San Francisco",
-                  xlab = "Increasing CRI", 
+                  title = "Housing Loss and Community Sentiment in New Orleans",
+                  xlab = "Increasing CSI", 
+                  ylab = "Increasing Housing Loss") %>% 
+  plot()
+
+  # Jersey City
+data <- 
+  neighbourhoods_table %>%  
+  filter(city == "Jersey City") %>% 
+  filter(!is.na(CRI)) %>% 
+  filter(housing_loss_pct_households >= 0) %>% 
+  st_as_sf() 
+
+water_NJ <- 
+  st_read("data/nhdwaterbody2002shp/nhdwaterbody2002.shp") %>% 
+  st_as_sf() %>% 
+  st_transform(102009) %>% 
+  st_set_precision(1000000) %>% 
+  st_make_valid() 
+
+streets_jersey <-
+  (getbb("Jersey City") * c(1.01, 0.99, 0.99, 1.01)) %>%
+  opq(timeout = 200) %>%
+  add_osm_feature(key = "highway", value = c("primary", "secondary",
+                                             "tertiary", "motorway")) %>%
+  osmdata_sf()
+
+bivariate_mapping(data = data,
+                  streets = streets_jersey,
+                  water = water_NJ,
+                  buffer = 2000,
+                  var1 = data$CRI, 
+                  var2 = data$housing_loss_pct_households, 
+                  title = "Housing Loss and Community Sentiment in Jersey City",
+                  xlab = "Increasing CSI", 
+                  ylab = "Increasing Housing Loss") %>% 
+  plot()
+
+
+  # San Francisco
+
+data <- 
+  neighbourhoods_table %>%  
+  filter(city == "San Francisco") %>% 
+  filter(!is.na(CRI)) %>% 
+  filter(housing_loss_pct_households >= 0) %>% 
+  st_as_sf() %>% 
+  st_intersection(st_buffer(st_as_sfc(st_bbox(data_hold)), 7000))
+
+water_CA <- 
+  st_read("data/cdfg_100k_2003_6/Data/cdfg_100k_2003_6.shp") %>% 
+  st_as_sf() %>% 
+  st_transform(102009) %>% 
+  st_zm()
+
+water_CA_ocean <- 
+  st_read("data/ne_10m_ocean/ne_10m_ocean.shp") %>% 
+  st_as_sf() %>% 
+  st_transform(102009) %>% 
+  st_cast("POLYGON") %>% 
+  st_make_valid() 
+
+streets_sanfran <-
+  (getbb("San Francisco") * c(1.01, 0.99, 0.99, 1.01)) %>%
+  opq(timeout = 200) %>%
+  add_osm_feature(key = "highway", value = c("primary", "secondary",
+                                             "tertiary", "motorway")) %>%
+  osmdata_sf()
+
+bivariate_mapping(data = data,
+                  streets = streets_sanfran,
+                  water = water_CA_ocean,
+                  buffer = 7000,
+                  var1 = data$CRI, 
+                  var2 = data$housing_loss_pct_households, 
+                  title = "Housing Loss and Community Sentiment in San Francisco",
+                  xlab = "Increasing CSI", 
                   ylab = "Increasing Housing Loss") %>% 
   plot()
 
@@ -708,6 +871,7 @@ data <-
 
 # Specify data, variables, title, labels, and quantiles (optional)
 bivariate_mapping(data = data,
+                  cityname = ,
                   var1 = data$CRI, 
                   var2 = data$active_listings_inverse, 
                   #quantiles_var1 = quantiles_CRI,
@@ -829,12 +993,5 @@ bivariate_mapping(data = data,
                   ylab = "Increasing Median Income") %>% 
   plot()
 
-################################# SIGNIFICANT AND INSIGNIFICANT VARIABLE PLOTTING #########################
-# CRI versus significant variable
-
-neighbourhoods_table %>% 
-  ggplot(aes(x = owner_occupied_pct_household, y = CRI)) +
-  geom_point() +
-  geom_smooth(method = "lm")
 
 

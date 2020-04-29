@@ -54,6 +54,8 @@ library(extrafont)
 fonts_install()
 library(scales)
 library(urbnmapr)
+library(osmdata)
+library(ggspatial)
 
 # Note: spaCy requires the user to download a version of miniconda and follow a 
 # set of instructions to set up
@@ -246,50 +248,30 @@ st_intersect_summarize <- function(data, poly, group_vars, population, sum_vars,
   
 }
 
-# Overdispersion function
 
-overdisp_fun <- function(model) {
-  
-  ## number of variance parameters in an n-by-n variance-covariance matrix
-  vpars <- function(m) {
-    nrow(m) * (nrow(m) + 1)/2
-  }
-  # The next two lines calculate the residual degrees of freedom
-  
-  model.df <- sum(sapply(VarCorr(model), vpars)) + length(fixef(model))
-  rdf <- nrow(model.frame(model)) - model.df
-  
-  # extracts the Pearson residuals
-  
-  rp <- residuals(model, type = "pearson")
-  Pearson.chisq <- sum(rp^2)
-  prat <- Pearson.chisq/rdf
-  
-  # Generates a p-value. If less than 0.05, the data are overdispersed.
-  
-  pval <- pchisq(Pearson.chisq, df = rdf, lower.tail = FALSE)
-  c(chisq = Pearson.chisq, ratio = prat, rdf = rdf, p = pval)
-}
 
 # Bivariate plotting
 
-bivariate_mapping <- function(data, cityname, var1, var2, quantiles_var1 = NULL, 
-                              quantiles_var2 = NULL, title, xlab, ylab) {
+bivariate_mapping <- function(data, buffer,
+                              var1, var2, 
+                              streets, water,
+                              quantiles_var1 = NULL, 
+                              quantiles_var2 = NULL, 
+                              title, xlab, ylab) {
  
   
   # Set up mapping theme
   theme_map <- function(...) {
     theme_minimal() +
       theme(
-        text = element_text(family = "sans",
-                            color = "black"),
+        text = element_text(family = "Helvetica Light", size = 14),
         # remove all axes
         axis.line = element_blank(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks = element_blank(),
-        # add a subtle grid
-        panel.grid.major = element_line(color = "#dbdbd9", size = 0.2),
+        # remove grid
+        panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         # background colors
         plot.background = element_rect(fill = "white",
@@ -304,9 +286,9 @@ bivariate_mapping <- function(data, cityname, var1, var2, quantiles_var1 = NULL,
         panel.spacing = unit(c(-.1, 0.2, .2, 0.2), "cm"),
         # titles
         legend.title = element_text(size = 11),
-        legend.text = element_text(size = 9, hjust = 0,
+        legend.text = element_text(size = 10, hjust = 0,
                                    color = "black"),
-        plot.title = element_text(size = 15, hjust = 0.5,
+        plot.title = element_text(size = 18, hjust = 0.5,
                                   color = "black"),
         plot.subtitle = element_text(size = 10, hjust = 0.5,
                                      color = "black",
@@ -367,18 +349,58 @@ bivariate_mapping <- function(data, cityname, var1, var2, quantiles_var1 = NULL,
     ) %>%
     left_join(bivariate_color_scale, by = "group")
   
+  # Generate streets data
+
+   streets <-
+    rbind(streets$osm_polygons %>% st_cast("LINESTRING"), streets$osm_lines) %>%
+    as_tibble() %>%
+    st_as_sf() %>%
+    st_transform(102009) %>%
+    st_intersection(
+      st_buffer(
+        st_as_sfc(
+          st_bbox(data)), buffer)) %>%
+    dplyr::select(osm_id, name, geometry)
+
+  # Generate water data
+   water <-
+     water %>%
+     st_intersection(
+       st_buffer(
+         st_as_sfc(
+           st_bbox(data)), buffer))
+
   # Generate map
-  map <- ggplot(data = data) +
-    geom_sf(aes (
-      fill = fill),
+
+  map <- 
+    ggplot(data = data) +
+    geom_sf(aes (fill = fill),
       colour = "white", 
       size = 0.1) + 
+    geom_sf(data = water, 
+            colour = "dark grey",
+            fill = "grey95",
+            alpha = 1, 
+            lwd = 0) +
+    geom_sf(data = streets, 
+            colour = "grey85",
+            alpha = 0.5, 
+            lwd = 0.25) +
     scale_fill_identity() + 
     labs (x = NULL, 
           y = NULL, 
           title = title) +
-    theme_map()
-  
+    annotation_scale(location = "bl", 
+                     width_hint = 0.1, 
+                     line_col = "grey50",
+                     bar_cols = c("grey50", "white"),
+                     unit_category = "metric",
+                     style = "ticks", 
+                     pad_x = unit(2, "cm"),
+                     text_family = "Helvetica Light") +
+    theme_map() 
+
+
   # Separate the groups
   bivariate_color_scale <- bivariate_color_scale %>% 
     separate(group, into = c("var1", "var2"), sep = " - ") %>%
@@ -399,14 +421,15 @@ bivariate_mapping <- function(data, cityname, var1, var2, quantiles_var1 = NULL,
          y = ylab) +
     theme_map() +
     theme(
-      axis.title = element_text(size = 6)
+      axis.title = element_text(size = 10)
     ) +
     coord_fixed()
   
   # Plot
   ggdraw() +
     draw_plot(map, 0, 0, 1, 1) +
-    draw_plot(legend, 0.05, 0.075, 0.2, 0.2)
+    draw_plot(legend, 0.75, 0.05, 0.2, 0.2)
+  
 }
 
 # Principal residence function
