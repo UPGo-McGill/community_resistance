@@ -844,7 +844,7 @@ streets_sanfran <-
 bivariate_mapping(data = data,
                   streets = streets_sanfran,
                   water = water_CA_ocean,
-                  buffer = 7000,
+                  buffer = 5000,
                   var1 = data$CRI, 
                   var2 = data$housing_loss_pct_households, 
                   title = "Housing Loss and Community Sentiment in San Francisco",
