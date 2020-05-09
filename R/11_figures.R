@@ -694,7 +694,7 @@ data %>%
   facet_grid(vars(city)) +
   xlab("\nDate") +
   ylab("CSI\n") +
-  ggtitle("The community sentiment index by region throughout the United States over time\n") +
+  ggtitle("The community sentiment index by city throughout the United States over time\n") +
   scale_y_continuous(breaks = c(-0.25, 0, 0.25), 
                      labels = number_format(accuracy = 0.01)) +
   theme_minimal() +
@@ -737,7 +737,7 @@ cities_media <-
 
 # But also those with the highest instances of the variable
 
-# Housing_loss_pct_households 
+# HOUSING LOSS
   # New Orleans (most housing loss), Jersey City (high housing loss), San Fran (media)
   cities_table %>% 
     arrange(desc(housing_loss_pct_households)) %>% 
@@ -812,7 +812,15 @@ bivariate_mapping(data = data,
 
 
   # San Francisco
-
+data_hold <- 
+  neighbourhoods_table %>% 
+  filter(city == "San Francisco") %>% 
+  filter(!is.na(CRI)) %>% 
+  filter(housing_loss_pct_households >= 0)
+  
+data_hold <- 
+  data_hold[-c(4,5),]
+  
 data <- 
   neighbourhoods_table %>%  
   filter(city == "San Francisco") %>% 
@@ -821,18 +829,25 @@ data <-
   st_as_sf() %>% 
   st_intersection(st_buffer(st_as_sfc(st_bbox(data_hold)), 7000))
 
+rm(data_hold)
+
 water_CA <- 
-  st_read("data/cdfg_100k_2003_6/Data/cdfg_100k_2003_6.shp") %>% 
+  st_read("data/Shape_CA/NHDWaterbody.shx") %>% 
+  st_as_sf() %>% 
+  st_transform(102009) %>% 
+  st_zm() %>% 
+  st_cast("MULTIPOLYGON") %>% 
+  st_make_valid() 
+
+water_CA_ocean <- 
+  st_read("data/Shape_CA/NHDArea.shp") %>% 
   st_as_sf() %>% 
   st_transform(102009) %>% 
   st_zm()
 
-water_CA_ocean <- 
-  st_read("data/ne_10m_ocean/ne_10m_ocean.shp") %>% 
-  st_as_sf() %>% 
-  st_transform(102009) %>% 
-  st_cast("POLYGON") %>% 
-  st_make_valid() 
+water_CA <- 
+  rbind(water_CA_ocean %>% dplyr::select("geometry"),
+        water_CA %>% dplyr::select("geometry"))
 
 streets_sanfran <-
   (getbb("San Francisco") * c(1.01, 0.99, 0.99, 1.01)) %>%
@@ -843,7 +858,7 @@ streets_sanfran <-
 
 bivariate_mapping(data = data,
                   streets = streets_sanfran,
-                  water = water_CA_ocean,
+                  water = water_CA,
                   buffer = 5000,
                   var1 = data$CRI, 
                   var2 = data$housing_loss_pct_households, 
@@ -853,7 +868,7 @@ bivariate_mapping(data = data,
   plot()
 
 
-# Active_listings
+### ACTIVE LISTINGS
 cities_active_listings <- 
   cities_table %>% 
   arrange(desc(active_listings)) %>% 
@@ -861,17 +876,95 @@ cities_active_listings <-
   st_drop_geometry() %>% 
   do.call(paste, .)
 
+  # New York
 data <- 
   neighbourhoods_table %>%  
-  filter(city == "Miami") %>% 
+  filter(city == "New York") %>% 
   filter(!is.na(CRI)) %>% 
   filter(active_listings >= 0) %>% 
   st_as_sf() %>% 
   mutate(active_listings_inverse = 1/active_listings)
 
-# Specify data, variables, title, labels, and quantiles (optional)
+streets_newyork <-
+  (getbb("New York City") * c(1.01, 0.99, 0.99, 1.01)) %>%
+  opq(timeout = 200) %>%
+  add_osm_feature(key = "highway", value = c("primary", "secondary",
+                                             "tertiary", "motorway")) %>%
+  osmdata_sf()
+
+water_NY <- 
+  st_read("data/Shape_NY/NHDWaterbody.shx") %>% 
+  st_as_sf() %>% 
+  st_transform(102009) %>% 
+  st_zm() %>% 
+  st_cast("MULTIPOLYGON") %>% 
+  st_make_valid() 
+
+water_NY_ocean <- 
+  st_read("data/Shape_NY/NHDArea.shp") %>% 
+  st_as_sf() %>% 
+  st_transform(102009) %>% 
+  st_zm()
+
+water_NY <- 
+  rbind(water_NY_ocean %>% dplyr::select("geometry"),
+        water_NY %>% dplyr::select("geometry"))
+
+
 bivariate_mapping(data = data,
-                  cityname = ,
+                  streets = streets_newyork,
+                  water = water_NY,
+                  buffer = 5000,
+                  var1 = data$CRI, 
+                  var2 = data$active_listings_inverse, 
+                  #quantiles_var1 = quantiles_CRI,
+                  #quantiles_var2 = c(0, 0.00001, 0.001, 1), 
+                  title = "Active Listings and Community Resistance in New York City",
+                  xlab = "Increasing CRI", 
+                  ylab = "Decreasing STR Listings") %>% 
+  plot()
+
+
+# Houston
+data <- 
+  neighbourhoods_table %>%  
+  filter(city == "Houston") %>% 
+  filter(!is.na(CRI)) %>% 
+  filter(active_listings >= 0) %>% 
+  st_as_sf() %>% 
+  mutate(active_listings_inverse = 1/active_listings)
+
+streets_houston <-
+  (getbb("Houston") * c(1.01, 0.99, 0.99, 1.01)) %>%
+  opq(timeout = 200) %>%
+  add_osm_feature(key = "highway", value = c("primary", "secondary",
+                                             "tertiary", "motorway")) %>%
+  osmdata_sf()
+
+water_TX <- 
+  st_read("data/Shape_TX/NHDWaterbody.shx") %>% 
+  st_as_sf() %>% 
+  st_transform(102009) %>% 
+  st_zm() %>% 
+  st_cast("MULTIPOLYGON") %>% 
+  st_make_valid() 
+
+water_TX_ocean <- 
+  st_read("data/Shape_TX/NHDArea.shp") %>% 
+  st_as_sf() %>% 
+  st_transform(102009) %>% 
+  st_zm() %>% 
+  st_make_valid()
+
+water_TX <- 
+  rbind(water_TX_ocean %>% dplyr::select("geometry"),
+        water_TX %>% dplyr::select("geometry"))
+
+
+bivariate_mapping(data = data,
+                  streets = streets_houston,
+                  water = water_TX,
+                  buffer = 10000,
                   var1 = data$CRI, 
                   var2 = data$active_listings_inverse, 
                   #quantiles_var1 = quantiles_CRI,
@@ -881,7 +974,57 @@ bivariate_mapping(data = data,
                   ylab = "Decreasing STR Listings") %>% 
   plot()
 
-# Non_mover_pct_pop
+
+  # Los Angeles
+data <- 
+  neighbourhoods_table %>%  
+  filter(city == "Los Angeles") %>% 
+  filter(!is.na(CRI)) %>% 
+  filter(active_listings >= 0) %>% 
+  st_as_sf() %>% 
+  mutate(active_listings_inverse = 1/active_listings)
+
+streets_losangeles <-
+  (getbb("Los Angeles") * c(1.01, 0.99, 0.99, 1.01)) %>%
+  opq(memsize = 4e9) %>%
+  add_osm_feature(key = "highway", value = c("primary", "secondary",
+                                             "tertiary", "motorway")) %>%
+  osmdata_sf()
+
+water_CA <- 
+  st_read("data/Shape_CA/NHDWaterbody.shx") %>% 
+  st_as_sf() %>% 
+  st_transform(102009) %>% 
+  st_zm() %>% 
+  st_cast("MULTIPOLYGON") %>% 
+  st_make_valid() 
+
+water_CA_ocean <- 
+  st_read("data/Shape_CA/NHDArea.shp") %>% 
+  st_as_sf() %>% 
+  st_transform(102009) %>% 
+  st_zm()
+
+water_CA <- 
+  rbind(water_CA_ocean %>% dplyr::select("geometry"),
+        water_CA %>% dplyr::select("geometry"))
+
+bivariate_mapping(data = data,
+                  streets = streets_losangeles,
+                  water = water_CA,
+                  buffer = 5000,
+                  var1 = data$CRI, 
+                  var2 = data$active_listings_inverse, 
+                  #quantiles_var1 = quantiles_CRI,
+                  #quantiles_var2 = c(0, 0.00001, 0.001, 1), 
+                  title = "Active Listings and Community Resistance in Los Angeles",
+                  xlab = "Increasing CRI", 
+                  ylab = "Decreasing STR Listings") %>% 
+  plot()
+
+
+
+### NON MOVER
 cities_non_mover <- 
   cities_table %>% 
   arrange(desc(non_mover_pct_pop)) %>% 
@@ -889,15 +1032,145 @@ cities_non_mover <-
   st_drop_geometry() %>% 
   do.call(paste, .)
 
+  # Chicago
 data <- 
   neighbourhoods_table %>%  
-  filter(city == "Las Vegas") %>% 
+  filter(city == "Chicago") %>% 
   filter(!is.na(CRI)) %>% 
   filter(non_mover_pct_pop >= 0) %>% 
   st_as_sf() 
 
-# Specify data, variables, title, labels, and quantiles (optional)
+streets_chicago <-
+  (getbb("Chicago") * c(1.01, 0.99, 0.99, 1.01)) %>%
+  opq(timeout = 200) %>%
+  add_osm_feature(key = "highway", value = c("primary", "secondary",
+                                             "tertiary", "motorway")) %>%
+  osmdata_sf()
+
+water_IL <- 
+  st_read("data/Shape_IL/NHDWaterbody.shx") %>% 
+  st_as_sf() %>% 
+  st_transform(102009) %>% 
+  st_zm() %>% 
+  st_cast("MULTIPOLYGON") %>% 
+  st_make_valid() 
+
+water_IL_lake <- 
+  st_read("data/hydro_p_LakeMichigan/hydro_p_LakeMichigan.shp") %>% 
+  st_as_sf() %>% 
+  st_transform(102009) %>% 
+  st_zm()
+
+water_IL <- 
+  rbind(water_IL_lake %>% dplyr::select("geometry"),
+        water_IL %>% dplyr::select("geometry"))
+
 bivariate_mapping(data = data,
+                  streets = streets_chicago,
+                  water = water_IL,
+                  buffer = 8000,
+                  var1 = data$CRI, 
+                  var2 = data$non_mover_pct_pop, 
+                  #quantiles_var1 = quantiles_CRI,
+                  #quantiles_var2 = c(0, 0.00001, 0.001, 1), 
+                  title = "Non Movers and Community Resistance in Chicago",
+                  xlab = "Increasing CRI", 
+                  ylab = "Increasing Non-Movers") %>% 
+  plot()
+
+
+
+# Washington
+data <- 
+  neighbourhoods_table %>%  
+  filter(city == "Washington") %>% 
+  filter(!is.na(CRI)) %>% 
+  filter(non_mover_pct_pop >= 0) %>% 
+  st_as_sf() 
+
+streets_washington <-
+  (getbb("Washington DC") * c(1.01, 0.99, 0.99, 1.01)) %>%
+  opq(timeout = 200) %>%
+  add_osm_feature(key = "highway", value = c("primary", "secondary",
+                                             "tertiary", "motorway")) %>%
+  osmdata_sf()
+
+water_DC <- 
+  st_read("data/Shape_DC/NHDWaterbody.shx") %>% 
+  st_as_sf() %>% 
+  st_transform(102009) %>% 
+  st_zm() %>% 
+  st_cast("MULTIPOLYGON") %>% 
+  st_make_valid() 
+
+water_DC_ocean <- 
+  st_read("data/Shape_DC/NHDArea.shp") %>% 
+  st_as_sf() %>% 
+  st_transform(102009) %>% 
+  st_zm()
+
+water_DC <- 
+  rbind(water_DC_ocean %>% dplyr::select("geometry"),
+        water_DC %>% dplyr::select("geometry"))
+
+bivariate_mapping(data = data,
+                  streets = streets_washington,
+                  water = water_DC,
+                  buffer = 3000,
+                  var1 = data$CRI, 
+                  var2 = data$non_mover_pct_pop, 
+                  #quantiles_var1 = quantiles_CRI,
+                  #quantiles_var2 = c(0, 0.00001, 0.001, 1), 
+                  title = "Non Movers and Community Resistance in Washington",
+                  xlab = "Increasing CRI", 
+                  ylab = "Increasing Non-Movers") %>% 
+  plot()
+
+  # Austin
+data <- 
+  neighbourhoods_table %>%  
+  filter(city == "Austin") %>% 
+  filter(!is.na(CRI)) %>% 
+  filter(non_mover_pct_pop >= 0) %>% 
+  st_as_sf() 
+
+streets_austin <-
+  (getbb("Austin") * c(1.01, 0.99, 0.99, 1.01)) %>%
+  opq(timeout = 200) %>%
+  add_osm_feature(key = "highway", value = c("primary", "secondary",
+                                             "tertiary", "motorway")) %>%
+  osmdata_sf()
+
+water_TX <- 
+  st_read("data/Shape_TX/NHDWaterbody.shx") %>% 
+  st_as_sf() %>% 
+  st_transform(102009) %>% 
+  st_zm() %>% 
+  st_cast("MULTIPOLYGON") %>% 
+  st_make_valid() 
+
+water_TX_ocean <- 
+  st_read("data/Shape_TX/NHDArea.shp") %>% 
+  st_as_sf() %>% 
+  st_transform(102009) %>% 
+  st_zm() %>% 
+  st_make_valid()
+
+water_TX_supplement <- 
+  st_read("data/Surface_Water-shp/474c9f1b-1005-42f0-a925-3be3426b11c5202046-1-aqovxe.5877.shp") %>% 
+  st_as_sf() %>% 
+  st_transform(102009) %>% 
+  st_zm() %>% 
+  st_make_valid()
+
+water_TX <- 
+  rbind(water_TX_supplement %>% dplyr::select("geometry"),
+        water_TX_ocean %>% dplyr::select("geometry"))
+
+bivariate_mapping(data = data,
+                  streets = streets_austin,
+                  water = water_TX,
+                  buffer = 5000,
                   var1 = data$CRI, 
                   var2 = data$non_mover_pct_pop, 
                   #quantiles_var1 = quantiles_CRI,
@@ -908,7 +1181,7 @@ bivariate_mapping(data = data,
   plot()
 
 
-# Owner_occupied_pct_households
+# OWNER_OCCUPIED
 cities_OO <- 
   cities_table %>% 
   arrange((owner_occupied_pct_household)) %>% 
@@ -916,25 +1189,152 @@ cities_OO <-
   st_drop_geometry() %>% 
   do.call(paste, .)
 
+  # San Diego
 data <- 
   neighbourhoods_table %>%  
-  filter(city == "New York") %>% 
+  filter(city == "San Diego") %>% 
   filter(!is.na(CRI)) %>% 
   filter(owner_occupied_pct_household >= 0) %>% 
   st_as_sf() 
 
-#quantiles_CRI <- c(-20, -2.5, 0.2, 2)
+streets_sandiego <-
+  (getbb("San Diego") * c(1.01, 0.99, 0.99, 1.01)) %>%
+  opq(timeout = 200) %>%
+  add_osm_feature(key = "highway", value = c("primary", "secondary",
+                                             "tertiary", "motorway")) %>%
+  osmdata_sf()
 
-# Specify data, variables, title, labels, and quantiles (optional)
+water_CA <- 
+  st_read("data/Shape_CA/NHDWaterbody.shx") %>% 
+  st_as_sf() %>% 
+  st_transform(102009) %>% 
+  st_zm() %>% 
+  st_cast("MULTIPOLYGON") %>% 
+  st_make_valid() 
+
+water_CA_ocean <- 
+  st_read("data/Shape_CA/NHDArea.shp") %>% 
+  st_as_sf() %>% 
+  st_transform(102009) %>% 
+  st_zm() %>% 
+  st_make_valid()
+
+water_CA_ocean2 <- 
+  st_read("data/ne_10m_ocean/ne_10m_ocean.shp") %>% 
+  st_as_sf() %>% 
+  st_transform(102009) %>% 
+  st_zm() %>% 
+  st_make_valid()
+
+water_CA <- 
+  rbind(water_CA_ocean %>% dplyr::select("geometry"),
+        water_CA_ocean2 %>% dplyr::select("geometry"),
+        water_CA %>% dplyr::select("geometry"))
+
 bivariate_mapping(data = data,
+                  streets = streets_sandiego,
+                  water = water_CA,
+                  buffer = 5000,
                   var1 = data$CRI, 
                   var2 = data$rental_pct_household, 
                   #quantiles_var1 = quantiles_CRI,
                   #quantiles_var2 = c(0, 0.00001, 0.001, 1), 
+                  title = "Rental Households and Community Resistance in San Diego",
+                  xlab = "Increasing CRI", 
+                  ylab = "Increasing Rental Households") %>% 
+  plot()
+
+# Buffalo
+data <- 
+  neighbourhoods_table %>%  
+  filter(city == "Buffalo") %>% 
+  filter(!is.na(CRI)) %>% 
+  filter(owner_occupied_pct_household >= 0) %>% 
+  st_as_sf() 
+
+streets_buffalo <-
+  (getbb("Buffalo") * c(1.01, 0.99, 0.99, 1.01)) %>%
+  opq(timeout = 200) %>%
+  add_osm_feature(key = "highway", value = c("primary", "secondary",
+                                             "tertiary", "motorway")) %>%
+  osmdata_sf()
+
+water_NY <- 
+  st_read("data/Shape_NY/NHDWaterbody.shx") %>% 
+  st_as_sf() %>% 
+  st_transform(102009) %>% 
+  st_zm() %>% 
+  st_cast("MULTIPOLYGON") %>% 
+  st_make_valid() 
+
+water_NY_ocean <- 
+  st_read("data/Shape_NY/NHDArea.shp") %>% 
+  st_as_sf() %>% 
+  st_transform(102009) %>% 
+  st_zm()
+
+water_NY <- 
+  rbind(water_NY_ocean %>% dplyr::select("geometry"),
+        water_NY %>% dplyr::select("geometry"))
+
+bivariate_mapping(data = data,
+                  streets = streets_buffalo,
+                  water = water_NY,
+                  buffer = 5000,
+                  var1 = data$CRI, 
+                  var2 = data$rental_pct_household, 
+                  #quantiles_var1 = quantiles_CRI,
+                  #quantiles_var2 = c(0, 0.00001, 0.001, 1), 
+                  title = "Rental Households and Community Resistance in Buffalo",
+                  xlab = "Increasing CRI", 
+                  ylab = "Increasing Rental Households") %>% 
+  plot()
+
+# Seattle
+data <- 
+  neighbourhoods_table %>%  
+  filter(city == "Seattle") %>% 
+  filter(!is.na(CRI)) %>% 
+  filter(owner_occupied_pct_household >= 0) %>% 
+  st_as_sf() 
+
+streets_seattle <-
+  (getbb("Seattle") * c(1.01, 0.99, 0.99, 1.01)) %>%
+  opq(timeout = 200) %>%
+  add_osm_feature(key = "highway", value = c("primary", "secondary",
+                                             "tertiary", "motorway")) %>%
+  osmdata_sf()
+
+water_WA <- 
+  st_read("data/Shape_WA/NHDWaterbody.shx") %>% 
+  st_as_sf() %>% 
+  st_transform(102009) %>% 
+  st_zm() %>% 
+  st_cast("MULTIPOLYGON") %>% 
+  st_make_valid() 
+
+water_WA_ocean <- 
+  st_read("data/Shape_WA/NHDArea.shp") %>% 
+  st_as_sf() %>% 
+  st_transform(102009) %>% 
+  st_zm()
+
+water_WA <- 
+  rbind(water_WA_ocean %>% dplyr::select("geometry"),
+        water_WA %>% dplyr::select("geometry"))
+
+bivariate_mapping(data = data,
+                  streets = streets_seattle,
+                  water = water_WA,
+                  buffer = 5000,
+                  var1 = data$CRI, 
+                  var2 = data$rental_pct_household, 
                   title = "Rental Households and Community Resistance in Seattle",
                   xlab = "Increasing CRI", 
                   ylab = "Increasing Rental Households") %>% 
   plot()
+
+
 
 # Now, to show the absense of a relationship
 # Active listings yoy 

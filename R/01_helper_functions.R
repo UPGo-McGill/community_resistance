@@ -51,7 +51,6 @@ install.packages("glmulti")
 library(rJava)
 library(glmulti)
 library(extrafont)
-fonts_install()
 library(scales)
 library(urbnmapr)
 library(osmdata)
@@ -69,7 +68,7 @@ library(ggspatial)
                # overwrite = TRUE)
 
 # Run Google Maps API Key
-#register_google(key = "", write = TRUE)
+register_google(key = "", write = TRUE)
 
 # PUMA import 
 import_puma <- function(state) {
@@ -356,6 +355,7 @@ bivariate_mapping <- function(data, buffer,
     as_tibble() %>%
     st_as_sf() %>%
     st_transform(102009) %>%
+    st_make_valid() %>% 
     st_intersection(
       st_buffer(
         st_as_sfc(
@@ -369,7 +369,7 @@ bivariate_mapping <- function(data, buffer,
        st_buffer(
          st_as_sfc(
            st_bbox(data)), buffer))
-
+   
   # Generate map
 
   map <- 
@@ -378,7 +378,6 @@ bivariate_mapping <- function(data, buffer,
       colour = "white", 
       size = 0.1) + 
     geom_sf(data = water, 
-            colour = "dark grey",
             fill = "grey95",
             alpha = 1, 
             lwd = 0) +
