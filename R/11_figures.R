@@ -100,7 +100,8 @@ colour_scale <-
   "2 - 1" = "#BC7C8F",
   "1 - 1" = "#CABED0")
 
-cities_table %>% 
+distribution_listings <- 
+  cities_table %>% 
   mutate(country = "") %>% 
   ggplot(aes(x = country, y = active_listings_avg)) + 
   geom_violin(fill = "#3F2949",
@@ -120,7 +121,7 @@ cities_table %>%
               draw_quantiles = c(0.5)) +
   xlab("") +
   ylab("Number of listings\n") +
-  ggtitle("STR market size by active listings in 2019 per city in the United States") +
+ # ggtitle("STR market size by active listings in 2019 per city in the United States") +
   scale_y_continuous(labels = comma) +
   theme_minimal() +
   theme(text = element_text(family = "Helvetica Light", size = 14),
@@ -128,7 +129,8 @@ cities_table %>%
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank())
 
-cities_table %>% 
+distribution_housingloss <- 
+  cities_table %>% 
   mutate(country = "") %>% 
   ggplot(aes(x = country, y = housing_loss)) + 
   geom_violin(fill = "#3F2949",
@@ -149,7 +151,7 @@ cities_table %>%
               draw_quantiles = c(0.5)) +
   xlab("") +
   ylab("Housing lost to STRs\n") +
-  ggtitle("STR-induced housing loss in 2019 per city in the United States") +
+ # ggtitle("STR-induced housing loss in 2019 per city in the United States") +
   scale_y_continuous(labels = comma) +
   theme_minimal() +
   theme(text = element_text(family = "Helvetica Light", size = 14),
@@ -157,7 +159,8 @@ cities_table %>%
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank())
 
-cities_table %>% 
+distribution_revenue <- 
+  cities_table %>% 
   mutate(country = "") %>% 
   ggplot(aes(x = country, y = revenue_LTM)) + 
   geom_violin(fill = "#3F2949",
@@ -177,7 +180,7 @@ cities_table %>%
               draw_quantiles = c(0.5)) +
   xlab("") +
   ylab("Revenue\n") +
-  ggtitle("Revenues generated from STRs in 2019 by city in the United States") +
+ # ggtitle("Revenues generated from STRs in 2019 by city in the United States") +
   scale_y_continuous(labels = paste0("$", c(0, 250, 500, 750), "M"),
                      breaks = 10^6 * c(0,250,500,750)) +
   theme_minimal() +
@@ -185,6 +188,14 @@ cities_table %>%
         plot.title = element_text(hjust = 0.5), 
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank())
+
+
+distribution_listings + distribution_revenue + distribution_housingloss + 
+  plot_annotation(title = "Distribution of active listings, revenue generated, and housing lost to STRs by city in the United States in 2019\n",
+                  theme = theme (text = element_text(family = "Helvetica Light",
+                                            size = 14),
+                                 plot.title = element_text(hjust = 0.5)))
+
 
 states_sf <- get_urbn_map("states", sf = TRUE)
 
@@ -263,10 +274,20 @@ media_table %>%
   group_by(month_yr) %>% 
   count() %>%
   ggplot(aes(x = month_yr, y = n)) +
-  geom_area(fill = "#CABED0", alpha = 0.5) +
-  stat_smooth(
-    geom = 'area', method = 'loess', span = 1/2,
-    alpha = 0.5, fill = "#3F2949") +
+  geom_line()+
+  geom_smooth(span = 0.8, 
+              color = "#3F2949", 
+              fill = "#CABED0", 
+              lwd = 2) +
+  # geom_smooth(method = lm, 
+  #             se = FALSE, 
+  #             color = "#806A8A", 
+  #             lwd = 1,
+  #             linetype = "dotted") + 
+  # geom_area(fill = "#CABED0", alpha = 0.5) +
+  # stat_smooth(
+  #   geom = 'area', method = 'loess', span = 1/2,
+  #   alpha = 0.5, fill = "#3F2949") +
   xlab("\nDate") +
   ylab("Number of news articles\n") +
   ggtitle("STR discourse throughout the United States over time") +
@@ -274,7 +295,7 @@ media_table %>%
   theme_minimal() +
   theme(text = element_text(family = "Helvetica Light", size = 14),
         plot.title = element_text(hjust = 0.5), 
-        panel.grid.major.x = element_blank(),
+         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank())
 
 cities_table %>%
@@ -443,11 +464,11 @@ media_table %>%
               color = "#3F2949", 
               fill = "#CABED0", 
               lwd = 2) +
-  geom_smooth(method = lm, 
-              se = FALSE, 
-              color = "#806A8A", 
-              lwd = 1,
-              linetype = "dotted") + 
+  # geom_smooth(method = lm, 
+  #             se = FALSE, 
+  #             color = "#806A8A", 
+  #             lwd = 1,
+  #             linetype = "dotted") + 
   xlab("\nDate") +
   ylab("Sentiment\n") +
   ggtitle("The sentiment of STR discourse throughout the United States over time\n") +
