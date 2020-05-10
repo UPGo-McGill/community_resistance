@@ -55,6 +55,7 @@ library(scales)
 library(urbnmapr)
 library(osmdata)
 library(ggspatial)
+library(patchwork)
 
 # Note: spaCy requires the user to download a version of miniconda and follow a 
 # set of instructions to set up

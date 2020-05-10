@@ -86,6 +86,25 @@ cities_table %>%
   summarize(housing_loss_pct_households_region = sum(housing_loss, na.rm = TRUE)/sum(households, na.rm = TRUE))%>% 
   arrange(desc(housing_loss_pct_households_region))
 
+airbnb_cities <- 
+  cities_table %>% 
+  st_drop_geometry() %>% 
+  filter(city %in% c("Anaheim", "Atlanta", "Austin", "Bakersfield",
+                    "Boston", "Chesapeake", "Chicago", "El Paso",
+                    "Fort Worth", "Garland", "Honolulu", "Houston",
+                    "Jersey City", "Laredo", "Los Angeles", "Miami",
+                    "Milwaukee", "Nashville", "New Orleans", "New York",
+                    "Norfolk", "Oxnard", "Portland", "Saint Petersburg", 
+                    "San Diego", "San Francisco", "Santa Clarita", "Scottsdale", 
+                    "Seattle", "Virginia Beach", "Washington")) %>% 
+  mutate(active_listings_per_household = active_listings_avg/households) %>% 
+  dplyr::select(c(city, active_listings_avg, active_listings_per_household, 
+                  revenue_LTM, revenue_LTM_per_listing, active_listings_yoy,
+                  housing_loss, housing_loss_pct_households)) 
+
+write.csv(airbnb_cities, file = "airbnb_cities.csv")
+
+
 # Visualizing STR activity
 
 colour_scale <- 
@@ -194,7 +213,8 @@ distribution_listings + distribution_revenue + distribution_housingloss +
   plot_annotation(title = "Distribution of active listings, revenue generated, and housing lost to STRs by city in the United States in 2019\n",
                   theme = theme (text = element_text(family = "Helvetica Light",
                                             size = 14),
-                                 plot.title = element_text(hjust = 0.5)))
+                                 plot.title = element_text(hjust = 0.5)),
+                  tag_levels = "A")
 
 
 states_sf <- get_urbn_map("states", sf = TRUE)
@@ -252,7 +272,7 @@ cities_table %>%
   guides(colour = guide_legend(override.aes = list(alpha = 0.75, size = 3))) + 
   guides(size=guide_legend(override.aes=list(colour="#CABED0"))) +
   theme(text = element_text(family = "Helvetica Light", size = 14),
-        plot.title = element_text(hjust = 0.7), 
+        plot.title = element_text(hjust = 0.6), 
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank())
 
@@ -270,24 +290,18 @@ media_table$month_yr <- as.Date(paste(media_table$month_yr, "-15", sep = ""))
 
 media_table %>% 
   filter(Date >= "2015-01-01" &
-        Date <= "2019-12-31") %>% 
+           Date <= "2019-12-31") %>% 
   group_by(month_yr) %>% 
-  count() %>%
+  count() %>% 
   ggplot(aes(x = month_yr, y = n)) +
-  geom_line()+
-  geom_smooth(span = 0.8, 
+  geom_line(color = "#3F2949", 
+            lwd = 0.25, 
+            show.legend = TRUE)+
+  geom_smooth(method = loess,
               color = "#3F2949", 
               fill = "#CABED0", 
-              lwd = 2) +
-  # geom_smooth(method = lm, 
-  #             se = FALSE, 
-  #             color = "#806A8A", 
-  #             lwd = 1,
-  #             linetype = "dotted") + 
-  # geom_area(fill = "#CABED0", alpha = 0.5) +
-  # stat_smooth(
-  #   geom = 'area', method = 'loess', span = 1/2,
-  #   alpha = 0.5, fill = "#3F2949") +
+              lwd = 2,
+              show.legend = TRUE) +
   xlab("\nDate") +
   ylab("Number of news articles\n") +
   ggtitle("STR discourse throughout the United States over time") +
@@ -295,10 +309,11 @@ media_table %>%
   theme_minimal() +
   theme(text = element_text(family = "Helvetica Light", size = 14),
         plot.title = element_text(hjust = 0.5), 
-         panel.grid.major.x = element_blank(),
+        panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank())
 
-cities_table %>%
+discourse_map <- 
+  cities_table %>%
   filter(city != "Anchorage" &
            city != "Honolulu") %>% 
   ggplot() +
@@ -321,7 +336,7 @@ cities_table %>%
                                 "Northeast" = "#77324C",
                                 "South" = "#89A1C8", 
                                 "West" = "#BC7C8F")) +
-  ggtitle("STR discourse throughout the United States") +
+    ggtitle("The distribution of STR discourse by city and region") +
   xlab("") +
   ylab("") +
   labs(colour = "Region",
@@ -330,36 +345,59 @@ cities_table %>%
                         range = c(3, 10)) +
   scale_alpha(guide = "none") +
   guides(colour = guide_legend(override.aes = list(alpha = 0.75, size = 3))) + 
-  guides(size= guide_legend(override.aes = list(colour = "#CABED0"))) +
+  guides(size = guide_legend(override.aes = list(colour = "#CABED0"))) +
   theme(text = element_text(family = "Helvetica Light", size = 14),
-        plot.title = element_text(hjust = 0.7), 
+        plot.title = element_text(hjust = 0), 
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank()) 
 
 # Regional number of articles over time
 
-media_table %>% 
+discourse_region <- 
+  media_table %>% 
   filter(Date >= "2015-01-01" &
            Date <= "2019-12-31") %>% 
   group_by(region, month_yr) %>% 
   count() %>%
-  ggplot(aes(x = month_yr, y = n)) +
-  geom_area(fill = "#CABED0", alpha = 0.5) +
-  stat_smooth(
-    geom = 'area', method = 'loess', span = 1/5,
-    alpha = 0.5, fill = "#3F2949") +
-  facet_grid(vars(region)) +
+  ggplot(aes(x = month_yr, y = n, color = region)) +
+  geom_line(lwd = 0.25, 
+            show.legend = TRUE)+
+  geom_smooth(aes(fill = region),
+              method = loess,
+              lwd = 1,
+              show.legend = TRUE,
+              se = TRUE,
+              alpha = 0.25) +
   xlab("\nDate") +
-  ylab("Number of news articles\n") +
-  ggtitle("STR discourse by region throughout the United States over time") +
-  scale_y_continuous(labels = comma) +
+  ylab("\nNumber of news articles\n") +
+    ggtitle("\nSTR discourse by region over time") +
+  scale_y_continuous(breaks = c(0, 250, 750, 1000), limits = c(0, 1000), labels = comma) +
+  scale_color_manual(name = "Region",
+                     values = c("Midwest" = "#435786", 
+                                "Northeast" = "#77324C",
+                                "South" = "#89A1C8", 
+                                "West" = "#BC7C8F")) +
+  scale_fill_manual(name = "Region",
+                    values = c("Midwest" = "#435786", 
+                                "Northeast" = "#77324C",
+                                "South" = "#89A1C8", 
+                                "West" = "#BC7C8F")) +
   theme_minimal() +
   theme(text = element_text(family = "Helvetica Light", size = 14),
-        plot.title = element_text(hjust = 0.5), 
+        plot.title = element_text(hjust = 0), 
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
-        panel.grid.minor.y = element_blank())
+        panel.grid.minor.y = element_blank(),
+        plot.margin = margin(t = 0, unit = "cm"))
 
+
+discourse_map + discourse_region + plot_layout(ncol = 1,
+                                               widths = c(1, 1),
+                                               heights = c(2.5, 1)) +
+  plot_annotation(title = "STR discourse throughout the United States\n",
+                  theme = theme (text = element_text(family = "Helvetica Light",
+                                                     size = 18),
+                                 plot.title = element_text(hjust = 0.5)))
 
 # Number of articles by city
 
@@ -451,6 +489,143 @@ data %>%
         panel.grid.minor.x = element_blank(), 
         panel.grid.minor.y = element_blank())
 
+
+cities <- 
+  cities_media[1:9,1] %>% 
+  do.call(paste, .)
+
+city_media_absolute <- 
+  media_table %>% 
+  filter(Date >= "2015-01-01" &
+           Date <= "2019-12-31") %>% 
+  filter(city %in% cities) %>% 
+  group_by(city, month_yr) %>% 
+  count() %>%
+  ggplot(aes(x = month_yr, y = n, color = city)) +
+  geom_smooth(
+              method = loess,
+              lwd = 1,
+              se = FALSE,
+              alpha = 0.25) +
+  xlab(NULL) +
+  ylab("\nNumber of news articles\n") +
+  # ggtitle("\nSTR discourse by city over time") +
+  scale_y_continuous(labels = comma) +
+  scale_color_manual(name = "City",
+                     values = c("Austin" = "#3F2949",
+                                "Boston" = "#435786",
+                                "Chicago" = "#4885C1",
+                                "Los Angeles" = "#77324C",
+                                "Miami" = "#806A8A",
+                                "New York" = "#89A1C8",
+                                "San Francisco" = "#AE3A4E",
+                                "Seattle" = "#BC7C8F",
+                                "Washington" = "#CABED0")) +
+  theme_minimal() +
+  theme(text = element_text(family = "Helvetica Light", size = 14),
+        plot.title = element_text(hjust = 0.5), 
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        axis.text.x = element_blank())
+
+city_media_pop<- 
+  cities_table %>% 
+  filter(city %in% cities) %>% 
+  dplyr::select(city, population, active_listings) %>% 
+  st_drop_geometry() %>% 
+  right_join(
+    media_table %>% 
+      filter(Date >= "2015-01-01" &
+               Date <= "2019-12-31") %>% 
+      filter(city %in% cities) %>% 
+      group_by(city, month_yr) %>% 
+      count()) %>% 
+  mutate(articles_per_capita = n/population,
+         articles_per_listing = n/active_listings) %>% 
+  ggplot(aes(x = month_yr, y = articles_per_capita, color = city)) +
+  geom_smooth(
+    method = loess,
+    lwd = 1,
+    se = FALSE,
+    alpha = 0.25) +
+  xlab(NULL) +
+  ylab("\nNumber of news articles per capita\n") +
+  # ggtitle("\nSTR discourse per capita by city over time") +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.00001)) +
+  scale_color_manual(name = "City",
+                     values = c("Austin" = "#3F2949",
+                                "Boston" = "#435786",
+                                "Chicago" = "#4885C1",
+                                "Los Angeles" = "#77324C",
+                                "Miami" = "#806A8A",
+                                "New York" = "#89A1C8",
+                                "San Francisco" = "#AE3A4E",
+                                "Seattle" = "#BC7C8F",
+                                "Washington" = "#CABED0")) +
+  theme_minimal() +
+  theme(text = element_text(family = "Helvetica Light", size = 14),
+        plot.title = element_text(hjust = 0.5), 
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        axis.text.x = element_blank())
+
+city_media_listing <- 
+  cities_table %>% 
+  filter(city %in% cities) %>% 
+  dplyr::select(city, population, active_listings) %>% 
+  st_drop_geometry() %>% 
+  right_join(
+    media_table %>% 
+      filter(Date >= "2015-01-01" &
+               Date <= "2019-12-31") %>% 
+      filter(city %in% cities) %>% 
+      group_by(city, month_yr) %>% 
+      count()) %>% 
+  mutate(articles_per_capita = n/population,
+         articles_per_listing = n/active_listings) %>% 
+  ggplot(aes(x = month_yr, y = articles_per_listing, color = city)) +
+  geom_smooth(
+    method = loess,
+    lwd = 1,
+    se = FALSE,
+    alpha = 0.25) +
+  xlab("\nDate") +
+  ylab("\nNumber of news articles per listing\n") +
+  # ggtitle("\nSTR discourse per listing by city over time") +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) +
+  scale_color_manual(name = "City",
+                     values = c("Austin" = "#3F2949",
+                                "Boston" = "#435786",
+                                "Chicago" = "#4885C1",
+                                "Los Angeles" = "#77324C",
+                                "Miami" = "#806A8A",
+                                "New York" = "#89A1C8",
+                                "San Francisco" = "#AE3A4E",
+                                "Seattle" = "#BC7C8F",
+                                "Washington" = "#CABED0")) +
+  theme_minimal() +
+  theme(text = element_text(family = "Helvetica Light", size = 14),
+        plot.title = element_text(hjust = 0.5), 
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank())
+  
+
+city_media_absolute + plot_spacer() +
+  city_media_pop + plot_spacer() +
+  city_media_listing +
+  plot_layout(ncol = 1, guides = "collect", 
+              heights = c(1, 0.25, 1, 0.25, 1)) +
+  plot_annotation(title = "STR discourse by city over time\n",
+                  theme = theme (text = element_text(family = "Helvetica Light",
+                                                     size = 18),
+                                 plot.title = element_text(hjust = 0.5)),
+                  tag_levels = "A")
+
+
+
 ##### SENTIMENT
 
 # Country-wide sentiment of articles over time
@@ -459,8 +634,8 @@ media_table %>%
   filter(Date >= "2015-01-01" &
            Date <= "2019-12-31") %>% 
   ggplot(aes(Date, sentiment)) +
-  #geom_point() +
-  geom_smooth(span = 0.8, 
+  geom_line()+
+  geom_smooth(method = loess,
               color = "#3F2949", 
               fill = "#CABED0", 
               lwd = 2) +
