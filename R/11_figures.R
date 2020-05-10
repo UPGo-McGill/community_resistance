@@ -401,93 +401,93 @@ discourse_map + discourse_region + plot_layout(ncol = 1,
 
 # Number of articles by city
 
-cities_media <- 
-  media_table %>% 
-  group_by(city) %>% 
-  count() %>% 
+cities_media <-
+  media_table %>%
+  group_by(city) %>%
+  count() %>%
   arrange(desc(n))
-
-cities <- 
-  cities_media[1:4,1] %>% 
-  do.call(paste, .)
-
-data <- 
-  media_table %>% 
-  filter(Date >= "2015-01-01" &
-           Date <= "2019-12-31") %>% 
-  filter(city %in% cities) %>% 
-  group_by(city, month_yr) %>% 
-  count() 
-
-data$city <- factor(data$city, levels = c("New York",
-                                          "San Francisco",
-                                          "Washington",
-                                          "Los Angeles"))
-  
-data %>%
-  ggplot(aes(x = month_yr, y = n)) +
-  geom_area(fill = "#CABED0", alpha = 0.5) +
-  stat_smooth(
-    geom = 'area', method = 'loess', span = 1/5,
-    alpha = 0.5, fill = "#3F2949") +
-  facet_grid(vars(city)) +
-  xlab("\nDate") +
-  ylab("Number of news articles\n") +
-  ggtitle("STR discourse by city throughout the United States over time\n") +
-  scale_y_continuous(labels = comma) +
-  theme_minimal() +
-  theme(text = element_text(family = "Helvetica Light", size = 14),
-        plot.title = element_text(hjust = 0.5), 
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank(), 
-        panel.grid.minor.y = element_blank())
-
-cities <- 
-  cities_media[5:13,1] %>% 
-  do.call(paste, .)
-
-media_table %>% 
-  filter(Date >= "2015-01-01" &
-           Date <= "2019-12-31") %>% 
-  filter(city %in% cities) %>% 
-  group_by(city) %>% 
-  count() %>% 
-  arrange(n)
-
-data <- 
-  media_table %>% 
-  filter(Date >= "2015-01-01" &
-           Date <= "2019-12-31") %>% 
-  filter(city %in% cities) %>% 
-  group_by(city, month_yr) %>% 
-  count() 
-
-data$city <- factor(data$city, levels = c("Chicago",
-                                          "Boston",
-                                          "Miami", 
-                                          "Seattle",
-                                          "Austin", 
-                                          "Las Vegas",
-                                          "Houston",
-                                          "Philadelphia",
-                                          "San Diego"))
-data %>%
-  ggplot(aes(x = month_yr, y = n)) +
-  geom_area(fill = "#CABED0", alpha = 0.5) +
-  stat_smooth(
-    geom = 'area', method = 'loess', span = 1/5,
-    alpha = 0.5, fill = "#3F2949") +
-  facet_grid(vars(city)) +
-  xlab("\nDate") +
-  ylab("Number of news articles\n") +
-  ggtitle("STR discourse by city throughout the United States over time\n") +
-  scale_y_continuous(breaks = c(0, 50, 100), labels = comma) +
-  theme_minimal() +
-  theme(text = element_text(family = "Helvetica Light", size = 14),
-        plot.title = element_text(hjust = 0.5), 
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank(), 
-        panel.grid.minor.y = element_blank())
+# 
+# cities <- 
+#   cities_media[1:4,1] %>% 
+#   do.call(paste, .)
+# 
+# data <- 
+#   media_table %>% 
+#   filter(Date >= "2015-01-01" &
+#            Date <= "2019-12-31") %>% 
+#   filter(city %in% cities) %>% 
+#   group_by(city, month_yr) %>% 
+#   count() 
+# 
+# data$city <- factor(data$city, levels = c("New York",
+#                                           "San Francisco",
+#                                           "Washington",
+#                                           "Los Angeles"))
+#   
+# data %>%
+#   ggplot(aes(x = month_yr, y = n)) +
+#   geom_area(fill = "#CABED0", alpha = 0.5) +
+#   stat_smooth(
+#     geom = 'area', method = 'loess', span = 1/5,
+#     alpha = 0.5, fill = "#3F2949") +
+#   facet_grid(vars(city)) +
+#   xlab("\nDate") +
+#   ylab("Number of news articles\n") +
+#   ggtitle("STR discourse by city throughout the United States over time\n") +
+#   scale_y_continuous(labels = comma) +
+#   theme_minimal() +
+#   theme(text = element_text(family = "Helvetica Light", size = 14),
+#         plot.title = element_text(hjust = 0.5), 
+#         panel.grid.major.x = element_blank(),
+#         panel.grid.minor.x = element_blank(), 
+#         panel.grid.minor.y = element_blank())
+# 
+# cities <- 
+#   cities_media[5:13,1] %>% 
+#   do.call(paste, .)
+# 
+# media_table %>% 
+#   filter(Date >= "2015-01-01" &
+#            Date <= "2019-12-31") %>% 
+#   filter(city %in% cities) %>% 
+#   group_by(city) %>% 
+#   count() %>% 
+#   arrange(n)
+# 
+# data <- 
+#   media_table %>% 
+#   filter(Date >= "2015-01-01" &
+#            Date <= "2019-12-31") %>% 
+#   filter(city %in% cities) %>% 
+#   group_by(city, month_yr) %>% 
+#   count() 
+# 
+# data$city <- factor(data$city, levels = c("Chicago",
+#                                           "Boston",
+#                                           "Miami", 
+#                                           "Seattle",
+#                                           "Austin", 
+#                                           "Las Vegas",
+#                                           "Houston",
+#                                           "Philadelphia",
+#                                           "San Diego"))
+# data %>%
+#   ggplot(aes(x = month_yr, y = n)) +
+#   geom_area(fill = "#CABED0", alpha = 0.5) +
+#   stat_smooth(
+#     geom = 'area', method = 'loess', span = 1/5,
+#     alpha = 0.5, fill = "#3F2949") +
+#   facet_grid(vars(city)) +
+#   xlab("\nDate") +
+#   ylab("Number of news articles\n") +
+#   ggtitle("STR discourse by city throughout the United States over time\n") +
+#   scale_y_continuous(breaks = c(0, 50, 100), labels = comma) +
+#   theme_minimal() +
+#   theme(text = element_text(family = "Helvetica Light", size = 14),
+#         plot.title = element_text(hjust = 0.5), 
+#         panel.grid.major.x = element_blank(),
+#         panel.grid.minor.x = element_blank(), 
+#         panel.grid.minor.y = element_blank())
 
 
 cities <- 
