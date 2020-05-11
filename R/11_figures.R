@@ -632,18 +632,15 @@ city_media_absolute + plot_spacer() +
 
 media_table %>% 
   filter(Date >= "2015-01-01" &
-           Date <= "2019-12-31") %>% 
-  ggplot(aes(Date, sentiment)) +
-  geom_line()+
-  geom_smooth(method = loess,
-              color = "#3F2949", 
+           Date <= "2019-11-30") %>% 
+  group_by(month_yr) %>% 
+  summarize(sentiment_mean = mean(sentiment, na.rm = TRUE)) %>% 
+  ggplot(aes(month_yr, sentiment_mean)) + 
+  geom_line(color = "#3F2949", 
+            lwd = 0.25) +
+  geom_smooth(color = "#3F2949", 
               fill = "#CABED0", 
               lwd = 2) +
-  # geom_smooth(method = lm, 
-  #             se = FALSE, 
-  #             color = "#806A8A", 
-  #             lwd = 1,
-  #             linetype = "dotted") + 
   xlab("\nDate") +
   ylab("Sentiment\n") +
   ggtitle("The sentiment of STR discourse throughout the United States over time\n") +
@@ -653,6 +650,7 @@ media_table %>%
         plot.title = element_text(hjust = 0.5), 
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank())
+
 
 # Regional sentiment of articles over time
 
