@@ -288,7 +288,7 @@ bivariate_mapping <- function(data, buffer,
         legend.title = element_text(size = 11),
         legend.text = element_text(size = 10, hjust = 0,
                                    color = "black"),
-        plot.title = element_text(size = 18, hjust = 0.5,
+        plot.title = element_text(size = 16, hjust = 0.5,
                                   color = "black"),
         plot.subtitle = element_text(size = 10, hjust = 0.5,
                                      color = "black",
@@ -427,8 +427,9 @@ bivariate_mapping <- function(data, buffer,
   
   # Plot
   ggdraw() +
-    draw_plot(map, 0, 0, 1, 1) +
-    draw_plot(legend, 0.75, 0.05, 0.2, 0.2)
+    draw_plot(map, 0, 0, 1, 1) 
+  # +
+  #   draw_plot(legend, 0.75, 0.05, 0.2, 0.2)
   
 }
 

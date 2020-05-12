@@ -3,6 +3,7 @@
 source("R/01_helper_functions.R")
 
 load("data/modeling_data.Rdata")
+load("data/cityname.Rdata")
 
 # Test out different STR measures
 model <- 
@@ -508,7 +509,8 @@ r.squaredGLMM(model)
 # Updated models
 model_puma <- 
   neighbourhoods_table %>% 
-  glm((CRI) ~ 
+  mutate(CSI = -1* CRI) %>% 
+  glm((CSI) ~ 
         active_listings +
         housing_loss_pct_households +
         non_mover_pct_pop +
@@ -531,8 +533,9 @@ r.squaredGLMM(model_puma)
 
 model_puma <- 
   neighbourhoods_table %>% 
-  filter(city %in% cityname[51:115]) %>% 
-  glm((CRI) ~ 
+  filter(city %in% cityname[60:115]) %>% 
+  mutate(CSI = -1*CRI) %>% 
+  glm((CSI) ~ 
         active_listings +
         housing_loss_pct_households +
         non_mover_pct_pop +
@@ -557,7 +560,7 @@ r.squaredGLMM(model_puma)
 
 model_puma <- 
   neighbourhoods_table %>% 
-  filter(!(city %in% bottom_50)) %>% 
+  filter((city %in% bottom_59)) %>% 
   glm((CRI) ~ 
         active_listings +
         housing_loss_pct_households +

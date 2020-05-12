@@ -297,7 +297,7 @@ media_table %>%
   geom_line(color = "#3F2949", 
             lwd = 0.25, 
             show.legend = TRUE)+
-  geom_smooth(method = loess,
+  geom_smooth(method = "gam",
               color = "#3F2949", 
               fill = "#CABED0", 
               lwd = 2,
@@ -363,14 +363,14 @@ discourse_region <-
   geom_line(lwd = 0.25, 
             show.legend = TRUE)+
   geom_smooth(aes(fill = region),
-              method = loess,
+              method = "gam",
               lwd = 1,
               show.legend = TRUE,
               se = TRUE,
               alpha = 0.25) +
   xlab("\nDate") +
   ylab("\nNumber of news articles\n") +
-    ggtitle("\nSTR discourse by region over time") +
+    ggtitle("\nSTR discourse by region throughout the United States over time") +
   scale_y_continuous(breaks = c(0, 250, 750, 1000), limits = c(0, 1000), labels = comma) +
   scale_color_manual(name = "Region",
                      values = c("Midwest" = "#435786", 
@@ -384,7 +384,7 @@ discourse_region <-
                                 "West" = "#BC7C8F")) +
   theme_minimal() +
   theme(text = element_text(family = "Helvetica Light", size = 14),
-        plot.title = element_text(hjust = 0), 
+        plot.title = element_text(hjust = 0.5), 
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
         panel.grid.minor.y = element_blank(),
@@ -503,7 +503,7 @@ city_media_absolute <-
   count() %>%
   ggplot(aes(x = month_yr, y = n, color = city)) +
   geom_smooth(
-              method = loess,
+              method = "gam",
               lwd = 1,
               se = FALSE,
               alpha = 0.25) +
@@ -545,7 +545,7 @@ city_media_pop<-
          articles_per_listing = n/active_listings) %>% 
   ggplot(aes(x = month_yr, y = articles_per_capita, color = city)) +
   geom_smooth(
-    method = loess,
+    method = "gam",
     lwd = 1,
     se = FALSE,
     alpha = 0.25) +
@@ -587,7 +587,7 @@ city_media_listing <-
          articles_per_listing = n/active_listings) %>% 
   ggplot(aes(x = month_yr, y = articles_per_listing, color = city)) +
   geom_smooth(
-    method = loess,
+    method = "gam",
     lwd = 1,
     se = FALSE,
     alpha = 0.25) +
@@ -620,7 +620,7 @@ city_media_absolute + plot_spacer() +
               heights = c(1, 0.25, 1, 0.25, 1)) +
   plot_annotation(title = "STR discourse by city over time\n",
                   theme = theme (text = element_text(family = "Helvetica Light",
-                                                     size = 18),
+                                                     size = 14),
                                  plot.title = element_text(hjust = 0.5)),
                   tag_levels = "A")
 
@@ -628,16 +628,25 @@ city_media_absolute + plot_spacer() +
 
 ##### SENTIMENT
 
+media_table %>% 
+  mutate(sentiment_round = round(media_table$sentiment, digits = 2)) %>% 
+  filter(Date >= "2015-01-01" &
+         Date <= "2019-12-31") %>% 
+  group_by(sentiment_round) %>% 
+  count() %>% 
+  ggplot(aes(x = n, y = sentiment_round)) + 
+  geom_point()
+
 # Country-wide sentiment of articles over time
 
 media_table %>% 
   filter(Date >= "2015-01-01" &
-           Date <= "2019-11-30") %>% 
-  group_by(month_yr) %>% 
-  summarize(sentiment_mean = mean(sentiment, na.rm = TRUE)) %>% 
-  ggplot(aes(month_yr, sentiment_mean)) + 
-  geom_line(color = "#3F2949", 
-            lwd = 0.25) +
+           Date <= "2019-12-31") %>% 
+  # group_by(month_yr) %>% 
+  # summarize(sentiment_mean = mean(sentiment, na.rm = TRUE)) %>% 
+  ggplot(aes(Date, sentiment)) + 
+  # geom_line(color = "#3F2949", 
+  #           lwd = 0.25) +
   geom_smooth(color = "#3F2949", 
               fill = "#CABED0", 
               lwd = 2) +
@@ -657,17 +666,29 @@ media_table %>%
 media_table %>% 
   filter(Date >= "2015-01-01" &
            Date <= "2019-12-31") %>% 
-ggplot(aes(Date, sentiment)) +
+ggplot(aes(Date, sentiment, color = region, fill = region)) +
   #geom_point() +
-  geom_smooth(span = 0.8, 
-              color = "#3F2949", 
-              fill = "#CABED0", 
-              lwd = 1) +
-  facet_grid(vars(region)) +
+  geom_smooth(lwd = 1,
+              alpha = 0.25) +
+  # geom_smooth(data = media_table %>%
+  #               filter(Date >= "2015-01-01" &
+  #                        Date <= "2019-12-31"),
+  #             aes(color = "#3F2949", fill = "#3F2949", lwd = 1),
+  #             show.legend = TRUE) +
   xlab("\nDate") +
   ylab("Sentiment\n") +
   ggtitle("The sentiment of STR discourse by region throughout the United States over time\n") +
   scale_y_continuous(breaks = 0, labels = comma) +
+  scale_color_manual(name = "Region",
+                     values = c("Midwest" = "#435786", 
+                                "Northeast" = "#77324C",
+                                "South" = "#89A1C8", 
+                                "West" = "#BC7C8F")) +
+  scale_fill_manual(name = "Region",
+                    values = c("Midwest" = "#435786", 
+                               "Northeast" = "#77324C",
+                               "South" = "#89A1C8", 
+                               "West" = "#BC7C8F")) +
   theme_minimal() +
   theme(text = element_text(family = "Helvetica Light", size = 14),
         plot.title = element_text(hjust = 0.5), 
@@ -682,79 +703,112 @@ cities_media <-
   count() %>% 
   arrange(desc(n))
 
-cities <- 
-  cities_media[1:4,1] %>% 
-  do.call(paste, .)
+# cities <- 
+#   cities_media[1:4,1] %>% 
+#   do.call(paste, .)
+# 
+# data <- 
+#   media_table %>% 
+#   filter(Date >= "2015-01-01" &
+#            Date <= "2019-12-31") %>% 
+#   filter(city %in% cities)
+# 
+# data$city <- factor(data$city, levels = c("New York",
+#                                           "San Francisco",
+#                                           "Washington",
+#                                           "Los Angeles"))
+# 
+# data %>% 
+#   ggplot(aes(Date, sentiment)) +
+#   geom_smooth(span = 0.8, 
+#               color = "#3F2949", 
+#               fill = "#CABED0", 
+#               lwd = 1) +
+#   facet_grid(vars(city)) +
+#   xlab("\nDate") +
+#   ylab("Sentiment\n") +
+#   ggtitle("The sentiment of STR discourse by city throughout the United States over time\n") +
+#   scale_y_continuous(breaks = 0, labels = comma) +
+#   theme_minimal() +
+#   theme(text = element_text(family = "Helvetica Light", size = 14),
+#         plot.title = element_text(hjust = 0.5), 
+#         panel.grid.major.x = element_blank(),
+#         panel.grid.minor.x = element_blank())
+# 
+# cities <- 
+#   cities_media[5:13,1] %>% 
+#   do.call(paste, .)
+# 
+# data <- 
+#   media_table %>% 
+#   filter(Date >= "2015-01-01" &
+#            Date <= "2019-12-31") %>% 
+#   filter(city %in% cities)
+# 
+# data$city <- factor(data$city, levels = c("Chicago",
+#                                           "Boston",
+#                                           "Miami", 
+#                                           "Seattle",
+#                                           "Austin", 
+#                                           "Las Vegas",
+#                                           "Houston",
+#                                           "Philadelphia",
+#                                           "San Diego"))
+# 
+# data %>% 
+#   ggplot(aes(Date, sentiment)) +
+#   geom_smooth(span = 0.8, 
+#               color = "#3F2949", 
+#               fill = "#CABED0", 
+#               lwd = 1) +
+#   facet_grid(vars(city)) +
+#   xlab("\nDate") +
+#   ylab("Sentiment\n") +
+#   ggtitle("The sentiment of STR discourse by city throughout the United States over time\n") +
+#   scale_y_continuous(breaks = 0, labels = comma) +
+#   theme_minimal() +
+#   theme(text = element_text(family = "Helvetica Light", size = 14),
+#         plot.title = element_text(hjust = 0.5), 
+#         panel.grid.major.x = element_blank(),
+#         panel.grid.minor.x = element_blank())
 
-data <- 
-  media_table %>% 
+cities <-
+   cities_media[1:9,1] %>%
+   do.call(paste, .)
+
+media_table %>% 
   filter(Date >= "2015-01-01" &
            Date <= "2019-12-31") %>% 
-  filter(city %in% cities)
-
-data$city <- factor(data$city, levels = c("New York",
-                                          "San Francisco",
-                                          "Washington",
-                                          "Los Angeles"))
-
-data %>% 
-  ggplot(aes(Date, sentiment)) +
-  geom_smooth(span = 0.8, 
-              color = "#3F2949", 
-              fill = "#CABED0", 
-              lwd = 1) +
-  facet_grid(vars(city)) +
+  filter(city %in% cities) %>% 
+  ggplot(aes(Date, sentiment, color = city)) +
+  geom_smooth(
+    lwd = 1,
+    se = FALSE,
+    alpha = 0.25) +
   xlab("\nDate") +
-  ylab("Sentiment\n") +
-  ggtitle("The sentiment of STR discourse by city throughout the United States over time\n") +
-  scale_y_continuous(breaks = 0, labels = comma) +
+  ylab("\nSentiment\n") +
+  ggtitle("\nThe sentiment of STR discourse by city throughout the United States over time") +
+  scale_y_continuous(labels = comma) +
+  scale_color_manual(name = "City",
+                     values = c("Austin" = "#3F2949",
+                                "Boston" = "#435786",
+                                "Chicago" = "#4885C1",
+                                "Los Angeles" = "#77324C",
+                                "Miami" = "#806A8A",
+                                "New York" = "#89A1C8",
+                                "San Francisco" = "#AE3A4E",
+                                "Seattle" = "#BC7C8F",
+                                "Washington" = "#CABED0")) +
   theme_minimal() +
   theme(text = element_text(family = "Helvetica Light", size = 14),
         plot.title = element_text(hjust = 0.5), 
         panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank())
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank())
 
-cities <- 
-  cities_media[5:13,1] %>% 
-  do.call(paste, .)
+##### COMMUNITY SENTIMENT INDEX
 
-data <- 
-  media_table %>% 
-  filter(Date >= "2015-01-01" &
-           Date <= "2019-12-31") %>% 
-  filter(city %in% cities)
-
-data$city <- factor(data$city, levels = c("Chicago",
-                                          "Boston",
-                                          "Miami", 
-                                          "Seattle",
-                                          "Austin", 
-                                          "Las Vegas",
-                                          "Houston",
-                                          "Philadelphia",
-                                          "San Diego"))
-
-data %>% 
-  ggplot(aes(Date, sentiment)) +
-  geom_smooth(span = 0.8, 
-              color = "#3F2949", 
-              fill = "#CABED0", 
-              lwd = 1) +
-  facet_grid(vars(city)) +
-  xlab("\nDate") +
-  ylab("Sentiment\n") +
-  ggtitle("The sentiment of STR discourse by city throughout the United States over time\n") +
-  scale_y_continuous(breaks = 0, labels = comma) +
-  theme_minimal() +
-  theme(text = element_text(family = "Helvetica Light", size = 14),
-        plot.title = element_text(hjust = 0.5), 
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank())
-
-
-##### COMMUNITY RESISTANCE INDEX
-
-# Country CRI over time
+# Country CSI over time
 
 media_table %>% 
   filter(Date >= "2015-01-01" &
@@ -762,18 +816,16 @@ media_table %>%
   group_by(month_yr) %>% 
   summarize(sentiment = mean(sentiment, na.rm = TRUE),
             articles = n()) %>% 
-  mutate(CRI = -1 * sentiment * articles) %>% 
-  ggplot(aes(month_yr, CRI)) +
- # geom_point() +
-  geom_smooth(span = 0.8, 
+  mutate(CSI = sentiment * articles) %>% 
+  ggplot(aes(month_yr, CSI)) +
+  # geom_line(color = "#3F2949", 
+  #           lwd = 0.25, 
+  #           show.legend = TRUE)+
+  geom_smooth(method = "gam",
               color = "#3F2949", 
               fill = "#CABED0", 
-              lwd = 2) +
-  geom_smooth(method = lm, 
-              se = FALSE, 
-              color = "#806A8A", 
-              lwd = 1,
-              linetype = "dotted") + 
+              lwd = 2,
+              show.legend = TRUE) +
   xlab("\nDate") +
   ylab("CSI\n") +
   ggtitle("The community sentiment index throughout the United States over time\n") +
@@ -784,7 +836,33 @@ media_table %>%
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank())
 
-# Region CRI over time
+media_table %>% 
+  filter(Date >= "2015-01-01" &
+           Date <= "2019-12-31") %>% 
+  group_by(month_yr) %>% 
+  count() %>% 
+  ggplot(aes(x = month_yr, y = n)) +
+  geom_line(color = "#3F2949", 
+            lwd = 0.25, 
+            show.legend = TRUE)+
+  geom_smooth(method = loess,
+              color = "#3F2949", 
+              fill = "#CABED0", 
+              lwd = 2,
+              show.legend = TRUE) +
+  xlab("\nDate") +
+  ylab("Number of news articles\n") +
+  ggtitle("STR discourse throughout the United States over time") +
+  scale_y_continuous(labels = comma) +
+  theme_minimal() +
+  theme(text = element_text(family = "Helvetica Light", size = 14),
+        plot.title = element_text(hjust = 0.5), 
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+
+
+
+# Region CSI over time
 
 media_table %>% 
   filter(Date >= "2015-01-01" &
@@ -793,16 +871,24 @@ media_table %>%
   summarize(sentiment = mean(sentiment, na.rm = TRUE),
             articles = n()) %>% 
   mutate(CRI = -1 * sentiment * articles) %>% 
-  ggplot(aes(month_yr, CRI)) +
-  geom_smooth(span = 0.8, 
-              color = "#3F2949", 
-              fill = "#CABED0", 
-              lwd = 1) +
-  facet_grid(vars(region)) +
+  ggplot(aes(month_yr, sentiment, color = region, fill = region)) +
+  geom_smooth(method = "gam",
+              lwd = 1,
+              alpha = 0.25) +
   xlab("\nDate") +
   ylab("CSI\n") +
   ggtitle("The community sentiment index by region throughout the United States over time\n") +
   scale_y_continuous(breaks = c(-4, -2, 0, 2, 4), labels = number_format(accuracy = 1)) +
+  scale_color_manual(name = "Region",
+                     values = c("Midwest" = "#435786", 
+                                "Northeast" = "#77324C",
+                                "South" = "#89A1C8", 
+                                "West" = "#BC7C8F")) +
+  scale_fill_manual(name = "Region",
+                    values = c("Midwest" = "#435786", 
+                               "Northeast" = "#77324C",
+                               "South" = "#89A1C8", 
+                               "West" = "#BC7C8F")) +
   theme_minimal() +
   theme(text = element_text(family = "Helvetica Light", size = 14),
         plot.title = element_text(hjust = 0.5), 
@@ -810,7 +896,42 @@ media_table %>%
         panel.grid.minor.x = element_blank(), 
         panel.grid.minor.y = element_blank())
 
-# City CRI over time
+
+media_table %>% 
+  filter(Date >= "2015-01-01" &
+           Date <= "2019-12-31") %>% 
+  ggplot(aes(Date, sentiment, color = region, fill = region)) +
+  #geom_point() +
+  geom_smooth(lwd = 1,
+              alpha = 0.25) +
+  # geom_smooth(data = media_table %>%
+  #               filter(Date >= "2015-01-01" &
+  #                        Date <= "2019-12-31"),
+  #             aes(color = "#3F2949", fill = "#3F2949", lwd = 1),
+  #             show.legend = TRUE) +
+  xlab("\nDate") +
+  ylab("Sentiment\n") +
+  ggtitle("The sentiment of STR discourse by region throughout the United States over time\n") +
+  scale_y_continuous(breaks = 0, labels = comma) +
+  scale_color_manual(name = "Region",
+                     values = c("Midwest" = "#435786", 
+                                "Northeast" = "#77324C",
+                                "South" = "#89A1C8", 
+                                "West" = "#BC7C8F")) +
+  scale_fill_manual(name = "Region",
+                    values = c("Midwest" = "#435786", 
+                               "Northeast" = "#77324C",
+                               "South" = "#89A1C8", 
+                               "West" = "#BC7C8F")) +
+  theme_minimal() +
+  theme(text = element_text(family = "Helvetica Light", size = 14),
+        plot.title = element_text(hjust = 0.5), 
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+
+
+
+# City CSI over time
 
 cities_media <- 
   media_table %>% 
@@ -819,91 +940,50 @@ cities_media <-
   arrange(desc(n))
 
 cities <- 
-  cities_media[1:4,1] %>% 
+  cities_media[1:9,1] %>% 
   do.call(paste, .)
 
-data <- 
-  media_table %>% 
+media_table %>% 
   filter(Date >= "2015-01-01" &
            Date <= "2019-12-31") %>% 
   filter(city %in% cities) %>% 
   group_by(city, month_yr) %>% 
   summarize(sentiment = mean(sentiment, na.rm = TRUE),
             articles = n()) %>% 
-  mutate(CRI = -1 * sentiment * articles) 
-  
-data$city <- factor(data$city, levels = c("New York",
-                                          "San Francisco",
-                                          "Washington",
-                                          "Los Angeles"))
-data %>% 
-  ggplot(aes(month_yr, CRI)) +
-  geom_smooth(span = 0.8, 
-              color = "#3F2949", 
-              fill = "#CABED0", 
-              lwd = 1) +
-  facet_grid(vars(city)) +
+  mutate(CSI = sentiment * articles) %>% 
+  ggplot(aes(month_yr, CSI, color = city)) +
+  geom_smooth( method = "gam",
+    lwd = 1,
+    se = FALSE,
+    alpha = 0.25) +
   xlab("\nDate") +
   ylab("CSI\n") +
   ggtitle("The community sentiment index by city throughout the United States over time\n") +
-  scale_y_continuous(breaks = c(-2, 0, 2), 
-                     labels = number_format(accuracy = 1)) +
+  scale_y_continuous(labels = number_format(accuracy = 1)) +
+  scale_color_manual(name = "City",
+                     values = c("Austin" = "#3F2949",
+                                "Boston" = "#435786",
+                                "Chicago" = "#4885C1",
+                                "Los Angeles" = "#77324C",
+                                "Miami" = "#806A8A",
+                                "New York" = "#89A1C8",
+                                "San Francisco" = "#AE3A4E",
+                                "Seattle" = "#BC7C8F",
+                                "Washington" = "#CABED0")) +
   theme_minimal() +
   theme(text = element_text(family = "Helvetica Light", size = 14),
         plot.title = element_text(hjust = 0.5), 
         panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank(), 
-        panel.grid.minor.y = element_blank())
-
-cities <- 
-  cities_media[5:13,1] %>% 
-  do.call(paste, .)
-
-data <- 
-  media_table %>% 
-  filter(Date >= "2015-01-01" &
-           Date <= "2019-12-31") %>% 
-  filter(city %in% cities) %>% 
-  group_by(city, month_yr) %>% 
-  summarize(sentiment = mean(sentiment, na.rm = TRUE),
-            articles = n()) %>% 
-  mutate(CRI = -1 * sentiment * articles) 
-
-data$city <- factor(data$city, levels = c("Chicago",
-                                          "Boston",
-                                          "Miami", 
-                                          "Seattle",
-                                          "Austin", 
-                                          "Las Vegas",
-                                          "Houston",
-                                          "Philadelphia",
-                                          "San Diego"))
-
-data %>% 
-  ggplot(aes(month_yr, CRI)) +
-  geom_smooth(span = 0.8, 
-              color = "#3F2949", 
-              fill = "#CABED0", 
-              lwd = 1) +
-  facet_grid(vars(city)) +
-  xlab("\nDate") +
-  ylab("CSI\n") +
-  ggtitle("The community sentiment index by city throughout the United States over time\n") +
-  scale_y_continuous(breaks = c(-0.25, 0, 0.25), 
-                     labels = number_format(accuracy = 0.01)) +
-  theme_minimal() +
-  theme(text = element_text(family = "Helvetica Light", size = 14),
-        plot.title = element_text(hjust = 0.5), 
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank(), 
+        panel.grid.minor.x = element_blank(),
         panel.grid.minor.y = element_blank())
 
 ## CRI
 
 cities_table %>% 
-  dplyr::select(c(city, CRI)) %>% 
+  mutate(CSI = -1* CRI) %>% 
+  dplyr::select(c(city, CSI, population, active_listings, housing_loss_pct_households)) %>% 
   st_drop_geometry() %>% 
-  arrange(desc(CRI)) %>% view()
+  arrange((CSI)) %>% view()
 
 neighbourhoods_table %>% 
   dplyr::select(c(city, neighbourhood, CRI)) %>% 
@@ -941,12 +1021,18 @@ cities_media <-
 
 # Specify data, variables, title, labels, and quantiles (optional)
   # New Orleans
+  
+neighbourhoods_table <- 
+  neighbourhoods_table %>% 
+  mutate(CSI = -1* CRI)
+
 data <- 
   neighbourhoods_table %>%  
   filter(city == "New Orleans") %>% 
   filter(!is.na(CRI)) %>% 
   filter(housing_loss_pct_households >= 0) %>% 
-  st_as_sf() 
+  st_as_sf() %>% 
+  mutate(housing_loss_pct_households_inverse = 1/housing_loss_pct_households)
 
 water_LA <- 
   st_read("data/tiger_la_water_CENSUS_2006/tiger_la_water_CENSUS_2006.shp") %>% 
@@ -960,16 +1046,16 @@ streets_neworleans <-
                                              "tertiary", "motorway")) %>%
   osmdata_sf()
 
-bivariate_mapping(data = data,
+new_orleans <- 
+  bivariate_mapping(data = data,
                   streets = streets_neworleans,
                   water = water_LA,
                   buffer = 5000,
-                  var1 = data$CRI, 
-                  var2 = data$housing_loss_pct_households, 
-                  title = "Housing Loss and Community Sentiment in New Orleans",
+                  var1 = data$CSI, 
+                  var2 = data$housing_loss_pct_households_inverse, 
+                  title = "New Orleans",
                   xlab = "Increasing CSI", 
-                  ylab = "Increasing Housing Loss") %>% 
-  plot()
+                  ylab = "Decreasing Housing Loss")
 
   # Jersey City
 data <- 
@@ -977,7 +1063,8 @@ data <-
   filter(city == "Jersey City") %>% 
   filter(!is.na(CRI)) %>% 
   filter(housing_loss_pct_households >= 0) %>% 
-  st_as_sf() 
+  st_as_sf() %>% 
+  mutate(housing_loss_pct_households_inverse = 1/housing_loss_pct_households)
 
 water_NJ <- 
   st_read("data/nhdwaterbody2002shp/nhdwaterbody2002.shp") %>% 
@@ -993,17 +1080,16 @@ streets_jersey <-
                                              "tertiary", "motorway")) %>%
   osmdata_sf()
 
-bivariate_mapping(data = data,
+jersey_city <- 
+  bivariate_mapping(data = data,
                   streets = streets_jersey,
                   water = water_NJ,
                   buffer = 2000,
-                  var1 = data$CRI, 
-                  var2 = data$housing_loss_pct_households, 
-                  title = "Housing Loss and Community Sentiment in Jersey City",
+                  var1 = data$CSI, 
+                  var2 = data$housing_loss_pct_households_inverse, 
+                  title = "Jersey City",
                   xlab = "Increasing CSI", 
-                  ylab = "Increasing Housing Loss") %>% 
-  plot()
-
+                  ylab = "Decreasing Housing Loss")
 
   # San Francisco
 data_hold <- 
@@ -1021,6 +1107,7 @@ data <-
   filter(!is.na(CRI)) %>% 
   filter(housing_loss_pct_households >= 0) %>% 
   st_as_sf() %>% 
+  mutate(housing_loss_pct_households_inverse = 1/housing_loss_pct_households) %>% 
   st_intersection(st_buffer(st_as_sfc(st_bbox(data_hold)), 7000))
 
 rm(data_hold)
@@ -1050,16 +1137,140 @@ streets_sanfran <-
                                              "tertiary", "motorway")) %>%
   osmdata_sf()
 
-bivariate_mapping(data = data,
+san_fran <- 
+  bivariate_mapping(data = data,
                   streets = streets_sanfran,
                   water = water_CA,
                   buffer = 5000,
-                  var1 = data$CRI, 
-                  var2 = data$housing_loss_pct_households, 
-                  title = "Housing Loss and Community Sentiment in San Francisco",
+                  var1 = data$CSI, 
+                  var2 = data$housing_loss_pct_households_inverse, 
+                  title = "San Francisco",
                   xlab = "Increasing CSI", 
-                  ylab = "Increasing Housing Loss") %>% 
-  plot()
+                  ylab = "Decreasing Housing Loss")
+
+# Housing loss legend
+
+theme_map <- function(...) {
+  theme_minimal() +
+    theme(
+      text = element_text(family = "Helvetica Light", size = 11),
+      # remove all axes
+      axis.line = element_blank(),
+      axis.text.x = element_blank(),
+      axis.text.y = element_blank(),
+      axis.ticks = element_blank(),
+      # remove grid
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      # background colors
+      plot.background = element_rect(fill = "white",
+                                     color = NA),
+      panel.background = element_rect(fill = "white",
+                                      color = NA),
+      legend.background = element_rect(fill = "white",
+                                       color = NA),
+      # borders and margins
+      plot.margin = unit(c(.5, .5, .2, .5), "cm"),
+      panel.border = element_blank(),
+      panel.spacing = unit(c(-.1, 0.2, .2, 0.2), "cm"),
+      # titles
+      legend.title = element_text(size = 11),
+      legend.text = element_text(size = 10, hjust = 0,
+                                 color = "black"),
+      plot.title = element_text(size = 18, hjust = 0.5,
+                                color = "black"),
+      plot.subtitle = element_text(size = 10, hjust = 0.5,
+                                   color = "black",
+                                   margin = margin(b = -0.1,
+                                                   t = -0.1,
+                                                   l = 2,
+                                                   unit = "cm"),
+                                   debug = F),
+      # captions
+      plot.caption = element_text(size = 7,
+                                  hjust = .5,
+                                  margin = margin(t = 0.2,
+                                                  b = 0,
+                                                  unit = "cm"),
+                                  color = "#939184"),
+      ...
+    )
+}
+
+bivariate_color_scale <- tibble(
+  "3 - 3" = "#3F2949", # high var1, high var2
+  "2 - 3" = "#435786",
+  "1 - 3" = "#4885C1", # low var1, high var2
+  "3 - 2" = "#77324C",
+  "2 - 2" = "#806A8A", # medium var1, medium var2
+  "1 - 2" = "#89A1C8",
+  "3 - 1" = "#AE3A4E", # high var1, low var2
+  "2 - 1" = "#BC7C8F",
+  "1 - 1" = "#CABED0" # low var1, low var2
+) %>%
+  gather("group", "fill")
+
+quantiles_var1 <- 
+  quantile(data$CSI, probs = seq(0, 1, length.out = 4))
+
+quantiles_var2 <- 
+  quantile(data$housing_loss_pct_households_inverse, probs = seq(0, 1, length.out = 4))
+
+data <- 
+  data %>% 
+  mutate(
+    var1_quantiles = cut(
+      data$CSI,
+      breaks = quantiles_var1,
+      include.lowest = TRUE
+    ),
+    var2_quantiles = cut(
+      data$housing_loss_pct_households_inverse,
+      breaks = quantiles_var2,
+      include.lowest = TRUE
+    ),
+    group = paste(
+      as.numeric(var1_quantiles), "-",
+      as.numeric(var2_quantiles)
+    )
+  ) %>%
+  left_join(bivariate_color_scale, by = "group")
+
+bivariate_color_scale <- 
+    bivariate_color_scale %>% 
+    separate(group, into = c("var1", "var2"), sep = " - ") %>%
+     mutate(var1 = as.integer(var1),
+            var2 = as.integer(var2))
+
+# Generate legend
+legend <- 
+  ggplot() +
+  geom_tile(
+    data = bivariate_color_scale,
+    mapping = aes(
+      x = var1,
+      y = var2,
+      fill = fill)
+  ) +
+  scale_fill_identity() +
+  labs(x = "Increasing CSI",
+       y = "Decreasing housing loss") +
+  theme_map() +
+  theme(
+    axis.title = element_text(size = 10)) +
+  coord_fixed()
+
+
+
+((san_fran/new_orleans) |
+  (jersey_city / plot_spacer() / legend / plot_spacer() 
+                  + plot_layout(heights = c(3, 0.25, 0.75, 0.25)))) +
+    plot_layout(ncol = 2, widths = c(1, 1)) + 
+  plot_annotation(title = "The inverse relationship between housing loss and community sentiment\n",
+                  theme = theme (text = element_text(family = "Helvetica Light",
+                                                     size = 18),
+                                 plot.title = element_text(hjust = 0.5)))
+
 
 
 ### ACTIVE LISTINGS
@@ -1076,8 +1287,7 @@ data <-
   filter(city == "New York") %>% 
   filter(!is.na(CRI)) %>% 
   filter(active_listings >= 0) %>% 
-  st_as_sf() %>% 
-  mutate(active_listings_inverse = 1/active_listings)
+  st_as_sf() 
 
 streets_newyork <-
   (getbb("New York City") * c(1.01, 0.99, 0.99, 1.01)) %>%
@@ -1105,18 +1315,16 @@ water_NY <-
         water_NY %>% dplyr::select("geometry"))
 
 
-bivariate_mapping(data = data,
+new_york <- 
+  bivariate_mapping(data = data,
                   streets = streets_newyork,
                   water = water_NY,
-                  buffer = 5000,
-                  var1 = data$CRI, 
-                  var2 = data$active_listings_inverse, 
-                  #quantiles_var1 = quantiles_CRI,
-                  #quantiles_var2 = c(0, 0.00001, 0.001, 1), 
-                  title = "Active Listings and Community Resistance in New York City",
-                  xlab = "Increasing CRI", 
-                  ylab = "Decreasing STR Listings") %>% 
-  plot()
+                  buffer = 2000,
+                  var1 = data$CSI, 
+                  var2 = data$active_listings, 
+                  title = "New York City",
+                  xlab = "Increasing CSI", 
+                  ylab = "Increasing STR Listings")
 
 
 # Houston
@@ -1125,8 +1333,7 @@ data <-
   filter(city == "Houston") %>% 
   filter(!is.na(CRI)) %>% 
   filter(active_listings >= 0) %>% 
-  st_as_sf() %>% 
-  mutate(active_listings_inverse = 1/active_listings)
+  st_as_sf() 
 
 streets_houston <-
   (getbb("Houston") * c(1.01, 0.99, 0.99, 1.01)) %>%
@@ -1155,18 +1362,16 @@ water_TX <-
         water_TX %>% dplyr::select("geometry"))
 
 
-bivariate_mapping(data = data,
+houston <- 
+  bivariate_mapping(data = data,
                   streets = streets_houston,
                   water = water_TX,
-                  buffer = 10000,
-                  var1 = data$CRI, 
-                  var2 = data$active_listings_inverse, 
-                  #quantiles_var1 = quantiles_CRI,
-                  #quantiles_var2 = c(0, 0.00001, 0.001, 1), 
-                  title = "Active Listings and Community Resistance in Houston",
-                  xlab = "Increasing CRI", 
-                  ylab = "Decreasing STR Listings") %>% 
-  plot()
+                  buffer = 5000,
+                  var1 = data$CSI, 
+                  var2 = data$active_listings, 
+                  title = "Houston",
+                  xlab = "Increasing CSI", 
+                  ylab = "Increasing STR Listings")
 
 
   # Los Angeles
@@ -1175,8 +1380,7 @@ data <-
   filter(city == "Los Angeles") %>% 
   filter(!is.na(CRI)) %>% 
   filter(active_listings >= 0) %>% 
-  st_as_sf() %>% 
-  mutate(active_listings_inverse = 1/active_listings)
+  st_as_sf()
 
 streets_losangeles <-
   (getbb("Los Angeles") * c(1.01, 0.99, 0.99, 1.01)) %>%
@@ -1203,20 +1407,89 @@ water_CA <-
   rbind(water_CA_ocean %>% dplyr::select("geometry"),
         water_CA %>% dplyr::select("geometry"))
 
-bivariate_mapping(data = data,
+los_angeles <- 
+  bivariate_mapping(data = data,
                   streets = streets_losangeles,
                   water = water_CA,
                   buffer = 5000,
-                  var1 = data$CRI, 
-                  var2 = data$active_listings_inverse, 
-                  #quantiles_var1 = quantiles_CRI,
-                  #quantiles_var2 = c(0, 0.00001, 0.001, 1), 
-                  title = "Active Listings and Community Resistance in Los Angeles",
-                  xlab = "Increasing CRI", 
-                  ylab = "Decreasing STR Listings") %>% 
-  plot()
+                  var1 = data$CSI, 
+                  var2 = data$active_listings, 
+                  title = "Los Angeles",
+                  xlab = "Increasing CSI", 
+                  ylab = "Increasing STR Listings") 
 
+# Active listings legend
+bivariate_color_scale <- tibble(
+  "3 - 3" = "#3F2949", # high var1, high var2
+  "2 - 3" = "#435786",
+  "1 - 3" = "#4885C1", # low var1, high var2
+  "3 - 2" = "#77324C",
+  "2 - 2" = "#806A8A", # medium var1, medium var2
+  "1 - 2" = "#89A1C8",
+  "3 - 1" = "#AE3A4E", # high var1, low var2
+  "2 - 1" = "#BC7C8F",
+  "1 - 1" = "#CABED0" # low var1, low var2
+) %>%
+  gather("group", "fill")
 
+quantiles_var1 <- 
+  quantile(data$CSI, probs = seq(0, 1, length.out = 4))
+
+quantiles_var2 <- 
+  quantile(data$active_listings, probs = seq(0, 1, length.out = 4))
+
+data <- 
+  data %>% 
+  mutate(
+    var1_quantiles = cut(
+      data$CSI,
+      breaks = quantiles_var1,
+      include.lowest = TRUE
+    ),
+    var2_quantiles = cut(
+      data$active_listings,
+      breaks = quantiles_var2,
+      include.lowest = TRUE
+    ),
+    group = paste(
+      as.numeric(var1_quantiles), "-",
+      as.numeric(var2_quantiles)
+    )
+  ) %>%
+  left_join(bivariate_color_scale, by = "group")
+
+bivariate_color_scale <- 
+  bivariate_color_scale %>% 
+  separate(group, into = c("var1", "var2"), sep = " - ") %>%
+  mutate(var1 = as.integer(var1),
+         var2 = as.integer(var2))
+
+# Generate legend
+legend <- 
+  ggplot() +
+  geom_tile(
+    data = bivariate_color_scale,
+    mapping = aes(
+      x = var1,
+      y = var2,
+      fill = fill)
+  ) +
+  scale_fill_identity() +
+  labs(x = "Increasing CSI",
+       y = "Increasing active listings") +
+  theme_map() +
+  theme(
+    axis.title = element_text(size = 10)) +
+  coord_fixed()
+
+((houston/los_angeles) |
+    (new_york / plot_spacer() / legend / plot_spacer() 
+     + plot_layout(heights = c(3, 0.25, 0.75, 0.25)))) +
+  plot_layout(ncol = 2, widths = c(1, 1)) + 
+  plot_annotation(title = "The positive relationship between active listings and community sentiment\n",
+                  theme = theme (text = element_text(family = "Helvetica Light",
+                                                     size = 18),
+                                 plot.title = element_text(hjust = 0.5)))
 
 ### NON MOVER
 cities_non_mover <- 
