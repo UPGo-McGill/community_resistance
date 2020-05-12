@@ -544,31 +544,7 @@ model_puma <-
         white_pct_pop + 
         university_education_pct_pop +
         lone_parent_pct_families +
-        population_city +
-        med_income_city +
-        low_income_pct_pop_city +
-        language_pct_pop_city +
-        citizen_pct_pop_city +
-        university_education_pct_pop_city +
-        lone_parent_pct_families_city,
-      family = gaussian, 
-      data = .)
-
-summary(model_puma)
-
-r.squaredGLMM(model_puma)
-
-model_puma <- 
-  neighbourhoods_table %>% 
-  filter((city %in% bottom_59)) %>% 
-  glm((CRI) ~ 
-        active_listings +
-        housing_loss_pct_households +
-        non_mover_pct_pop +
-        owner_occupied_pct_household +
-        language_pct_pop +
-        white_pct_pop + 
-        university_education_pct_pop +
+        housing_loss_pct_households_city +
         population_city +
         med_income_city +
         language_pct_pop_city +
@@ -579,6 +555,7 @@ model_puma <-
 summary(model_puma)
 
 r.squaredGLMM(model_puma)
+
 
 
 

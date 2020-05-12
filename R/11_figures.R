@@ -209,13 +209,20 @@ distribution_revenue <-
         panel.grid.minor.x = element_blank())
 
 
-distribution_listings + distribution_revenue + distribution_housingloss + 
+
+
+
+tiff("STR_violin.tiff", units = "in", width = 20, height = 10, res = 300)
+
+
+  distribution_listings + distribution_revenue + distribution_housingloss + 
   plot_annotation(title = "Distribution of active listings, revenue generated, and housing lost to STRs by city in the United States in 2019\n",
                   theme = theme (text = element_text(family = "Helvetica Light",
-                                            size = 14),
+                                                     size = 14),
                                  plot.title = element_text(hjust = 0.5)),
                   tag_levels = "A")
-
+  
+dev.off()
 
 states_sf <- get_urbn_map("states", sf = TRUE)
 
@@ -237,6 +244,8 @@ cities_hawaii_alaska <-
   left_join(counties_sf) %>%
   st_as_sf() 
 
+
+tiff("STR_map.tiff", units = "in", width = 20, height = 10, res = 300)
 
 cities_table %>%
   filter(city != "Anchorage" &
@@ -276,6 +285,7 @@ cities_table %>%
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank())
 
+dev.off()
 ################################### MEDIA ANALYSIS ###########################################
 
 ##### NUMBER OF ARTICLES
@@ -287,6 +297,8 @@ media_table$month_yr <- (format(as.Date(media_table$Date), "%Y-%m"))
 media_table$month_yr <- as.Date(paste(media_table$month_yr, "-15", sep = ""))
 
 # Country-wide number of articles over time
+
+tiff("country_discourse.tiff", units = "in", width = 20, height = 10, res = 300)
 
 media_table %>% 
   filter(Date >= "2015-01-01" &
@@ -304,7 +316,7 @@ media_table %>%
               show.legend = TRUE) +
   xlab("\nDate") +
   ylab("Number of news articles\n") +
-  ggtitle("STR discourse throughout the United States over time") +
+  ggtitle("STR discourse throughout the United States over time\n") +
   scale_y_continuous(labels = comma) +
   theme_minimal() +
   theme(text = element_text(family = "Helvetica Light", size = 14),
@@ -312,7 +324,10 @@ media_table %>%
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank())
 
-discourse_map <- 
+dev.off()
+
+tiff("discourse_map.tiff", units = "in", width = 20, height = 10, res = 300)
+
   cities_table %>%
   filter(city != "Anchorage" &
            city != "Honolulu") %>% 
@@ -347,13 +362,16 @@ discourse_map <-
   guides(colour = guide_legend(override.aes = list(alpha = 0.75, size = 3))) + 
   guides(size = guide_legend(override.aes = list(colour = "#CABED0"))) +
   theme(text = element_text(family = "Helvetica Light", size = 14),
-        plot.title = element_text(hjust = 0), 
+        plot.title = element_text(hjust = 0.5), 
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank()) 
 
+dev.off()
+
 # Regional number of articles over time
 
-discourse_region <- 
+tiff("regional_discourse.tiff", units = "in", width = 20, height = 10, res = 300)
+
   media_table %>% 
   filter(Date >= "2015-01-01" &
            Date <= "2019-12-31") %>% 
@@ -390,6 +408,7 @@ discourse_region <-
         panel.grid.minor.y = element_blank(),
         plot.margin = margin(t = 0, unit = "cm"))
 
+dev.off()
 
 discourse_map + discourse_region + plot_layout(ncol = 1,
                                                widths = c(1, 1),
@@ -613,6 +632,8 @@ city_media_listing <-
         panel.grid.minor.y = element_blank())
   
 
+tiff("cities_discourse.tiff", units = "in", width = 20, height = 20, res = 300)
+
 city_media_absolute + plot_spacer() +
   city_media_pop + plot_spacer() +
   city_media_listing +
@@ -624,9 +645,10 @@ city_media_absolute + plot_spacer() +
                                  plot.title = element_text(hjust = 0.5)),
                   tag_levels = "A")
 
-
+dev.off()
 
 ##### SENTIMENT
+
 
 media_table %>% 
   mutate(sentiment_round = round(media_table$sentiment, digits = 2)) %>% 
@@ -638,6 +660,8 @@ media_table %>%
   geom_point()
 
 # Country-wide sentiment of articles over time
+
+tiff("country_sentiment.tiff", units = "in", width = 20, height = 10, res = 300)
 
 media_table %>% 
   filter(Date >= "2015-01-01" &
@@ -660,8 +684,11 @@ media_table %>%
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank())
 
+dev.off()
 
 # Regional sentiment of articles over time
+
+tiff("regional_sentiment.tiff", units = "in", width = 20, height = 10, res = 300)
 
 media_table %>% 
   filter(Date >= "2015-01-01" &
@@ -694,6 +721,8 @@ ggplot(aes(Date, sentiment, color = region, fill = region)) +
         plot.title = element_text(hjust = 0.5), 
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank())
+
+dev.off()
 
 # City sentiment of articles over time
 
@@ -776,6 +805,8 @@ cities <-
    cities_media[1:9,1] %>%
    do.call(paste, .)
 
+tiff("city_sentiment.tiff", units = "in", width = 20, height = 10, res = 300)
+
 media_table %>% 
   filter(Date >= "2015-01-01" &
            Date <= "2019-12-31") %>% 
@@ -806,9 +837,13 @@ media_table %>%
         panel.grid.minor.x = element_blank(),
         panel.grid.minor.y = element_blank())
 
+dev.off()
+
 ##### COMMUNITY SENTIMENT INDEX
 
 # Country CSI over time
+
+tiff("country_CSI.tiff", units = "in", width = 20, height = 10, res = 300)
 
 media_table %>% 
   filter(Date >= "2015-01-01" &
@@ -836,33 +871,12 @@ media_table %>%
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank())
 
-media_table %>% 
-  filter(Date >= "2015-01-01" &
-           Date <= "2019-12-31") %>% 
-  group_by(month_yr) %>% 
-  count() %>% 
-  ggplot(aes(x = month_yr, y = n)) +
-  geom_line(color = "#3F2949", 
-            lwd = 0.25, 
-            show.legend = TRUE)+
-  geom_smooth(method = loess,
-              color = "#3F2949", 
-              fill = "#CABED0", 
-              lwd = 2,
-              show.legend = TRUE) +
-  xlab("\nDate") +
-  ylab("Number of news articles\n") +
-  ggtitle("STR discourse throughout the United States over time") +
-  scale_y_continuous(labels = comma) +
-  theme_minimal() +
-  theme(text = element_text(family = "Helvetica Light", size = 14),
-        plot.title = element_text(hjust = 0.5), 
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank())
-
+dev.off()
 
 
 # Region CSI over time
+
+tiff("regional_CSI.tiff", units = "in", width = 20, height = 10, res = 300)
 
 media_table %>% 
   filter(Date >= "2015-01-01" &
@@ -897,37 +911,8 @@ media_table %>%
         panel.grid.minor.y = element_blank())
 
 
-media_table %>% 
-  filter(Date >= "2015-01-01" &
-           Date <= "2019-12-31") %>% 
-  ggplot(aes(Date, sentiment, color = region, fill = region)) +
-  #geom_point() +
-  geom_smooth(lwd = 1,
-              alpha = 0.25) +
-  # geom_smooth(data = media_table %>%
-  #               filter(Date >= "2015-01-01" &
-  #                        Date <= "2019-12-31"),
-  #             aes(color = "#3F2949", fill = "#3F2949", lwd = 1),
-  #             show.legend = TRUE) +
-  xlab("\nDate") +
-  ylab("Sentiment\n") +
-  ggtitle("The sentiment of STR discourse by region throughout the United States over time\n") +
-  scale_y_continuous(breaks = 0, labels = comma) +
-  scale_color_manual(name = "Region",
-                     values = c("Midwest" = "#435786", 
-                                "Northeast" = "#77324C",
-                                "South" = "#89A1C8", 
-                                "West" = "#BC7C8F")) +
-  scale_fill_manual(name = "Region",
-                    values = c("Midwest" = "#435786", 
-                               "Northeast" = "#77324C",
-                               "South" = "#89A1C8", 
-                               "West" = "#BC7C8F")) +
-  theme_minimal() +
-  theme(text = element_text(family = "Helvetica Light", size = 14),
-        plot.title = element_text(hjust = 0.5), 
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank())
+dev.off()
+
 
 
 
@@ -942,6 +927,8 @@ cities_media <-
 cities <- 
   cities_media[1:9,1] %>% 
   do.call(paste, .)
+
+tiff("city_CSI.tiff", units = "in", width = 20, height = 10, res = 300)
 
 media_table %>% 
   filter(Date >= "2015-01-01" &
@@ -976,6 +963,8 @@ media_table %>%
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
         panel.grid.minor.y = element_blank())
+
+dev.off()
 
 ## CRI
 
@@ -1084,7 +1073,7 @@ jersey_city <-
   bivariate_mapping(data = data,
                   streets = streets_jersey,
                   water = water_NJ,
-                  buffer = 2000,
+                  buffer = 3000,
                   var1 = data$CSI, 
                   var2 = data$housing_loss_pct_households_inverse, 
                   title = "Jersey City",
@@ -1260,6 +1249,7 @@ legend <-
     axis.title = element_text(size = 10)) +
   coord_fixed()
 
+tiff("bivariate_housingloss.tiff", units = "in", width = 15, height = 15, res = 300)
 
 
 ((san_fran/new_orleans) |
@@ -1272,6 +1262,7 @@ legend <-
                                  plot.title = element_text(hjust = 0.5)))
 
 
+dev.off()
 
 ### ACTIVE LISTINGS
 cities_active_listings <- 
@@ -1482,6 +1473,8 @@ legend <-
     axis.title = element_text(size = 10)) +
   coord_fixed()
 
+tiff("bivariate_activelistings.tiff", units = "in", width = 15, height = 15, res = 300)
+
 ((houston/los_angeles) |
     (new_york / plot_spacer() / legend / plot_spacer() 
      + plot_layout(heights = c(3, 0.25, 0.75, 0.25)))) +
@@ -1490,6 +1483,8 @@ legend <-
                   theme = theme (text = element_text(family = "Helvetica Light",
                                                      size = 18),
                                  plot.title = element_text(hjust = 0.5)))
+
+dev.off()
 
 ### NON MOVER
 cities_non_mover <- 
@@ -1505,7 +1500,8 @@ data <-
   filter(city == "Chicago") %>% 
   filter(!is.na(CRI)) %>% 
   filter(non_mover_pct_pop >= 0) %>% 
-  st_as_sf() 
+  st_as_sf() %>% 
+  mutate(mover_pct_pop = 1/non_mover_pct_pop)
 
 streets_chicago <-
   (getbb("Chicago") * c(1.01, 0.99, 0.99, 1.01)) %>%
@@ -1532,19 +1528,16 @@ water_IL <-
   rbind(water_IL_lake %>% dplyr::select("geometry"),
         water_IL %>% dplyr::select("geometry"))
 
-bivariate_mapping(data = data,
+chicago <- 
+  bivariate_mapping(data = data,
                   streets = streets_chicago,
                   water = water_IL,
                   buffer = 8000,
-                  var1 = data$CRI, 
-                  var2 = data$non_mover_pct_pop, 
-                  #quantiles_var1 = quantiles_CRI,
-                  #quantiles_var2 = c(0, 0.00001, 0.001, 1), 
-                  title = "Non Movers and Community Resistance in Chicago",
-                  xlab = "Increasing CRI", 
-                  ylab = "Increasing Non-Movers") %>% 
-  plot()
-
+                  var1 = data$CSI, 
+                  var2 = data$mover_pct_pop, 
+                  title = "Chicago",
+                  xlab = "Increasing CSI", 
+                  ylab = "Less Residentially Stable")
 
 
 # Washington
@@ -1553,7 +1546,8 @@ data <-
   filter(city == "Washington") %>% 
   filter(!is.na(CRI)) %>% 
   filter(non_mover_pct_pop >= 0) %>% 
-  st_as_sf() 
+  st_as_sf() %>% 
+  mutate(mover_pct_pop = 1/non_mover_pct_pop)
 
 streets_washington <-
   (getbb("Washington DC") * c(1.01, 0.99, 0.99, 1.01)) %>%
@@ -1580,18 +1574,16 @@ water_DC <-
   rbind(water_DC_ocean %>% dplyr::select("geometry"),
         water_DC %>% dplyr::select("geometry"))
 
-bivariate_mapping(data = data,
+washington <- 
+  bivariate_mapping(data = data,
                   streets = streets_washington,
                   water = water_DC,
                   buffer = 3000,
-                  var1 = data$CRI, 
-                  var2 = data$non_mover_pct_pop, 
-                  #quantiles_var1 = quantiles_CRI,
-                  #quantiles_var2 = c(0, 0.00001, 0.001, 1), 
-                  title = "Non Movers and Community Resistance in Washington",
-                  xlab = "Increasing CRI", 
-                  ylab = "Increasing Non-Movers") %>% 
-  plot()
+                  var1 = data$CSI, 
+                  var2 = data$mover_pct_pop, 
+                  title = "Washington",
+                  xlab = "Increasing CSI", 
+                  ylab = "Less Residentially Stable") 
 
   # Austin
 data <- 
@@ -1599,7 +1591,8 @@ data <-
   filter(city == "Austin") %>% 
   filter(!is.na(CRI)) %>% 
   filter(non_mover_pct_pop >= 0) %>% 
-  st_as_sf() 
+  st_as_sf() %>% 
+  mutate(mover_pct_pop = 1/non_mover_pct_pop)
 
 streets_austin <-
   (getbb("Austin") * c(1.01, 0.99, 0.99, 1.01)) %>%
@@ -1634,19 +1627,94 @@ water_TX <-
   rbind(water_TX_supplement %>% dplyr::select("geometry"),
         water_TX_ocean %>% dplyr::select("geometry"))
 
-bivariate_mapping(data = data,
+austin <- 
+  bivariate_mapping(data = data,
                   streets = streets_austin,
                   water = water_TX,
                   buffer = 5000,
-                  var1 = data$CRI, 
-                  var2 = data$non_mover_pct_pop, 
-                  #quantiles_var1 = quantiles_CRI,
-                  #quantiles_var2 = c(0, 0.00001, 0.001, 1), 
-                  title = "Non Movers and Community Resistance in Austin",
-                  xlab = "Increasing CRI", 
-                  ylab = "Increasing Non-Movers") %>% 
+                  var1 = data$CSI, 
+                  var2 = data$mover_pct_pop, 
+                  title = "Austin",
+                  xlab = "Increasing CSI", 
+                  ylab = "Decreasing Residential Stability") %>% 
   plot()
 
+# Non mover legend
+bivariate_color_scale <- tibble(
+  "3 - 3" = "#3F2949", # high var1, high var2
+  "2 - 3" = "#435786",
+  "1 - 3" = "#4885C1", # low var1, high var2
+  "3 - 2" = "#77324C",
+  "2 - 2" = "#806A8A", # medium var1, medium var2
+  "1 - 2" = "#89A1C8",
+  "3 - 1" = "#AE3A4E", # high var1, low var2
+  "2 - 1" = "#BC7C8F",
+  "1 - 1" = "#CABED0" # low var1, low var2
+) %>%
+  gather("group", "fill")
+
+quantiles_var1 <- 
+  quantile(data$CSI, probs = seq(0, 1, length.out = 4))
+
+quantiles_var2 <- 
+  quantile(data$mover_pct_pop, probs = seq(0, 1, length.out = 4))
+
+data <- 
+  data %>% 
+  mutate(
+    var1_quantiles = cut(
+      data$CSI,
+      breaks = quantiles_var1,
+      include.lowest = TRUE
+    ),
+    var2_quantiles = cut(
+      data$mover_pct_pop,
+      breaks = quantiles_var2,
+      include.lowest = TRUE
+    ),
+    group = paste(
+      as.numeric(var1_quantiles), "-",
+      as.numeric(var2_quantiles)
+    )
+  ) %>%
+  left_join(bivariate_color_scale, by = "group")
+
+bivariate_color_scale <- 
+  bivariate_color_scale %>% 
+  separate(group, into = c("var1", "var2"), sep = " - ") %>%
+  mutate(var1 = as.integer(var1),
+         var2 = as.integer(var2))
+
+# Generate legend
+legend <- 
+  ggplot() +
+  geom_tile(
+    data = bivariate_color_scale,
+    mapping = aes(
+      x = var1,
+      y = var2,
+      fill = fill)
+  ) +
+  scale_fill_identity() +
+  labs(x = "Increasing CSI",
+       y = "Increasing residential instability") +
+  theme_map() +
+  theme(
+    axis.title = element_text(size = 10)) +
+  coord_fixed()
+
+tiff("bivariate_nonmover.tiff", units = "in", width = 15, height = 15, res = 300)
+
+((austin/washington) |
+    (chicago / plot_spacer() / legend / plot_spacer() 
+     + plot_layout(heights = c(3, 0.25, 0.75, 0.25)))) +
+  plot_layout(ncol = 2, widths = c(1, 1)) + 
+  plot_annotation(title = "The positive relationship between residential instability and community sentiment\n",
+                  theme = theme (text = element_text(family = "Helvetica Light",
+                                                     size = 18),
+                                 plot.title = element_text(hjust = 0.5)))
+
+dev.off()
 
 # OWNER_OCCUPIED
 cities_OO <- 
@@ -1698,18 +1766,16 @@ water_CA <-
         water_CA_ocean2 %>% dplyr::select("geometry"),
         water_CA %>% dplyr::select("geometry"))
 
-bivariate_mapping(data = data,
+san_diego <- 
+        bivariate_mapping(data = data,
                   streets = streets_sandiego,
                   water = water_CA,
                   buffer = 5000,
-                  var1 = data$CRI, 
-                  var2 = data$rental_pct_household, 
-                  #quantiles_var1 = quantiles_CRI,
-                  #quantiles_var2 = c(0, 0.00001, 0.001, 1), 
-                  title = "Rental Households and Community Resistance in San Diego",
-                  xlab = "Increasing CRI", 
-                  ylab = "Increasing Rental Households") %>% 
-  plot()
+                  var1 = data$CSI, 
+                  var2 = data$owner_occupied_pct_household, 
+                  title = "San Diego",
+                  xlab = "Increasing CSI", 
+                  ylab = "Increasing Owner-Occupied Households")
 
 # Buffalo
 data <- 
@@ -1744,18 +1810,16 @@ water_NY <-
   rbind(water_NY_ocean %>% dplyr::select("geometry"),
         water_NY %>% dplyr::select("geometry"))
 
-bivariate_mapping(data = data,
+buffalo <- 
+  bivariate_mapping(data = data,
                   streets = streets_buffalo,
                   water = water_NY,
                   buffer = 5000,
-                  var1 = data$CRI, 
-                  var2 = data$rental_pct_household, 
-                  #quantiles_var1 = quantiles_CRI,
-                  #quantiles_var2 = c(0, 0.00001, 0.001, 1), 
-                  title = "Rental Households and Community Resistance in Buffalo",
-                  xlab = "Increasing CRI", 
-                  ylab = "Increasing Rental Households") %>% 
-  plot()
+                  var1 = data$CSI, 
+                  var2 = data$owner_occupied_pct_household, 
+                  title = "Buffalo",
+                  xlab = "Increasing CSI", 
+                  ylab = "Increasing Owner-Occupied Households") 
 
 # Seattle
 data <- 
@@ -1790,18 +1854,94 @@ water_WA <-
   rbind(water_WA_ocean %>% dplyr::select("geometry"),
         water_WA %>% dplyr::select("geometry"))
 
-bivariate_mapping(data = data,
+seattle <- 
+  bivariate_mapping(data = data,
                   streets = streets_seattle,
                   water = water_WA,
-                  buffer = 5000,
-                  var1 = data$CRI, 
-                  var2 = data$rental_pct_household, 
-                  title = "Rental Households and Community Resistance in Seattle",
-                  xlab = "Increasing CRI", 
-                  ylab = "Increasing Rental Households") %>% 
-  plot()
+                  buffer = 3000,
+                  var1 = data$CSI, 
+                  var2 = data$owner_occupied_pct_household, 
+                  title = "Seattle",
+                  xlab = "Increasing CSI", 
+                  ylab = "Increasing Owner Occupied Households")
+
+# OO Legend
+bivariate_color_scale <- tibble(
+  "3 - 3" = "#3F2949", # high var1, high var2
+  "2 - 3" = "#435786",
+  "1 - 3" = "#4885C1", # low var1, high var2
+  "3 - 2" = "#77324C",
+  "2 - 2" = "#806A8A", # medium var1, medium var2
+  "1 - 2" = "#89A1C8",
+  "3 - 1" = "#AE3A4E", # high var1, low var2
+  "2 - 1" = "#BC7C8F",
+  "1 - 1" = "#CABED0" # low var1, low var2
+) %>%
+  gather("group", "fill")
+
+quantiles_var1 <- 
+  quantile(data$CSI, probs = seq(0, 1, length.out = 4))
+
+quantiles_var2 <- 
+  quantile(data$owner_occupied_pct_household, probs = seq(0, 1, length.out = 4))
+
+data <- 
+  data %>% 
+  mutate(
+    var1_quantiles = cut(
+      data$CSI,
+      breaks = quantiles_var1,
+      include.lowest = TRUE
+    ),
+    var2_quantiles = cut(
+      data$owner_occupied_pct_household,
+      breaks = quantiles_var2,
+      include.lowest = TRUE
+    ),
+    group = paste(
+      as.numeric(var1_quantiles), "-",
+      as.numeric(var2_quantiles)
+    )
+  ) %>%
+  left_join(bivariate_color_scale, by = "group")
+
+bivariate_color_scale <- 
+  bivariate_color_scale %>% 
+  separate(group, into = c("var1", "var2"), sep = " - ") %>%
+  mutate(var1 = as.integer(var1),
+         var2 = as.integer(var2))
+
+# Generate legend
+legend <- 
+  ggplot() +
+  geom_tile(
+    data = bivariate_color_scale,
+    mapping = aes(
+      x = var1,
+      y = var2,
+      fill = fill)
+  ) +
+  scale_fill_identity() +
+  labs(x = "Increasing CSI",
+       y = "Increasing owner-occupied") +
+  theme_map() +
+  theme(
+    axis.title = element_text(size = 10)) +
+  coord_fixed()
 
 
+tiff("bivariate_owneroccupied.tiff", units = "in", width = 15, height = 10, res = 300)
+
+(((san_diego /plot_spacer() +  plot_layout(heights = c(1, 0.15))) | 
+    (seattle / plot_spacer() + plot_layout(heights = c(1, 0.30)))) +
+  (buffalo / plot_spacer() / legend / plot_spacer() +
+     plot_layout(heights = c(3, 0.05, 0.75, 0.35)))) +
+   plot_annotation(title = "The positive relationship between owner-occupied households and community sentiment\n",
+                  theme = theme (text = element_text(family = "Helvetica Light",
+                                                     size = 18),
+                                 plot.title = element_text(hjust = 0.5)))
+
+dev.off()
 
 # Now, to show the absense of a relationship
 # Active listings yoy 
