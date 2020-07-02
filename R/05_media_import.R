@@ -43,50 +43,70 @@ save(media, neighbourhoods, cityname, media_order,
 
 ### Lemmatize articles #########################################################
 
-model <- udpipe_download_model("english")
+# Tidy text using spacy
 
-english <- udpipe_load_model(model)
-
-# Tidy text
-airbnb <- 
-  c("airbnb", "homeshar", "home shar", "shortterm", "short term", "str ", 
-    "strs", "guest", "shortstay", "short stay", "home stay", "homestay", 
-    "hotel", "home share", "airbnb host", "host", "home sharing", "homeshare", 
-    "homesharing", "timeshare", "letting", "shortterm rental", "longterm", 
-    "rental", "legislation", "short term rental", "hotelization", 
-    "legalization", "homeaway", "vrbo", "rent", "market", "tenant", "home", 
-    "house", "apartment", "condo")
+tidy_text <- 
+  suppressMessages(
+    future_map(media, str_tidytext)
+  )
 
 
-# Lemmatize the articles to refine results and prepare for NER
-output <- 
-  map(media, ~{
-    .x %>% 
-      group_split(ceiling(doc_id / ceiling(nrow(.x) / 30)), keep = FALSE) %>% 
-      future_map(lemmatizer, .progress = TRUE)
-    })
+# Create media and lemmatized_articles list to allow for further text analysis
+media <- 
+  map(tidy_text, ~{
+    rbind(.x[[1]])
+  })
+lemmatized_articles <- 
+  map(tidy_text, ~{
+    rbind(.x[[2]])
+  })
 
 
-## Consolidate then split up output and clean up
+# # Alternate method 
+# model <- udpipe_download_model("english")
+# 
+# english <- udpipe_load_model(model)
+# 
+# # Tidy text
+# airbnb <- 
+#   c("airbnb", "homeshar", "home shar", "shortterm", "short term", "str ", 
+#     "strs", "guest", "shortstay", "short stay", "home stay", "homestay", 
+#     "hotel", "home share", "airbnb host", "host", "home sharing", "homeshare", 
+#     "homesharing", "timeshare", "letting", "shortterm rental", "longterm", 
+#     "rental", "legislation", "short term rental", "hotelization", 
+#     "legalization", "homeaway", "vrbo", "rent", "market", "tenant", "home", 
+#     "house", "apartment", "condo")
+# 
+# 
+# # Lemmatize the articles to refine results and prepare for NER
+# output <- 
+#   map(media, ~{
+#     .x %>% 
+#       group_split(ceiling(doc_id / ceiling(nrow(.x) / 30)), keep = FALSE) %>% 
+#       future_map(lemmatizer, .progress = TRUE)
+#     })
+# 
+# 
+# ## Consolidate then split up output and clean up
+# 
+# output <- 
+#   output %>% 
+#   map(~list(
+#     map_dfr(.x, function(x) x[[1]]),
+#     map_dfr(.x, function(x) x[[2]]),
+#     map_dfr(.x, function(x) x[[3]])
+#     ))
+# 
+# media <- map(output, ~.x[[1]])
+# lemmatized_articles <- map(output, ~.x[[2]])
+# lemma_intermediate <- map(output, ~.x[[3]])
 
-output <- 
-  output %>% 
-  map(~list(
-    map_dfr(.x, function(x) x[[1]]),
-    map_dfr(.x, function(x) x[[2]]),
-    map_dfr(.x, function(x) x[[3]])
-    ))
 
-media <- map(output, ~.x[[1]])
-lemmatized_articles <- map(output, ~.x[[2]])
-lemma_intermediate <- map(output, ~.x[[3]])
+# ## Clean up
+# 
+# rm(airbnb, english, model, output)
 
-
-## Clean up
-
-rm(airbnb, english, model, output)
-
-save(lemmatized_articles, lemma_intermediate, file = "data/lemmas.Rdata")
+save(lemmatized_articles, file = "data/lemmatized_articles.Rdata")
 save(cityname, media_order, file = "data/cityname.Rdata")
 
 save(media, neighbourhoods, file = "data/end_of_script_5.Rdata")

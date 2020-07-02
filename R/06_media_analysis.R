@@ -2,7 +2,6 @@
 
 source("R/01_helper_functions.R")
 
-
 ### Sentiment analysis #########################################################
 
 ## Create dictionary using the QDAP dictionary as a starting point
