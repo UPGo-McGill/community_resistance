@@ -51,48 +51,84 @@ rm(dictionary, machine_learning_synonyms)
 
 ### Named entity recognition and geocoding ##################################### 
 
+# NER using spacy
+
 ner <- 
-  lemma_intermediate[1:60] %>% 
-  future_map(ner_fun, .progress = TRUE)
-
-ner_2 <- 
-  lemma_intermediate[61:80] %>% 
-  future_map(ner_fun, .progress = TRUE)
-
-ner_3 <- 
-  lemma_intermediate[81:115] %>% 
-  map(~{
-    
-    no_docs <- 
-      ceiling(.x %>% group_by(doc_id) %>% n_groups() / 60)
-    
-    no_iterations <- 
-      ceiling(.x %>% group_by(doc_id) %>% n_groups() / no_docs)
-    
-    chunks <- 
-      map(1:no_iterations, function(x) {
-        i <- 1 + (x - 1) * no_docs
-        .x %>% filter(doc_id %in% c(i:(i + no_docs - 1)))
-      })
-    
-    chunks %>% 
-      future_map(ner_fun, .progress = TRUE) %>% 
-      bind_rows()
+  map(media, ~{
+    rbind(
+      spacy_parse(.x$Article) %>% 
+        entity_extract(type = "named", concatenator = " ") %>% 
+        filter(entity_type == "GPE" |
+                 entity_type == "FAC" |
+                 entity_type == "LOC" |
+                 entity_type == "PERSON" |
+                 entity_type == "ORG") %>% 
+        filter(nchar(entity) > 2) %>% 
+        dplyr::select(doc_id, entity),
+      spacy_parse(.x$Headline) %>% 
+        entity_extract(type = "named", concatenator = " ") %>% 
+        filter(entity_type == "GPE" |
+                 entity_type == "FAC" |
+                 entity_type == "LOC" |
+                 entity_type == "PERSON" |
+                 entity_type == "ORG") %>% 
+        filter(nchar(entity) > 2) %>% 
+        dplyr::select(doc_id, entity)) %>% 
+      distinct() 
   })
-
-# Combine ner pieces  
-ner <- c(ner, ner_2, ner_3, ner_109)
-
-# Clean the named entities by removing punctuation and making all lowercase
-ner <- map(ner, mutate, entity = tolower(gsub("[[:punct:]]", " ", entity)))
 
 save(ner, file = "data/ner.Rdata")
 
 
+# NER using alternate method
+
+# ner <- 
+#   lemma_intermediate[1:60] %>% 
+#   future_map(ner_fun, .progress = TRUE)
+# 
+# ner_2 <- 
+#   lemma_intermediate[61:80] %>% 
+#   future_map(ner_fun, .progress = TRUE)
+# 
+# ner_3 <- 
+#   lemma_intermediate[81:115] %>% 
+#   map(~{
+#     
+#     no_docs <- 
+#       ceiling(.x %>% group_by(doc_id) %>% n_groups() / 60)
+#     
+#     no_iterations <- 
+#       ceiling(.x %>% group_by(doc_id) %>% n_groups() / no_docs)
+#     
+#     chunks <- 
+#       map(1:no_iterations, function(x) {
+#         i <- 1 + (x - 1) * no_docs
+#         .x %>% filter(doc_id %in% c(i:(i + no_docs - 1)))
+#       })
+#     
+#     chunks %>% 
+#       future_map(ner_fun, .progress = TRUE) %>% 
+#       bind_rows()
+#   })
+# 
+# # Combine ner pieces  
+# ner <- c(ner, ner_2, ner_3, ner_109)
+# 
+# # Clean the named entities by removing punctuation and making all lowercase
+# ner <- map(ner, mutate, entity = tolower(gsub("[[:punct:]]", " ", entity)))
+# 
+# save(ner, file = "data/ner.Rdata")
+
+
+
 # Collapse the named entity recognition to reduce API queries
-ner_compressed <- 
-  map_df(ner, dplyr::select, entity) %>% 
+ner_compressed <-
+  map_df(ner, dplyr::select, entity) %>%
   distinct()
+
+ner_compressed$entity <- ner_compressed$entity %>% 
+  gsub("[[:punct:]]", " ", .)
+
 
 # Load locations that have already been queried.
 load("data/locations.Rdata")
