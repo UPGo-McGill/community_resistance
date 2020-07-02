@@ -23,7 +23,7 @@ machine_learning_synonyms <-
     "residence", "hotel", "gap", "investment", "poor", "need", "rent hike", 
     "community led", "housing stock", "nuisance", "garbage", "noise", "party", 
     "disrespect", "lockbox", "regulation", "unregulate", "scarce", "fines", 
-    "fined", "shut")
+    "fined", "shut", "backlash", "homeless", "homelessness", "affordability")
 
 dictionary[["negativeWords"]] <- 
   c(dictionary[["negativeWords"]], machine_learning_synonyms)

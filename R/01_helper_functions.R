@@ -193,7 +193,7 @@ lemmatized_articles <- lemmatized_articles %>%
   mutate(mentions = 
            str_count(lemmatized_articles$lemmas, paste(airbnb, collapse="|"))
          ) %>% 
-  filter(mentions > 2) %>%
+  filter(mentions > 3) %>%
   dplyr::select(-c(mentions)) 
 
 
